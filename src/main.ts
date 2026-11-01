@@ -1,0 +1,66 @@
+/**
+ * main.ts
+ * -------
+ * Entry point for Wyatt & Emma Arcade v2.0.
+ * Locks the Phaser 2D WebGL/Canvas stage to a crisp 1280x720 landscape tablet viewport
+ * using `Phaser.Scale.FIT` + `Phaser.Scale.CENTER_BOTH`.
+ */
+
+import Phaser from 'phaser';
+import { BootScene } from './scenes/BootScene';
+import { HubScene } from './scenes/HubScene';
+import { StoryEngineScene } from './scenes/StoryEngineScene';
+import { AudioBus } from './core/AudioBus';
+
+// In DEV mode, immediately unregister any stale Service Workers and purge old Workbox caches
+// so localhost never serves cached old artwork or 404s for newly staged sprites/audio!
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => {
+        for (const reg of registrations) {
+          void reg.unregister();
+        }
+      })
+      .catch(() => {});
+  }
+  if ('caches' in window) {
+    caches
+      .keys()
+      .then((keys) => {
+        for (const key of keys) {
+          void caches.delete(key);
+        }
+      })
+      .catch(() => {});
+  }
+}
+
+// Install global first-tap audio unlocker for Howler.js + WebAudio
+AudioBus.installUnlockListeners();
+
+const config: Phaser.Types.Core.GameConfig = {
+  type: Phaser.AUTO,
+  parent: 'app',
+  width: 1280,
+  height: 720,
+  backgroundColor: '#0f0c24',
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1280,
+    height: 720
+  },
+  input: {
+    activePointers: 3
+  },
+  render: {
+    antialias: false,
+    pixelArt: true,
+    roundPixels: true
+  },
+  scene: [BootScene, HubScene, StoryEngineScene]
+};
+
+export const game = new Phaser.Game(config);
