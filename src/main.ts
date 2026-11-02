@@ -10,6 +10,8 @@ import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene';
 import { HubScene } from './scenes/HubScene';
 import { StoryEngineScene } from './scenes/StoryEngineScene';
+import { ArtStudioScene } from './scenes/ArtStudioScene';
+import { MelodyMakerScene } from './scenes/MelodyMakerScene';
 import { AudioBus } from './core/AudioBus';
 
 // In DEV mode, immediately unregister any stale Service Workers and purge old Workbox caches
@@ -60,7 +62,7 @@ const config: Phaser.Types.Core.GameConfig = {
     pixelArt: true,
     roundPixels: true
   },
-  scene: [BootScene, HubScene, StoryEngineScene]
+  scene: [BootScene, HubScene, StoryEngineScene, ArtStudioScene, MelodyMakerScene]
 };
 
 export const game = new Phaser.Game(config);

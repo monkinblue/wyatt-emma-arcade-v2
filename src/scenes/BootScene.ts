@@ -23,7 +23,7 @@ export class BootScene extends Phaser.Scene {
    * on Frame 0 when entering `StoryEngineScene`!
    */
   public preload(): void {
-    // 0a. Hub Heirloom Bookshelf, 3 Mode Objects & 3 Individual Book Sprites
+    // 0a. Hub Heirloom Bookshelf, 3 Mode Objects, 3 Individual Book Sprites & 3 Create Shelf Objects
     this.load.image('bookshelf-bg', '/assets/hub/bookshelf-bg.jpg?v=hub2');
     this.load.image('mode-read', '/assets/hub/sprites/mode-read.png?v=hub2');
     this.load.image('mode-arcade', '/assets/hub/sprites/mode-arcade.png?v=hub2');
@@ -32,6 +32,72 @@ export class BootScene extends Phaser.Scene {
     this.load.image('book-grandpa-bapci', '/assets/hub/sprites/book-grandpa-bapci.png?v=hub2');
     this.load.image('book-louisiana', '/assets/hub/sprites/book-louisiana.png?v=hub2');
     this.load.image('shelf-sparky', '/assets/hub/sprites/shelf-sparky.png?v=hub2');
+    this.load.image('create-art-studio', '/assets/hub/sprites/create-art-studio.png?v=create1');
+    this.load.image('create-tinker-box', '/assets/hub/sprites/create-tinker-box.png?v=create1');
+    this.load.image('create-music-box', '/assets/hub/sprites/create-music-box.png?v=create1');
+
+    // 0a-2. Heirloom Art & Sticker Studio Frame + 8 Illustrated Tool Icons + 12 Coloring Book Templates (936x560)
+    this.load.image('studio-frame-bg', '/assets/games/art-studio/studio-frame-bg.jpg?v=studio2');
+    this.load.image('tool-crayon', '/assets/games/art-studio/sprites/tool-crayon.png?v=studio2');
+    this.load.image('tool-glitter-brush', '/assets/games/art-studio/sprites/tool-glitter-brush.png?v=studio2');
+    this.load.image('tool-roller', '/assets/games/art-studio/sprites/tool-roller.png?v=studio2');
+    this.load.image('tool-bucket', '/assets/games/art-studio/sprites/tool-bucket.png?v=studio2');
+    this.load.image('tool-undo', '/assets/games/art-studio/sprites/tool-undo.png?v=studio2');
+    this.load.image('tool-sponge', '/assets/games/art-studio/sprites/tool-sponge.png?v=studio2');
+    this.load.image('tool-bookshelf', '/assets/games/art-studio/sprites/tool-bookshelf.png?v=studio2');
+    this.load.image('tool-sticker-box', '/assets/games/art-studio/sprites/tool-sticker-box.png?v=studio2');
+    this.load.image('ui-paint-well-rim', '/assets/games/art-studio/sprites/ui-paint-well-rim.png?v=studio3');
+    this.load.image('ui-paint-well-fill', '/assets/games/art-studio/sprites/ui-paint-well-fill.png?v=studio3');
+    this.load.image('ui-brass-frame', '/assets/games/art-studio/sprites/ui-brass-frame.png?v=studio3');
+    this.load.image('ui-page-left', '/assets/games/art-studio/sprites/ui-page-left.png?v=studio3');
+    this.load.image('ui-page-right', '/assets/games/art-studio/sprites/ui-page-right.png?v=studio3');
+
+    this.load.image('tpl-01-blank', '/assets/games/art-studio/templates/tpl-01-blank.png?v=studio2');
+    this.load.image('tpl-02-sparky-doggie', '/assets/games/art-studio/templates/tpl-02-sparky-doggie.png?v=studio2');
+    this.load.image('tpl-03-roadster', '/assets/games/art-studio/templates/tpl-03-roadster.png?v=studio2');
+    this.load.image('tpl-04-tugboat', '/assets/games/art-studio/templates/tpl-04-tugboat.png?v=studio2');
+    this.load.image('tpl-05-windmill', '/assets/games/art-studio/templates/tpl-05-windmill.png?v=studio2');
+    this.load.image('tpl-06-airport', '/assets/games/art-studio/templates/tpl-06-airport.png?v=studio2');
+    this.load.image('tpl-07-nanas-house', '/assets/games/art-studio/templates/tpl-07-nanas-house.png?v=studio2');
+    this.load.image('tpl-08-garage', '/assets/games/art-studio/templates/tpl-08-garage.png?v=studio2');
+    this.load.image('tpl-09-beach', '/assets/games/art-studio/templates/tpl-09-beach.png?v=studio2');
+    this.load.image('tpl-10-cabin', '/assets/games/art-studio/templates/tpl-10-cabin.png?v=studio2');
+    this.load.image('tpl-11-critters', '/assets/games/art-studio/templates/tpl-11-critters.png?v=studio2');
+    this.load.image('tpl-12-bedtime', '/assets/games/art-studio/templates/tpl-12-bedtime.png?v=studio2');
+
+    // 0a-3. Heirloom Music Box & Puppet Theater (`MelodyMakerScene.ts`) Frame + 36 Custom Sprites
+    this.load.image('melody-frame-bg', '/assets/games/melody-maker/melody-frame-bg.jpg?v=melody2');
+    for (let i = 0; i < 8; i++) {
+      this.load.image(`key-${i}`, `/assets/games/melody-maker/sprites/key-${i}.png?v=melody2`);
+    }
+    this.load.image('prop-mallet-left', '/assets/games/melody-maker/sprites/prop-mallet-left.png?v=melody2');
+    this.load.image('prop-mallet-right', '/assets/games/melody-maker/sprites/prop-mallet-right.png?v=melody2');
+    this.load.image('prop-firefly', '/assets/games/melody-maker/sprites/prop-firefly.png?v=melody2');
+    this.load.image('prop-star-burst', '/assets/games/melody-maker/sprites/prop-star-burst.png?v=melody2');
+
+    for (let f = 0; f < 3; f++) {
+      this.load.image(`band-sparky-${f}`, `/assets/games/melody-maker/sprites/band-sparky-${f}.png?v=melody1`);
+      this.load.image(`band-doggie-${f}`, `/assets/games/melody-maker/sprites/band-doggie-${f}.png?v=melody1`);
+      this.load.image(`band-choir-${f}`, `/assets/games/melody-maker/sprites/band-choir-${f}.png?v=melody1`);
+    }
+
+    this.load.image('voice-glockenspiel', '/assets/games/melody-maker/sprites/voice-glockenspiel.png?v=melody1');
+    this.load.image('voice-marimba', '/assets/games/melody-maker/sprites/voice-marimba.png?v=melody1');
+    this.load.image('voice-piano', '/assets/games/melody-maker/sprites/voice-piano.png?v=melody1');
+    this.load.image('voice-doggie', '/assets/games/melody-maker/sprites/voice-doggie.png?v=melody1');
+    this.load.image('voice-sparky', '/assets/games/melody-maker/sprites/voice-sparky.png?v=melody1');
+
+    this.load.image('song-twinkle', '/assets/games/melody-maker/sprites/song-twinkle.png?v=melody1');
+    this.load.image('song-mary', '/assets/games/melody-maker/sprites/song-mary.png?v=melody1');
+    this.load.image('song-macdonald', '/assets/games/melody-maker/sprites/song-macdonald.png?v=melody1');
+    this.load.image('song-rowboat', '/assets/games/melody-maker/sprites/song-rowboat.png?v=melody1');
+    this.load.image('song-roadster', '/assets/games/melody-maker/sprites/song-roadster.png?v=melody1');
+
+    this.load.image('mode-autoplay', '/assets/games/melody-maker/sprites/mode-autoplay.png?v=melody1');
+    this.load.image('mode-firefly', '/assets/games/melody-maker/sprites/mode-firefly.png?v=melody1');
+    this.load.image('mode-maestro', '/assets/games/melody-maker/sprites/mode-maestro.png?v=melody1');
+    this.load.image('rhythm-campfire', '/assets/games/melody-maker/sprites/rhythm-campfire.png?v=melody1');
+    this.load.image('rhythm-parade', '/assets/games/melody-maker/sprites/rhythm-parade.png?v=melody1');
 
     // 0b. Heirloom Leather & Gold-Leaf Cover Page
     this.load.image('story-bg-just-nana-and-us-cover', '/assets/stories/nana/cover-bg.jpg');
@@ -502,7 +568,61 @@ export class BootScene extends Phaser.Scene {
       'book-nana',
       'book-grandpa-bapci',
       'book-louisiana',
-      'shelf-sparky'
+      'shelf-sparky',
+      'create-art-studio',
+      'create-tinker-box',
+      'create-music-box',
+      'studio-frame-bg',
+      'tool-crayon',
+      'tool-glitter-brush',
+      'tool-roller',
+      'tool-bucket',
+      'tool-undo',
+      'tool-sponge',
+      'tool-bookshelf',
+      'tool-sticker-box',
+      'ui-paint-well-rim',
+      'ui-paint-well-fill',
+      'ui-brass-frame',
+      'ui-page-left',
+      'ui-page-right',
+      'melody-frame-bg',
+      'key-0',
+      'key-1',
+      'key-2',
+      'key-3',
+      'key-4',
+      'key-5',
+      'key-6',
+      'key-7',
+      'prop-mallet-left',
+      'prop-mallet-right',
+      'prop-firefly',
+      'prop-star-burst',
+      'band-sparky-0',
+      'band-sparky-1',
+      'band-sparky-2',
+      'band-doggie-0',
+      'band-doggie-1',
+      'band-doggie-2',
+      'band-choir-0',
+      'band-choir-1',
+      'band-choir-2',
+      'voice-glockenspiel',
+      'voice-marimba',
+      'voice-piano',
+      'voice-doggie',
+      'voice-sparky',
+      'song-twinkle',
+      'song-mary',
+      'song-macdonald',
+      'song-rowboat',
+      'song-roadster',
+      'mode-autoplay',
+      'mode-firefly',
+      'mode-maestro',
+      'rhythm-campfire',
+      'rhythm-parade'
     ];
 
     texKeys.forEach((key) => {

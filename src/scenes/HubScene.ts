@@ -678,9 +678,274 @@ export class HubScene extends Phaser.Scene {
     const activeTab = ArcadeState.getActiveTab();
     if (activeTab === 'read') {
       this.renderReadBooksOnShelf();
+    } else if (activeTab === 'create') {
+      this.renderCreateObjectsOnShelf();
     } else {
       this.renderShelfActivityCards(activeTab);
     }
+  }
+
+  /**
+   * STEP 2: Places the 3 Create Objects (`create-art-studio`, `create-tinker-box`, `create-music-box`)
+   * directly on the lower oak shelf plank (`y: 636`, `origin: (0.5, 1.0)`) between Sparky and Doggie
+   * with ornate brass nameplates on the front wooden shelf lip (`y: 668`).
+   */
+  private renderCreateObjectsOnShelf(): void {
+    const shelfY = 636;
+    const plaqueY = 668;
+    const baseItemScale = 0.6;
+
+    const createSpecs: Array<{
+      id: string;
+      texKey: string;
+      x: number;
+      title: string;
+      subtitle: string;
+      unlocked: boolean;
+      targetScene?: string;
+    }> = [
+      {
+        id: 'create-art-studio',
+        texKey: 'create-art-studio',
+        x: 420,
+        title: 'Heirloom Art Studio',
+        subtitle: 'Paint, Color & Stickers',
+        unlocked: true,
+        targetScene: 'ArtStudioScene'
+      },
+      {
+        id: 'create-tinker-box',
+        texKey: 'create-tinker-box',
+        x: 640,
+        title: 'Tinker Workshop',
+        subtitle: 'Coming Soon',
+        unlocked: false
+      },
+      {
+        id: 'create-music-box',
+        texKey: 'create-music-box',
+        x: 860,
+        title: 'Heirloom Melody Maker',
+        subtitle: 'Play, Listen & Jam',
+        unlocked: true,
+        targetScene: 'MelodyMakerScene'
+      }
+    ];
+
+    createSpecs.forEach((spec) => {
+      // Soft dark-wood drop shadow ellipse underneath the base of each Create object
+      const shadow = this.add.graphics();
+      shadow.fillStyle(0x0c0502, spec.unlocked ? 0.54 : 0.38);
+      shadow.fillEllipse(spec.x, shelfY - 4, 188, 24);
+      shadow.fillStyle(0x050201, spec.unlocked ? 0.36 : 0.24);
+      shadow.fillEllipse(spec.x, shelfY - 2, 140, 14);
+      this.lowerShelfContentContainer.add(shadow);
+
+      // Standing Create Object Sprite (`origin: (0.5, 1.0)` at `y: 636`)
+      if (this.textures.exists(spec.texKey)) {
+        this.textures.get(spec.texKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+      const itemSprite = this.add
+        .image(spec.x, shelfY, spec.texKey)
+        .setOrigin(0.5, 1.0)
+        .setScale(baseItemScale);
+
+      if (!spec.unlocked) {
+        itemSprite.setTint(0x6e6a75);
+        itemSprite.setAlpha(0.68);
+      }
+      this.lowerShelfContentContainer.add(itemSprite);
+
+      // Gentle warm golden idle shimmer around the unlocked Art Studio easel
+      if (spec.unlocked) {
+        const shimmerAnchors = [
+          { dx: -26, dy: -210 },
+          { dx: 30, dy: -190 },
+          { dx: -10, dy: -145 },
+          { dx: 36, dy: -110 },
+          { dx: -32, dy: -85 }
+        ];
+        shimmerAnchors.forEach((pt, sIdx) => {
+          const glint = this.add
+            .image(spec.x + pt.dx, shelfY + pt.dy, 'particle-star')
+            .setTint(sIdx % 2 === 0 ? 0xfef08a : 0xfbbf24)
+            .setBlendMode(Phaser.BlendModes.ADD)
+            .setScale(0.18)
+            .setAlpha(0.15);
+          this.lowerShelfContentContainer.add(glint);
+
+          this.tweens.add({
+            targets: glint,
+            alpha: { from: 0.1, to: 0.78 },
+            scaleX: { from: 0.14, to: 0.4 },
+            scaleY: { from: 0.14, to: 0.4 },
+            angle: { from: 0, to: 90 },
+            duration: 1350 + sIdx * 180,
+            delay: sIdx * 260,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+          });
+        });
+      }
+
+      // Ornate Brass/Parchment Nameplate on the front wooden shelf lip (`y: 668`)
+      const plateW = 204;
+      const plateH = 40;
+      const nameplate = this.add.container(spec.x, plaqueY);
+      const plateG = this.add.graphics();
+
+      plateG.fillStyle(0x090401, 0.58);
+      plateG.fillRoundedRect(-plateW / 2 + 2, -plateH / 2 + 2, plateW, plateH, 7);
+
+      if (spec.unlocked) {
+        plateG.fillStyle(0xfdf8ec, 0.97);
+        plateG.fillRoundedRect(-plateW / 2, -plateH / 2, plateW, plateH, 7);
+        plateG.lineStyle(2.5, 0xd97706, 1);
+        plateG.strokeRoundedRect(-plateW / 2, -plateH / 2, plateW, plateH, 7);
+        plateG.lineStyle(1, 0xfbbf24, 0.85);
+        plateG.strokeRoundedRect(-plateW / 2 + 3, -plateH / 2 + 3, plateW - 6, plateH - 6, 5);
+      } else {
+        plateG.fillStyle(0x27232a, 0.92);
+        plateG.fillRoundedRect(-plateW / 2, -plateH / 2, plateW, plateH, 7);
+        plateG.lineStyle(1.8, 0x78716c, 0.85);
+        plateG.strokeRoundedRect(-plateW / 2, -plateH / 2, plateW, plateH, 7);
+      }
+
+      const rivetColor = spec.unlocked ? 0xb45309 : 0x57534e;
+      plateG.fillStyle(rivetColor, 0.9);
+      plateG.fillCircle(-plateW / 2 + 6, -plateH / 2 + 6, 1.8);
+      plateG.fillCircle(plateW / 2 - 6, -plateH / 2 + 6, 1.8);
+      plateG.fillCircle(-plateW / 2 + 6, plateH / 2 - 6, 1.8);
+      plateG.fillCircle(plateW / 2 - 6, plateH / 2 - 6, 1.8);
+
+      const titleTxt = this.add
+        .text(0, -7, spec.title, {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '12.5px',
+          fontStyle: 'bold',
+          color: spec.unlocked ? '#451a03' : '#cbd5e1'
+        })
+        .setOrigin(0.5);
+
+      const subTxt = this.add
+        .text(0, 9, spec.unlocked ? `★ ${spec.subtitle}` : `🔒 ${spec.subtitle}`, {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '11px',
+          fontStyle: 'bold',
+          color: spec.unlocked ? '#b45309' : '#94a3b8'
+        })
+        .setOrigin(0.5);
+
+      nameplate.add([plateG, titleTxt, subTxt]);
+      this.lowerShelfContentContainer.add(nameplate);
+
+      const hitZone = this.add
+        .zone(spec.x, shelfY - 125, 204, 355)
+        .setOrigin(0.5, 0.5)
+        .setInteractive({ useHandCursor: true });
+      this.lowerShelfContentContainer.add(hitZone);
+
+      if (spec.unlocked) {
+        hitZone.on('pointerover', () => {
+          if (this.isLaunchingBook) return;
+          this.tweens.killTweensOf([itemSprite, nameplate]);
+          this.tweens.add({
+            targets: itemSprite,
+            y: shelfY - 8,
+            scaleX: baseItemScale * 1.04,
+            scaleY: baseItemScale * 1.04,
+            duration: 180,
+            ease: 'Quad.easeOut'
+          });
+          this.tweens.add({
+            targets: nameplate,
+            scaleX: 1.04,
+            scaleY: 1.04,
+            duration: 180,
+            ease: 'Quad.easeOut'
+          });
+        });
+
+        hitZone.on('pointerout', () => {
+          if (this.isLaunchingBook) return;
+          this.tweens.killTweensOf([itemSprite, nameplate]);
+          this.tweens.add({
+            targets: itemSprite,
+            y: shelfY,
+            scaleX: baseItemScale,
+            scaleY: baseItemScale,
+            angle: 0,
+            duration: 180,
+            ease: 'Quad.easeOut'
+          });
+          this.tweens.add({
+            targets: nameplate,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 180,
+            ease: 'Quad.easeOut'
+          });
+        });
+
+        hitZone.on('pointerdown', () => {
+          if (this.isLaunchingBook) return;
+          this.isLaunchingBook = true;
+
+          if (!AudioBus.getMuted()) {
+            if (this.cache.audio.exists('sfx-book-select')) {
+              this.sound.play('sfx-book-select', { volume: 0.9 });
+            } else {
+              AudioBus.playLayerSfx('/assets/hub/audio/sfx-book-select.mp3', 0.9);
+            }
+          }
+
+          Juice.burstStars(this, spec.x, shelfY - 155, 24, [0xfef08a, 0xfbbf24, 0xf59e0b, 0xffffff]);
+
+          this.tweens.killTweensOf([itemSprite, nameplate]);
+          this.tweens.add({
+            targets: itemSprite,
+            y: shelfY - 28,
+            scaleX: baseItemScale * 1.15,
+            scaleY: baseItemScale * 1.15,
+            angle: -3.5,
+            duration: 550,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+              this.scene.start(spec.targetScene ?? 'ArtStudioScene');
+            }
+          });
+        });
+      } else {
+        let isWiggling = false;
+        hitZone.on('pointerdown', () => {
+          if (this.isLaunchingBook || isWiggling) return;
+          isWiggling = true;
+
+          if (!AudioBus.getMuted()) {
+            if (this.cache.audio.exists('sfx-book-locked')) {
+              this.sound.play('sfx-book-locked', { volume: 0.85 });
+            } else {
+              AudioBus.playLayerSfx('/assets/hub/audio/sfx-book-locked.mp3', 0.85);
+            }
+          }
+
+          this.tweens.add({
+            targets: [itemSprite, nameplate],
+            x: { from: spec.x - 4, to: spec.x + 4 },
+            duration: 60,
+            yoyo: true,
+            repeat: 1,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+              itemSprite.x = spec.x;
+              nameplate.x = spec.x;
+              isWiggling = false;
+            }
+          });
+        });
+      }
+    });
   }
 
   private renderReadBooksOnShelf(): void {
