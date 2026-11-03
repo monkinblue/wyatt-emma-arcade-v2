@@ -31,6 +31,9 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    port: 5174
+    port: 5174,
+    watch: {
+      ignored: ['**/public/assets/**/refs/**', '**/public/assets/**/raw/**']
+    }
   }
 });

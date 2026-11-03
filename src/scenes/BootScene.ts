@@ -29,12 +29,17 @@ export class BootScene extends Phaser.Scene {
     this.load.image('mode-arcade', '/assets/hub/sprites/mode-arcade.png?v=hub2');
     this.load.image('mode-create', '/assets/hub/sprites/mode-create.png?v=hub2');
     this.load.image('book-nana', '/assets/hub/sprites/book-nana.png?v=hub2');
+    this.load.image('book-cover-colorado', '/assets/stories/colorado/pages/book-cover-colorado.png?v=co1');
     this.load.image('book-grandpa-bapci', '/assets/hub/sprites/book-grandpa-bapci.png?v=hub2');
     this.load.image('book-louisiana', '/assets/hub/sprites/book-louisiana.png?v=hub2');
     this.load.image('shelf-sparky', '/assets/hub/sprites/shelf-sparky.png?v=hub2');
     this.load.image('create-art-studio', '/assets/hub/sprites/create-art-studio.png?v=create1');
     this.load.image('create-tinker-box', '/assets/hub/sprites/create-tinker-box.png?v=create1');
     this.load.image('create-music-box', '/assets/hub/sprites/create-music-box.png?v=create1');
+    this.load.image('arcade-toy-balloon', '/assets/hub/arcade/arcade-toy-balloon.png?v=arcade1');
+    this.load.image('arcade-toy-match', '/assets/hub/arcade/arcade-toy-match.png?v=arcade2');
+    this.load.image('arcade-toy-bounce', '/assets/hub/arcade/arcade-toy-bounce.png?v=arcade1');
+    this.load.image('arcade-toy-kart', '/assets/hub/arcade/arcade-toy-kart.png?v=arcade1');
 
     // 0a-2. Heirloom Art & Sticker Studio Frame + 8 Illustrated Tool Icons + 12 Coloring Book Templates (936x560)
     this.load.image('studio-frame-bg', '/assets/games/art-studio/studio-frame-bg.jpg?v=studio2');
@@ -98,6 +103,348 @@ export class BootScene extends Phaser.Scene {
     this.load.image('mode-maestro', '/assets/games/melody-maker/sprites/mode-maestro.png?v=melody1');
     this.load.image('rhythm-campfire', '/assets/games/melody-maker/sprites/rhythm-campfire.png?v=melody1');
     this.load.image('rhythm-parade', '/assets/games/melody-maker/sprites/rhythm-parade.png?v=melody1');
+
+    // 0a-4. Heirloom Tinker Workshop (`TinkerWorkshopScene.ts`) Frame + 31 Custom Sprites
+    this.load.image('tinker-frame-bg', '/assets/games/tinker-workshop/tinker-frame-bg.jpg?v=tinker2');
+    this.load.image('part-chute', '/assets/games/tinker-workshop/sprites/part-chute.png?v=tinker2');
+    this.load.image('part-gear', '/assets/games/tinker-workshop/sprites/part-gear.png?v=tinker2');
+    this.load.image('part-seesaw', '/assets/games/tinker-workshop/sprites/part-seesaw.png?v=tinker2');
+    this.load.image('part-flipper', '/assets/games/tinker-workshop/sprites/part-flipper.png?v=tinker2');
+    this.load.image('part-trampoline', '/assets/games/tinker-workshop/sprites/part-trampoline.png?v=tinker2');
+    this.load.image('part-bellows', '/assets/games/tinker-workshop/sprites/part-bellows.png?v=tinker2');
+    this.load.image('part-bowl', '/assets/games/tinker-workshop/sprites/part-bowl.png?v=tinker2');
+    this.load.image('part-wedge', '/assets/games/tinker-workshop/sprites/part-wedge.png?v=tinker2');
+    this.load.image('part-hammer', '/assets/games/tinker-workshop/sprites/part-hammer.png?v=tinker2');
+    this.load.image('part-funnel', '/assets/games/tinker-workshop/sprites/part-funnel.png?v=tinker2');
+    this.load.image('part-wall', '/assets/games/tinker-workshop/sprites/part-wall.png?v=tinker2');
+
+    this.load.image('prop-marble', '/assets/games/tinker-workshop/sprites/prop-marble.png?v=tinker2');
+    this.load.image('prop-acorn', '/assets/games/tinker-workshop/sprites/prop-acorn.png?v=tinker2');
+    this.load.image('prop-bumper', '/assets/games/tinker-workshop/sprites/prop-bumper.png?v=tinker2');
+    this.load.image('prop-star', '/assets/games/tinker-workshop/sprites/prop-star.png?v=tinker2');
+    this.load.image('prop-chain', '/assets/games/tinker-workshop/sprites/prop-chain.png?v=tinker2');
+    this.load.image('prop-pull-chain', '/assets/games/tinker-workshop/sprites/prop-chain.png?v=tinker2');
+
+    for (let f = 0; f < 3; f++) {
+      this.load.image(`tinker-sparky-${f}`, `/assets/games/tinker-workshop/sprites/tinker-sparky-${f}.png?v=tinker2`);
+      this.load.image(`tinker-doggie-${f}`, `/assets/games/tinker-workshop/sprites/tinker-doggie-${f}.png?v=tinker2`);
+      this.load.image(`sparky-hopper-${f + 1}`, `/assets/games/tinker-workshop/sprites/tinker-sparky-${f}.png?v=tinker2`);
+      this.load.image(`doggie-cart-${f + 1}`, `/assets/games/tinker-workshop/sprites/tinker-doggie-${f}.png?v=tinker2`);
+    }
+
+    for (let p = 1; p <= 5; p++) {
+      this.load.image(`puzzle-${p}`, `/assets/games/tinker-workshop/sprites/puzzle-${p}.png?v=tinker1`);
+    }
+
+    this.load.image('tinker-mode-guide', '/assets/games/tinker-workshop/sprites/tinker-mode-guide.png?v=tinker1');
+    this.load.image('tinker-mode-stars', '/assets/games/tinker-workshop/sprites/tinker-mode-stars.png?v=tinker1');
+    this.load.image('tinker-mode-fountain', '/assets/games/tinker-workshop/sprites/tinker-mode-fountain.png?v=tinker1');
+    this.load.image('tinker-action-drop', '/assets/games/tinker-workshop/sprites/tinker-action-drop.png?v=tinker1');
+    this.load.image('tinker-action-clear', '/assets/games/tinker-workshop/sprites/tinker-action-clear.png?v=tinker1');
+
+    // 0a-5. Balloon Letter Pop (`BalloonPopScene.ts`) Stage Background + 26 Custom Sprites
+    this.load.image('balloon-stage', '/assets/games/balloon-pop/balloon-stage.jpg?v=balloon1');
+    this.load.image('balloon-red', '/assets/games/balloon-pop/sprites/balloon-red.png?v=balloon1');
+    this.load.image('balloon-blue', '/assets/games/balloon-pop/sprites/balloon-blue.png?v=balloon1');
+    this.load.image('balloon-green', '/assets/games/balloon-pop/sprites/balloon-green.png?v=balloon1');
+    this.load.image('balloon-gold', '/assets/games/balloon-pop/sprites/balloon-gold.png?v=balloon1');
+    this.load.image('balloon-purple', '/assets/games/balloon-pop/sprites/balloon-purple.png?v=balloon1');
+    this.load.image('balloon-coral', '/assets/games/balloon-pop/sprites/balloon-coral.png?v=balloon1');
+    this.load.image('balloon-star', '/assets/games/balloon-pop/sprites/balloon-star.png?v=balloon1');
+    this.load.image('balloon-rainbow', '/assets/games/balloon-pop/sprites/balloon-rainbow.png?v=balloon1');
+    this.load.image('prop-tile', '/assets/games/balloon-pop/sprites/prop-tile.png?v=balloon1');
+    this.load.image('prop-parachute', '/assets/games/balloon-pop/sprites/prop-parachute.png?v=balloon1');
+    this.load.image('prop-crate', '/assets/games/balloon-pop/sprites/prop-crate.png?v=balloon1');
+    this.load.image('prop-pinwheel', '/assets/games/balloon-pop/sprites/prop-pinwheel.png?v=balloon1');
+    this.load.image('sparky-idle', '/assets/games/balloon-pop/sprites/sparky-idle.png?v=balloon1');
+    this.load.image('sparky-pump', '/assets/games/balloon-pop/sprites/sparky-pump.png?v=balloon1');
+    this.load.image('sparky-cheer', '/assets/games/balloon-pop/sprites/sparky-cheer.png?v=balloon1');
+    this.load.image('doggie-idle', '/assets/games/balloon-pop/sprites/doggie-idle.png?v=balloon1');
+    this.load.image('doggie-catch', '/assets/games/balloon-pop/sprites/doggie-catch.png?v=balloon1');
+    this.load.image('doggie-cheer', '/assets/games/balloon-pop/sprites/doggie-cheer.png?v=balloon1');
+    this.load.image('ui-back', '/assets/games/balloon-pop/sprites/ui-back.png?v=balloon1');
+    this.load.image('ui-mode-phonics', '/assets/games/balloon-pop/sprites/ui-mode-phonics.png?v=balloon1');
+    this.load.image('ui-mode-words', '/assets/games/balloon-pop/sprites/ui-mode-words.png?v=balloon1');
+    this.load.image('ui-mode-cargo', '/assets/games/balloon-pop/sprites/ui-mode-cargo.png?v=balloon1');
+    this.load.image('ui-theme', '/assets/games/balloon-pop/sprites/ui-theme.png?v=balloon1');
+    this.load.image('ui-speak', '/assets/games/balloon-pop/sprites/ui-speak.png?v=balloon1');
+    this.load.image('ui-wind', '/assets/games/balloon-pop/sprites/ui-wind.png?v=balloon1');
+    this.load.image('ui-album', '/assets/games/balloon-pop/sprites/ui-album.png?v=balloon1');
+
+    // 0a-6. Animal Match Safari (`MemoryMatchScene.ts`) Stage Background + 60 Custom Sprites
+    this.load.image('match-stage-bg', '/assets/games/memory-match/sprites/match-stage-bg.png?v=match1');
+    this.load.image('card-back', '/assets/games/memory-match/sprites/card-back.png?v=match1');
+    this.load.image('card-front', '/assets/games/memory-match/sprites/card-front.png?v=match1');
+    this.load.image('match-prop-key', '/assets/games/memory-match/sprites/prop-key.png?v=match1');
+    this.load.image('chest-closed', '/assets/games/memory-match/sprites/chest-closed.png?v=match1');
+    this.load.image('chest-open', '/assets/games/memory-match/sprites/chest-open.png?v=match1');
+    this.load.image('char-sparky-spyglass', '/assets/games/memory-match/sprites/char-sparky-spyglass.png?v=match1');
+    this.load.image('char-doggie-lantern', '/assets/games/memory-match/sprites/char-doggie-lantern.png?v=match1');
+    this.load.image('match-prop-firefly', '/assets/games/memory-match/sprites/prop-firefly.png?v=match1');
+    this.load.image('ui-grid', '/assets/games/memory-match/sprites/ui-grid.png?v=match1');
+    this.load.image('ui-mode', '/assets/games/memory-match/sprites/ui-mode.png?v=match1');
+    this.load.image('ui-hint', '/assets/games/memory-match/sprites/ui-hint.png?v=match1');
+    this.load.image('ui-sanctuary', '/assets/games/memory-match/sprites/ui-sanctuary.png?v=match1');
+
+    const matchCardSprites = [
+      'safari-lion', 'safari-lion-cub', 'safari-elephant', 'safari-elephant-calf',
+      'safari-bear', 'safari-bear-cub', 'safari-owl', 'safari-owlet',
+      'safari-frog', 'safari-tadpole', 'safari-fox', 'safari-fox-kit',
+      'safari-monkey', 'safari-monkey-baby', 'safari-duck', 'safari-duckling',
+      'ocean-whale', 'ocean-octopus', 'ocean-turtle', 'ocean-clownfish',
+      'ocean-crab', 'ocean-dolphin', 'ocean-seahorse', 'ocean-starfish',
+      'dino-trex', 'dino-triceratops', 'dino-stegosaurus', 'dino-brachiosaurus',
+      'dino-pterodactyl', 'dino-ankylosaurus', 'dino-baby', 'dino-egg',
+      'veh-airship', 'veh-train', 'veh-firetruck', 'veh-submarine',
+      'veh-biplane', 'veh-rocket', 'veh-tractor', 'veh-sailboat',
+      'tr-dragon', 'tr-unicorn', 'tr-crown', 'tr-crystal',
+      'tr-map', 'tr-cupcake', 'tr-strawberry', 'tr-acorn'
+    ];
+    for (const key of matchCardSprites) {
+      this.load.image(key, `/assets/games/memory-match/sprites/${key}.png?v=match1`);
+    }
+
+    // 0a-7. Book 2: "To Babci and Grandpa's House We Go! / A Colorado Adventure" (`ColoradoStoryScene.ts`)
+    this.load.image('colorado-p0-cover', '/assets/stories/colorado/pages/p0-cover.jpg?v=co3');
+    this.load.image('colorado-p1', '/assets/stories/colorado/pages/p1-clean.jpg?v=p1v1');
+    this.load.image('colorado-p1-clean', '/assets/stories/colorado/pages/p1-clean.jpg?v=p1v1');
+    this.load.image('colorado-p2', '/assets/stories/colorado/pages/p2-clean.jpg?v=p2v1');
+    this.load.image('colorado-p2-clean', '/assets/stories/colorado/pages/p2-clean.jpg?v=p2v1');
+    this.load.image('colorado-p3', '/assets/stories/colorado/pages/p3-clean.jpg?v=p3v1');
+    this.load.image('colorado-p3-clean', '/assets/stories/colorado/pages/p3-clean.jpg?v=p3v1');
+    this.load.image('colorado-p4', '/assets/stories/colorado/pages/p4-clean.jpg?v=p4v1');
+    this.load.image('colorado-p4-clean', '/assets/stories/colorado/pages/p4-clean.jpg?v=p4v1');
+    this.load.image('colorado-p5', '/assets/stories/colorado/pages/p5-clean.jpg?v=p5v1');
+    this.load.image('colorado-p5-clean', '/assets/stories/colorado/pages/p5-clean.jpg?v=p5v1');
+    this.load.image('colorado-p6', '/assets/stories/colorado/pages/p6-clean.jpg?v=p6v1');
+    this.load.image('colorado-p6-clean', '/assets/stories/colorado/pages/p6-clean.jpg?v=p6v1');
+    this.load.image('colorado-p7', '/assets/stories/colorado/pages/p7-clean.jpg?v=p7v1');
+    this.load.image('colorado-p7-clean', '/assets/stories/colorado/pages/p7-clean.jpg?v=p7v1');
+    this.load.image('colorado-p8', '/assets/stories/colorado/pages/p8.jpg?v=p8v1');
+    this.load.image('colorado-p8-clean', '/assets/stories/colorado/pages/p8.jpg?v=p8v1');
+    this.load.image('colorado-p9', '/assets/stories/colorado/pages/p8.jpg?v=p8v1');
+
+    // Book 2 — Page 1 ("The Big Road Trip to Colorado") Multi-Frame Spritesheets & Foreground Mask
+    this.load.spritesheet('p1_thule_sparky', '/assets/stories/colorado/sprites/p1/p1_thule_sparky.png?v=p1v1', {
+      frameWidth: 462,
+      frameHeight: 245
+    });
+    this.load.spritesheet('p1_doggie_suitcase', '/assets/stories/colorado/sprites/p1/p1_doggie_suitcase.png?v=p1v1', {
+      frameWidth: 239,
+      frameHeight: 269
+    });
+    this.load.spritesheet('p1_exhaust_smoke', '/assets/stories/colorado/sprites/p1/p1_exhaust_smoke.png?v=p1v1', {
+      frameWidth: 249,
+      frameHeight: 433
+    });
+    this.load.spritesheet('p1_bluebird', '/assets/stories/colorado/sprites/p1/p1_bluebird.png?v=p1v1', {
+      frameWidth: 251,
+      frameHeight: 276
+    });
+    this.load.spritesheet('p1_chipmunk', '/assets/stories/colorado/sprites/p1/p1_chipmunk.png?v=p1v1', {
+      frameWidth: 263,
+      frameHeight: 345
+    });
+    this.load.spritesheet('p1_eagle_soar', '/assets/stories/colorado/sprites/p1/p1_eagle_soar.png?v=p1v1', {
+      frameWidth: 313,
+      frameHeight: 252
+    });
+    this.load.spritesheet('p1_camping_cooler', '/assets/stories/colorado/sprites/p1/p1_camping_cooler.png?v=p1v1', {
+      frameWidth: 266,
+      frameHeight: 278
+    });
+    this.load.spritesheet('p1_autumn_leaves', '/assets/stories/colorado/sprites/p1/p1_autumn_leaves.png?v=p1v1', {
+      frameWidth: 281,
+      frameHeight: 281
+    });
+    this.load.image('p1_pine_freshener', '/assets/stories/colorado/sprites/p1/p1_pine_freshener.png?v=p1v1');
+    this.load.image('p1_heads_foreground_mask', '/assets/stories/colorado/sprites/p1/p1_heads_foreground_mask.png?v=p1v2');
+
+    // Book 2 — Page 2 ("Arriving at Babci & Grandpa's House") Multi-Frame 1x4 Spritesheets
+    this.load.spritesheet('p2_grandparents_wave', '/assets/stories/colorado/sprites/p2/p2_grandparents_wave.png?v=p2v1', {
+      frameWidth: 263,
+      frameHeight: 332
+    });
+    this.load.spritesheet('p2_wyatt_run', '/assets/stories/colorado/sprites/p2/p2_wyatt_run.png?v=p2v1', {
+      frameWidth: 229,
+      frameHeight: 318
+    });
+    this.load.spritesheet('p2_emma_run', '/assets/stories/colorado/sprites/p2/p2_emma_run.png?v=p2v1', {
+      frameWidth: 217,
+      frameHeight: 315
+    });
+    this.load.spritesheet('p2_chimney_sparky', '/assets/stories/colorado/sprites/p2/p2_chimney_sparky.png?v=p2v1', {
+      frameWidth: 190,
+      frameHeight: 415
+    });
+    this.load.spritesheet('p2_bush_doggie', '/assets/stories/colorado/sprites/p2/p2_bush_doggie.png?v=p2v1', {
+      frameWidth: 228,
+      frameHeight: 324
+    });
+    this.load.spritesheet('p2_lavender_butterflies', '/assets/stories/colorado/sprites/p2/p2_lavender_butterflies.png?v=p2v1', {
+      frameWidth: 240,
+      frameHeight: 245
+    });
+    this.load.spritesheet('p2_lawn_sprinkler', '/assets/stories/colorado/sprites/p2/p2_lawn_sprinkler.png?v=p2v1', {
+      frameWidth: 246,
+      frameHeight: 192
+    });
+    this.load.spritesheet('p2_tree_squirrel', '/assets/stories/colorado/sprites/p2/p2_tree_squirrel.png?v=p2v1', {
+      frameWidth: 250,
+      frameHeight: 337
+    });
+
+    // Book 2 — Page 3 ("Manitou Springs Penny Arcade") Multi-Frame 1x4 Spritesheets
+    this.load.spritesheet('p3_wyatt_skeeball', '/assets/stories/colorado/sprites/p3/p3_wyatt_skeeball.png?v=p3v1', {
+      frameWidth: 271,
+      frameHeight: 381
+    });
+    this.load.spritesheet('p3_emma_tickets', '/assets/stories/colorado/sprites/p3/p3_emma_tickets.png?v=p3v1', {
+      frameWidth: 265,
+      frameHeight: 414
+    });
+    this.load.spritesheet('p3_grandparents_cheer', '/assets/stories/colorado/sprites/p3/p3_grandparents_cheer.png?v=p3v1', {
+      frameWidth: 280,
+      frameHeight: 498
+    });
+    this.load.spritesheet('p3_pony_doggie', '/assets/stories/colorado/sprites/p3/p3_pony_doggie.png?v=p3v1', {
+      frameWidth: 252,
+      frameHeight: 409
+    });
+    this.load.spritesheet('p3_claw_sparky', '/assets/stories/colorado/sprites/p3/p3_claw_sparky.png?v=p3v1', {
+      frameWidth: 219,
+      frameHeight: 517
+    });
+    this.load.spritesheet('p3_fortuneteller', '/assets/stories/colorado/sprites/p3/p3_fortuneteller.png?v=p3v1', {
+      frameWidth: 259,
+      frameHeight: 291
+    });
+    this.load.spritesheet('p3_bigfoot_wheel', '/assets/stories/colorado/sprites/p3/p3_bigfoot_wheel.png?v=p3v1', {
+      frameWidth: 267,
+      frameHeight: 262
+    });
+    this.load.audio('p3_ambient_arcade_loop', '/assets/audio/colorado/sfx/p3_ambient_arcade_loop.mp3');
+    this.load.audio('p3_ambient_crowd_chatter', '/assets/audio/colorado/sfx/p3_ambient_crowd_chatter.mp3');
+
+    // Book 2 — Page 4 ("Eleven Mile Canyon & South Platte River") Multi-Frame 1x4 Spritesheets & Canyon Mask
+    this.load.spritesheet('p4_bighorn', '/assets/stories/colorado/sprites/p4/p4_bighorn.png?v=p4v1', {
+      frameWidth: 221,
+      frameHeight: 367
+    });
+    this.load.spritesheet('p4_cessna', '/assets/stories/colorado/sprites/p4/p4_cessna.png?v=p4v1', {
+      frameWidth: 240,
+      frameHeight: 101
+    });
+    this.load.spritesheet('p4_doggie_fisherman', '/assets/stories/colorado/sprites/p4/p4_doggie_fisherman.png?v=p4v1', {
+      frameWidth: 245,
+      frameHeight: 235
+    });
+    this.load.spritesheet('p4_dragonfly', '/assets/stories/colorado/sprites/p4/p4_dragonfly.png?v=p4v1', {
+      frameWidth: 221,
+      frameHeight: 237
+    });
+    this.load.spritesheet('p4_sparky_tube', '/assets/stories/colorado/sprites/p4/p4_sparky_tube.png?v=p4v1', {
+      frameWidth: 268,
+      frameHeight: 210
+    });
+    this.load.image('p4_canyon_foreground_mask', '/assets/stories/colorado/sprites/p4/p4_canyon_foreground_mask.png?v=p4v1');
+    this.load.audio('p4_ambient_stream', '/assets/audio/colorado/sfx/p4_ambient_stream.mp3');
+
+    // Book 2 — Page 5 ("Royal Gorge Bridge & Aerial Gondola") Multi-Frame 1x4 Spritesheets & Cliff Mask
+    this.load.spritesheet('p5_gondola_sparky', '/assets/stories/colorado/sprites/p5/p5_gondola_sparky.png?v=p5v1', {
+      frameWidth: 221,
+      frameHeight: 377
+    });
+    this.load.spritesheet('p5_tower_flags', '/assets/stories/colorado/sprites/p5/p5_tower_flags.png?v=p5v1', {
+      frameWidth: 214,
+      frameHeight: 136
+    });
+    this.load.spritesheet('p5_railing_doggie', '/assets/stories/colorado/sprites/p5/p5_railing_doggie.png?v=p5v1', {
+      frameWidth: 175,
+      frameHeight: 247
+    });
+    this.load.spritesheet('p5_canyon_eagle', '/assets/stories/colorado/sprites/p5/p5_canyon_eagle.png?v=p5v1', {
+      frameWidth: 300,
+      frameHeight: 204
+    });
+    this.load.spritesheet('p5_tiny_raft', '/assets/stories/colorado/sprites/p5/p5_tiny_raft.png?v=p5v1', {
+      frameWidth: 156,
+      frameHeight: 154
+    });
+    this.load.image('p5_bridge_cables_mask', '/assets/stories/colorado/sprites/p5/p5_bridge_cables_mask.png?v=p5v2');
+    this.load.audio('p5_ambient_gorge_wind', '/assets/audio/colorado/sfx/p5_ambient_gorge_wind.mp3');
+    this.load.audio('p5_gusting_canyon_wind', '/assets/audio/colorado/sfx/p5_gusting_canyon_wind.mp3');
+    this.load.audio('p5_gondola_cable_loop', '/assets/audio/colorado/sfx/p5_gondola_cable_loop.mp3');
+
+    // Book 2 — Page 6 ("Royal Gorge Train Vista Car") Multi-Frame 1x4 Spritesheets & Handrail Mask
+    this.load.spritesheet('p6_wyatt_horn', '/assets/stories/colorado/sprites/p6/p6_wyatt_horn.png?v=p6v1', {
+      frameWidth: 268,
+      frameHeight: 549
+    });
+    this.load.spritesheet('p6_grandpa_cheer', '/assets/stories/colorado/sprites/p6/p6_grandpa_cheer.png?v=p6v1', {
+      frameWidth: 150,
+      frameHeight: 247
+    });
+    this.load.spritesheet('p6_babci_emma', '/assets/stories/colorado/sprites/p6/p6_babci_emma.png?v=p6v1', {
+      frameWidth: 348,
+      frameHeight: 448
+    });
+    this.load.spritesheet('p6_railing_doggie', '/assets/stories/colorado/sprites/p6/p6_railing_doggie.png?v=p6v1', {
+      frameWidth: 334,
+      frameHeight: 238
+    });
+    this.load.spritesheet('p6_river_otter', '/assets/stories/colorado/sprites/p6/p6_river_otter.png?v=p6v1', {
+      frameWidth: 238,
+      frameHeight: 199
+    });
+    this.load.image('p6_handrail_foreground_mask', '/assets/stories/colorado/sprites/p6/p6_handrail_foreground_mask.png?v=p6v1');
+    this.load.audio('sfx_train_chug', '/assets/audio/colorado/sfx/sfx_train_chug.mp3');
+    this.load.audio('sfx_train_horn', '/assets/audio/colorado/sfx/sfx_train_horn.mp3');
+    this.load.audio('p6_ambient_river_rapids', '/assets/audio/colorado/sfx/p6_ambient_river_rapids.mp3');
+
+    // Book 2 — Page 7 ("Garden of the Gods") Multi-Frame 1x4 Spritesheets & Page 7/8 Ambient Audio
+    this.load.spritesheet('p7_grandparents_emma', '/assets/stories/colorado/sprites/p7/p7_grandparents_emma.png?v=p7v1', {
+      frameWidth: 280,
+      frameHeight: 350
+    });
+    this.load.spritesheet('p7_wyatt_point', '/assets/stories/colorado/sprites/p7/p7_wyatt_point.png?v=p7v1', {
+      frameWidth: 242,
+      frameHeight: 443
+    });
+    this.load.spritesheet('p7_boulder_sparky', '/assets/stories/colorado/sprites/p7/p7_boulder_sparky.png?v=p7v1', {
+      frameWidth: 258,
+      frameHeight: 283
+    });
+    this.load.spritesheet('p7_trail_doggie', '/assets/stories/colorado/sprites/p7/p7_trail_doggie.png?v=p7v1', {
+      frameWidth: 236,
+      frameHeight: 328
+    });
+    this.load.spritesheet('p7_bluebirds', '/assets/stories/colorado/sprites/p7/p7_bluebirds.png?v=p7v1', {
+      frameWidth: 250,
+      frameHeight: 165
+    });
+    this.load.audio('p7_ambient_nature_breeze', '/assets/audio/colorado/sfx/p7_ambient_nature_breeze.mp3');
+    this.load.audio('p7_ambient_meadow_birds', '/assets/audio/colorado/sfx/p7_ambient_meadow_birds.mp3');
+    this.load.audio('p8_pierogi_sizzle_loop', '/assets/audio/colorado/sfx/p8_pierogi_sizzle_loop.mp3');
+    this.load.audio('p8_cozy_kitchen_guitar', '/assets/audio/colorado/sfx/p8_cozy_kitchen_guitar.mp3');
+
+    const coloradoSprites = [
+      'spr-thule-box', 'spr-subaru-wheel', 'spr-hawk', 'spr-wyatt-emma-wave',
+      'spr-grandpa-babci-wave', 'spr-front-door', 'spr-butterflies', 'spr-doggie-bush',
+      'spr-claw-plush', 'spr-skeeball', 'spr-arcade-pony', 'spr-neon-star',
+      'spr-trout', 'spr-water-splash', 'spr-emma-splash', 'spr-chipmunk',
+      'spr-gondola', 'spr-eagle', 'spr-co-flag', 'spr-train-horn',
+      'spr-steam-puff', 'spr-conductor-hat', 'spr-kayak', 'spr-climber',
+      'spr-camels-glow', 'spr-bunny', 'spr-sparky-rock', 'spr-wagon-ride',
+      'spr-golf-ball', 'spr-golf-flag', 'spr-pierogi-pan', 'spr-flour-puff',
+      'spr-pierogi-plate', 'spr-babci-hug', 'spr-doggie-chef', 'spr-sparky-chef',
+      'spr-compass', 'spr-lavender-box', 'spr-ticket-burst', 'spr-creel-basket',
+      'spr-binoculars', 'spr-rail-lantern', 'spr-bluebird', 'spr-columbine-pot',
+      'spr-potato-cheese-bowl', 'spr-arrow-left', 'spr-arrow-right', 'spr-mountain-crest'
+    ];
+    for (const sKey of coloradoSprites) {
+      this.load.image(sKey, `/assets/stories/colorado/sprites/${sKey}.png?v=co2`);
+    }
 
     // 0b. Heirloom Leather & Gold-Leaf Cover Page
     this.load.image('story-bg-just-nana-and-us-cover', '/assets/stories/nana/cover-bg.jpg');
@@ -572,6 +919,9 @@ export class BootScene extends Phaser.Scene {
       'create-art-studio',
       'create-tinker-box',
       'create-music-box',
+      'arcade-toy-balloon',
+      'arcade-toy-bounce',
+      'arcade-toy-kart',
       'studio-frame-bg',
       'tool-crayon',
       'tool-glitter-brush',
@@ -622,7 +972,112 @@ export class BootScene extends Phaser.Scene {
       'mode-firefly',
       'mode-maestro',
       'rhythm-campfire',
-      'rhythm-parade'
+      'rhythm-parade',
+      'tinker-frame-bg',
+      'part-chute',
+      'part-gear',
+      'part-seesaw',
+      'part-flipper',
+      'part-trampoline',
+      'part-bellows',
+      'part-bowl',
+      'part-wedge',
+      'part-hammer',
+      'part-funnel',
+      'part-wall',
+      'prop-marble',
+      'prop-acorn',
+      'prop-bumper',
+      'prop-star',
+      'prop-chain',
+      'prop-pull-chain',
+      'tinker-sparky-0',
+      'tinker-sparky-1',
+      'tinker-sparky-2',
+      'tinker-doggie-0',
+      'tinker-doggie-1',
+      'tinker-doggie-2',
+      'sparky-hopper-1',
+      'sparky-hopper-2',
+      'sparky-hopper-3',
+      'doggie-cart-1',
+      'doggie-cart-2',
+      'doggie-cart-3',
+      'puzzle-1',
+      'puzzle-2',
+      'puzzle-3',
+      'puzzle-4',
+      'puzzle-5',
+      'tinker-mode-guide',
+      'tinker-mode-stars',
+      'tinker-mode-fountain',
+      'tinker-action-drop',
+      'tinker-action-clear',
+      'colorado-p0-cover',
+      'colorado-p1',
+      'p1_thule_sparky',
+      'p1_doggie_suitcase',
+      'p1_exhaust_smoke',
+      'p1_bluebird',
+      'p1_chipmunk',
+      'p1_eagle_soar',
+      'p1_camping_cooler',
+      'p1_autumn_leaves',
+      'p1_pine_freshener',
+      'p1_heads_foreground_mask',
+      'colorado-p2',
+      'colorado-p2-clean',
+      'p2_grandparents_wave',
+      'p2_wyatt_run',
+      'p2_emma_run',
+      'p2_chimney_sparky',
+      'p2_bush_doggie',
+      'p2_lavender_butterflies',
+      'p2_lawn_sprinkler',
+      'p2_tree_squirrel',
+      'colorado-p3',
+      'colorado-p3-clean',
+      'p3_wyatt_skeeball',
+      'p3_emma_tickets',
+      'p3_grandparents_cheer',
+      'p3_pony_doggie',
+      'p3_claw_sparky',
+      'p3_fortuneteller',
+      'p3_bigfoot_wheel',
+      'colorado-p4',
+      'colorado-p4-clean',
+      'p4_bighorn',
+      'p4_cessna',
+      'p4_doggie_fisherman',
+      'p4_dragonfly',
+      'p4_sparky_tube',
+      'p4_canyon_foreground_mask',
+      'colorado-p5',
+      'colorado-p5-clean',
+      'p5_gondola_sparky',
+      'p5_tower_flags',
+      'p5_railing_doggie',
+      'p5_canyon_eagle',
+      'p5_tiny_raft',
+      'p5_bridge_cables_mask',
+      'colorado-p6',
+      'colorado-p6-clean',
+      'p6_wyatt_horn',
+      'p6_grandpa_cheer',
+      'p6_babci_emma',
+      'p6_railing_doggie',
+      'p6_river_otter',
+      'p6_handrail_foreground_mask',
+      'colorado-p7',
+      'colorado-p7-clean',
+      'p7_grandparents_emma',
+      'p7_wyatt_point',
+      'p7_boulder_sparky',
+      'p7_trail_doggie',
+      'p7_bluebirds',
+      'colorado-p8',
+      'colorado-p8-clean',
+      'colorado-p9'
     ];
 
     texKeys.forEach((key) => {

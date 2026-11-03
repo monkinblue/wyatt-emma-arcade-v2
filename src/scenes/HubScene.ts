@@ -28,40 +28,84 @@ interface ShelfActivityCardConfig {
   id: string;
   title: string;
   subtitle: string;
+  texKey?: string;
+  baseScale?: number;
   emoji: string;
   badgeText: string;
   accentColor: number;
   previewSfx: SfxName;
+  unlocked?: boolean;
+  targetScene?: string;
+  comingSoon?: boolean;
 }
 
 const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]> = {
   play: [
+    // Page 1: 3 Painted Heirloom Arcade Toys standing directly on the oak shelf
+    // (Balloon Letter Pop + Animal Match Safari both playable right on Page 1!)
     {
       id: 'bubble-pop',
-      title: "Sparky's Bubble Pop!",
-      subtitle: 'Pop floating rainbow dragon bubbles!',
-      emoji: '🫧',
-      badgeText: 'ARCADE MINI-GAME',
+      title: 'BALLOON LETTER POP',
+      subtitle: 'Sky-Ship Letters & Words',
+      texKey: 'arcade-toy-balloon',
+      baseScale: 0.76,
+      emoji: '🎈',
+      badgeText: 'SKY-SHIP ARCADE',
       accentColor: 0x34d399,
-      previewSfx: 'sparky'
+      previewSfx: 'sparky',
+      unlocked: true,
+      targetScene: 'BalloonPopScene'
+    },
+    {
+      id: 'animal-match-safari',
+      title: 'ANIMAL MATCH SAFARI',
+      subtitle: 'Clockwork Memory Match',
+      texKey: 'arcade-toy-match',
+      baseScale: 0.34,
+      emoji: '🦁',
+      badgeText: 'PARLOR PUZZLE',
+      accentColor: 0xfbbf24,
+      previewSfx: 'chime',
+      unlocked: true,
+      targetScene: 'MemoryMatchScene'
     },
     {
       id: 'doggie-catch',
-      title: "Doggie's Treat Bounce",
-      subtitle: 'Boing across clouds to catch crunchy bones!',
+      title: "DOGGIE'S TREAT BOUNCE",
+      subtitle: 'Cloud Trampoline Fun',
+      texKey: 'arcade-toy-bounce',
+      baseScale: 0.74,
       emoji: '🦴',
       badgeText: 'ARCADE MINI-GAME',
       accentColor: 0xf472b6,
-      previewSfx: 'doggie'
+      previewSfx: 'doggie',
+      unlocked: false,
+      comingSoon: true
     },
+    // Page 2: 2 Upcoming Heirloom Arcade Shelf Toys & Pedestals
     {
       id: 'cloud-racer',
-      title: 'Zoomy Cloud Kart',
-      subtitle: 'Honk the horn and zoom over rainbow hills!',
+      title: 'ZOOMY CLOUD KART',
+      subtitle: 'Rainbow Hill Racer',
+      texKey: 'arcade-toy-kart',
+      baseScale: 0.64,
       emoji: '🏎️',
       badgeText: 'ARCADE MINI-GAME',
       accentColor: 0xfacc15,
-      previewSfx: 'horn'
+      previewSfx: 'horn',
+      unlocked: false,
+      comingSoon: true
+    },
+    {
+      id: 'rocket-number-blast',
+      title: 'ROCKET NUMBER BLAST',
+      subtitle: 'Coming Soon',
+      emoji: '🚀',
+      badgeText: 'COMING SOON',
+      accentColor: 0x38bdf8,
+      previewSfx: 'chime',
+      unlocked: false,
+      comingSoon: true
     }
   ],
   create: [
@@ -101,6 +145,12 @@ export class HubScene extends Phaser.Scene {
   private lowerShelfContentContainer!: Phaser.GameObjects.Container;
   private shelfSparkySprite!: Phaser.GameObjects.Image;
   private isLaunchingBook: boolean = false;
+  private pageIndexByTab: Record<HubTabId, number> = {
+    read: 0,
+    play: 0,
+    create: 0
+  };
+  private slideDirection: number = 0;
 
   constructor() {
     super({ key: 'HubScene' });
@@ -717,9 +767,10 @@ export class HubScene extends Phaser.Scene {
         id: 'create-tinker-box',
         texKey: 'create-tinker-box',
         x: 640,
-        title: 'Tinker Workshop',
-        subtitle: 'Coming Soon',
-        unlocked: false
+        title: 'Heirloom Tinker Workshop',
+        subtitle: 'Build, Gears & Marbles',
+        unlocked: true,
+        targetScene: 'TinkerWorkshopScene'
       },
       {
         id: 'create-music-box',
@@ -732,7 +783,16 @@ export class HubScene extends Phaser.Scene {
       }
     ];
 
-    createSpecs.forEach((spec) => {
+    const itemsPerPage = 3;
+    const totalPages = Math.max(1, Math.ceil(createSpecs.length / itemsPerPage));
+    const currentPage = Phaser.Math.Clamp(this.pageIndexByTab.create ?? 0, 0, totalPages - 1);
+    this.pageIndexByTab.create = currentPage;
+    const pageSpecs = createSpecs.slice(
+      currentPage * itemsPerPage,
+      currentPage * itemsPerPage + itemsPerPage
+    );
+
+    pageSpecs.forEach((spec) => {
       // Soft dark-wood drop shadow ellipse underneath the base of each Create object
       const shadow = this.add.graphics();
       shadow.fillStyle(0x0c0502, spec.unlocked ? 0.54 : 0.38);
@@ -946,6 +1006,8 @@ export class HubScene extends Phaser.Scene {
         });
       }
     });
+
+    this.renderShelfPaginationControls('create', currentPage, totalPages);
   }
 
   private renderReadBooksOnShelf(): void {
@@ -960,6 +1022,7 @@ export class HubScene extends Phaser.Scene {
       title: string;
       subtitle: string;
       unlocked: boolean;
+      targetScene?: string;
       cartridgeId?: string;
     }> = [
       {
@@ -969,15 +1032,17 @@ export class HubScene extends Phaser.Scene {
         title: "To Nana and Papa's House We Go!",
         subtitle: 'A Michigan Adventure',
         unlocked: true,
+        targetScene: 'StoryEngineScene',
         cartridgeId: 'just-nana-and-us'
       },
       {
         id: 'book-grandpa-bapci',
         texKey: 'book-grandpa-bapci',
         x: 640,
-        title: "Grandpa & Bapci's House",
-        subtitle: 'Coming Soon',
-        unlocked: false
+        title: "To Babci and Grandpa's House We Go!",
+        subtitle: 'A Colorado Adventure',
+        unlocked: true,
+        targetScene: 'ColoradoStoryScene'
       },
       {
         id: 'book-louisiana',
@@ -989,7 +1054,16 @@ export class HubScene extends Phaser.Scene {
       }
     ];
 
-    bookSpecs.forEach((spec) => {
+    const itemsPerPage = 3;
+    const totalPages = Math.max(1, Math.ceil(bookSpecs.length / itemsPerPage));
+    const currentPage = Phaser.Math.Clamp(this.pageIndexByTab.read ?? 0, 0, totalPages - 1);
+    this.pageIndexByTab.read = currentPage;
+    const pageSpecs = bookSpecs.slice(
+      currentPage * itemsPerPage,
+      currentPage * itemsPerPage + itemsPerPage
+    );
+
+    pageSpecs.forEach((spec) => {
       // Soft dark-wood drop shadow ellipse underneath the base of each book
       const shadow = this.add.graphics();
       shadow.fillStyle(0x0c0502, spec.unlocked ? 0.54 : 0.38);
@@ -1080,7 +1154,7 @@ export class HubScene extends Phaser.Scene {
       const titleTxt = this.add
         .text(0, -7, spec.title, {
           fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: spec.title.length > 26 ? '11.5px' : '12.5px',
+          fontSize: spec.title.length > 32 ? '10.8px' : spec.title.length > 26 ? '11.5px' : '12.5px',
           fontStyle: 'bold',
           color: spec.unlocked ? '#451a03' : '#cbd5e1'
         })
@@ -1171,7 +1245,11 @@ export class HubScene extends Phaser.Scene {
             duration: 650,
             ease: 'Back.easeOut',
             onComplete: () => {
-              this.scene.start('StoryEngineScene', { cartridgeId: spec.cartridgeId ?? 'just-nana-and-us' });
+              if (spec.targetScene === 'ColoradoStoryScene') {
+                this.scene.start('ColoradoStoryScene', { pageIndex: 0 });
+              } else {
+                this.scene.start('StoryEngineScene', { cartridgeId: spec.cartridgeId ?? 'just-nana-and-us' });
+              }
             }
           });
         });
@@ -1205,112 +1283,468 @@ export class HubScene extends Phaser.Scene {
         });
       }
     });
+
+    this.renderShelfPaginationControls('read', currentPage, totalPages);
   }
 
   /**
-   * Renders the `Play Arcade` or `Create` selection cards neatly inside the center oak shelf cavity
-   * (`x: 310..970, y: 240..625`) styled with warm parchment, carved walnut, and antique brass borders.
+   * Renders ornate Left ('◀') and Right ('▶') Brass Carousel Arrow Medallions in the open dark-wood
+   * alcove above Sparky and Doggie (`x: 205, y: 405` and `x: 1075, y: 405`) plus subtle brass page
+   * indicator pips below the shelf whenever a category has more than 1 page.
+   */
+  private renderShelfPaginationControls(
+    tab: HubTabId,
+    currentPage: number,
+    totalPages: number
+  ): void {
+    if (totalPages <= 1) return;
+
+    const arrowSpecs: Array<{ x: number; y: number; dir: -1 | 1; symbol: string }> = [
+      { x: 205, y: 405, dir: -1, symbol: '◀' },
+      { x: 1075, y: 405, dir: 1, symbol: '▶' }
+    ];
+
+    arrowSpecs.forEach((spec) => {
+      const btn = this.add.container(spec.x, spec.y);
+      const radius = 32;
+      const g = this.add.graphics();
+
+      // Drop shadow
+      g.fillStyle(0x090401, 0.65);
+      g.fillCircle(2, 4, radius + 2);
+
+      // Outer antique brass octagon/bevelled rim
+      g.fillStyle(0xb45309, 1);
+      g.fillCircle(0, 0, radius);
+      g.lineStyle(3, 0xfde047, 1);
+      g.strokeCircle(0, 0, radius);
+
+      // Recessed mahogany center
+      g.fillStyle(0x2a1408, 0.96);
+      g.fillCircle(0, 0, radius - 6);
+      g.lineStyle(1.5, 0xfbbf24, 0.85);
+      g.strokeCircle(0, 0, radius - 6);
+
+      // 8 perimeter brass rivets for octagonal heirloom feel
+      g.fillStyle(0xfef08a, 0.9);
+      for (let a = 0; a < 8; a++) {
+        const rad = (a * Math.PI) / 4;
+        g.fillCircle(Math.cos(rad) * (radius - 3), Math.sin(rad) * (radius - 3), 1.8);
+      }
+
+      const arrowTxt = this.add
+        .text(spec.dir * 1.5, -1, spec.symbol, {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '24px',
+          fontStyle: 'bold',
+          color: '#fef08a',
+          stroke: '#1c0d06',
+          strokeThickness: 4
+        })
+        .setOrigin(0.5);
+
+      btn.add([g, arrowTxt]);
+
+      // Hover scale bounce + crisp mechanical click when flipping pages
+      const hitZone = this.add
+        .zone(0, 0, 72, 72)
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+      btn.add(hitZone);
+
+      hitZone.on('pointerover', () => {
+        this.tweens.add({
+          targets: btn,
+          scaleX: 1.1,
+          scaleY: 1.1,
+          duration: 130,
+          ease: 'Back.easeOut'
+        });
+      });
+
+      hitZone.on('pointerout', () => {
+        this.tweens.add({
+          targets: btn,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 130,
+          ease: 'Quad.easeOut'
+        });
+      });
+
+      hitZone.on('pointerdown', () => {
+        if (this.isLaunchingBook) return;
+        AudioBus.playSfx('tab');
+        Juice.squashAndStretch(this, btn, 0.22, 140);
+        Juice.burstStars(this, spec.x, spec.y, 8, [0xfef08a, 0xfbbf24, 0xffffff]);
+
+        const nextPage = (currentPage + spec.dir + totalPages) % totalPages;
+        this.pageIndexByTab[tab] = nextPage;
+        this.slideDirection = spec.dir;
+        this.renderLowerShelfContent();
+      });
+
+      this.lowerShelfContentContainer.add(btn);
+    });
+
+    // Subtle brass page indicator plaque + glowing gold pips centered below the shelf (`x: 640, y: 701`)
+    const pipsContainer = this.add.container(640, 701);
+    const plaqueW = 152;
+    const plaqueH = 22;
+    const pg = this.add.graphics();
+
+    pg.fillStyle(0x1f1007, 0.94);
+    pg.fillRoundedRect(-plaqueW / 2, -plaqueH / 2, plaqueW, plaqueH, 11);
+    pg.lineStyle(1.8, 0xd97706, 0.95);
+    pg.strokeRoundedRect(-plaqueW / 2, -plaqueH / 2, plaqueW, plaqueH, 11);
+
+    pipsContainer.add(pg);
+
+    // Glowing gold dots on the left of the pill + "PAGE X / Y" label on the right
+    const pipSpacing = 16;
+    const pipStartX = -40 - ((totalPages - 1) * pipSpacing) / 2;
+    for (let p = 0; p < totalPages; p++) {
+      const px = pipStartX + p * pipSpacing;
+      const isCurrent = p === currentPage;
+      const dot = this.add.graphics();
+      if (isCurrent) {
+        dot.fillStyle(0xfef08a, 1);
+        dot.fillCircle(px, 0, 5);
+        dot.lineStyle(1.5, 0xf59e0b, 1);
+        dot.strokeCircle(px, 0, 5);
+      } else {
+        dot.fillStyle(0x78522b, 0.85);
+        dot.fillCircle(px, 0, 3.6);
+      }
+      pipsContainer.add(dot);
+    }
+
+    const pageLabel = this.add
+      .text(20, 0, `PAGE ${currentPage + 1} / ${totalPages}`, {
+        fontFamily: '"Fredoka", Georgia, serif',
+        fontSize: '11px',
+        fontStyle: 'bold',
+        color: '#fef08a'
+      })
+      .setOrigin(0.5);
+    pipsContainer.add(pageLabel);
+
+    this.lowerShelfContentContainer.add(pipsContainer);
+  }
+
+  /**
+   * Renders the `Play Arcade` standing heirloom shelf toys (Page 1: `arcade-toy-balloon`,
+   * `arcade-toy-bounce`, `arcade-toy-kart`) or upcoming preview showcase plaques (Page 2),
+   * supporting multi-page carousels (3 items per page).
    */
   private renderShelfActivityCards(tab: 'play' | 'create'): void {
-    const cards = SHELF_ACTIVITY_CARDS[tab];
-    const xs = [420, 640, 860];
-    const cardY = 445;
-    const cardW = 204;
-    const cardH = 316;
+    const allCards = SHELF_ACTIVITY_CARDS[tab];
+    const itemsPerPage = 3;
+    const totalPages = Math.max(1, Math.ceil(allCards.length / itemsPerPage));
+    const currentPage = Phaser.Math.Clamp(this.pageIndexByTab[tab] ?? 0, 0, totalPages - 1);
+    this.pageIndexByTab[tab] = currentPage;
 
-    cards.forEach((card, index) => {
+    const pageCards = allCards.slice(
+      currentPage * itemsPerPage,
+      currentPage * itemsPerPage + itemsPerPage
+    );
+
+    // Center 1, 2, or 3 items gracefully across the oak shelf (`x: 420, 640, 860` or `x: 515, 765`)
+    const xs =
+      pageCards.length === 1
+        ? [640]
+        : pageCards.length === 2
+        ? [515, 765]
+        : [420, 640, 860];
+    const shelfY = 636;
+    const plaqueY = 668;
+    const slideOffset = this.slideDirection * 48;
+    this.slideDirection = 0;
+
+    pageCards.forEach((card, index) => {
       const cx = xs[index] ?? 640;
-      const container = this.add.container(cx, cardY);
 
-      // Soft dark-wood drop shadow on the shelf plank
+      // Case A: Standing Painted Heirloom Arcade Toy Sprite on the Oak Shelf (`arcade-toy-*`)
+      if (card.texKey && this.textures.exists(card.texKey)) {
+        const baseScale = card.baseScale ?? 0.72;
+
+        // Soft dark-wood drop shadow ellipse underneath the base of each toy
+        const shadow = this.add.graphics();
+        shadow.fillStyle(0x0c0502, 0.54);
+        shadow.fillEllipse(cx, shelfY - 4, 188, 24);
+        shadow.fillStyle(0x050201, 0.36);
+        shadow.fillEllipse(cx, shelfY - 2, 140, 14);
+        this.lowerShelfContentContainer.add(shadow);
+
+        // Warm golden radial glow behind the toy (brightens on hover/tap)
+        const hoverGlow = this.add
+          .image(cx, shelfY - 145, 'hub-radial-glow')
+          .setOrigin(0.5, 0.5)
+          .setDisplaySize(240, 220)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setAlpha(card.unlocked ? 0.24 : 0.08);
+        this.lowerShelfContentContainer.add(hoverGlow);
+
+        const toySprite = this.add
+          .image(cx + slideOffset, shelfY, card.texKey)
+          .setOrigin(0.5, 1.0)
+          .setScale(baseScale * 0.92)
+          .setAlpha(0);
+        this.lowerShelfContentContainer.add(toySprite);
+
+        this.tweens.add({
+          targets: toySprite,
+          x: cx,
+          scaleX: baseScale,
+          scaleY: baseScale,
+          alpha: 1,
+          duration: 240,
+          delay: index * 55,
+          ease: 'Back.easeOut'
+        });
+
+        // Gentle warm golden idle shimmer around unlocked Balloon Letter Pop carousel toy
+        if (card.unlocked) {
+          const shimmerAnchors = [
+            { dx: -44, dy: -235 },
+            { dx: 42, dy: -220 },
+            { dx: 0, dy: -265 },
+            { dx: 48, dy: -135 },
+            { dx: -42, dy: -120 }
+          ];
+          shimmerAnchors.forEach((pt, sIdx) => {
+            const glint = this.add
+              .image(cx + pt.dx, shelfY + pt.dy, 'particle-star')
+              .setTint(sIdx % 2 === 0 ? 0xfef08a : 0xfbbf24)
+              .setBlendMode(Phaser.BlendModes.ADD)
+              .setScale(0.18)
+              .setAlpha(0.15);
+            this.lowerShelfContentContainer.add(glint);
+
+            this.tweens.add({
+              targets: glint,
+              alpha: { from: 0.12, to: 0.82 },
+              scaleX: { from: 0.14, to: 0.42 },
+              scaleY: { from: 0.14, to: 0.42 },
+              angle: { from: 0, to: 90 },
+              duration: 1350 + sIdx * 180,
+              delay: sIdx * 240,
+              yoyo: true,
+              repeat: -1,
+              ease: 'Sine.easeInOut'
+            });
+          });
+        }
+
+        // Ornate Brass/Parchment Nameplate on the front wooden shelf lip (`y: 668`)
+        const plateW = 204;
+        const plateH = 40;
+        const nameplate = this.add.container(cx, plaqueY);
+        const plateG = this.add.graphics();
+
+        plateG.fillStyle(0x090401, 0.58);
+        plateG.fillRoundedRect(-plateW / 2 + 2, -plateH / 2 + 2, plateW, plateH, 7);
+
+        plateG.fillStyle(0xfdf8ec, 0.97);
+        plateG.fillRoundedRect(-plateW / 2, -plateH / 2, plateW, plateH, 7);
+        plateG.lineStyle(2.5, 0xd97706, 1);
+        plateG.strokeRoundedRect(-plateW / 2, -plateH / 2, plateW, plateH, 7);
+        plateG.lineStyle(1, 0xfbbf24, 0.85);
+        plateG.strokeRoundedRect(-plateW / 2 + 3, -plateH / 2 + 3, plateW - 6, plateH - 6, 5);
+
+        plateG.fillStyle(0xb45309, 0.9);
+        plateG.fillCircle(-plateW / 2 + 6, -plateH / 2 + 6, 1.8);
+        plateG.fillCircle(plateW / 2 - 6, -plateH / 2 + 6, 1.8);
+        plateG.fillCircle(-plateW / 2 + 6, plateH / 2 - 6, 1.8);
+        plateG.fillCircle(plateW / 2 - 6, plateH / 2 - 6, 1.8);
+
+        const titleTxt = this.add
+          .text(0, -7, card.title, {
+            fontFamily: '"Fredoka", Georgia, serif',
+            fontSize: '12.5px',
+            fontStyle: 'bold',
+            color: '#451a03'
+          })
+          .setOrigin(0.5);
+
+        const subTxt = this.add
+          .text(0, 9, `★ ${card.subtitle}`, {
+            fontFamily: '"Fredoka", Georgia, serif',
+            fontSize: '11px',
+            fontStyle: 'bold',
+            color: '#b45309'
+          })
+          .setOrigin(0.5);
+
+        nameplate.add([plateG, titleTxt, subTxt]);
+        this.lowerShelfContentContainer.add(nameplate);
+
+        const hitZone = this.add
+          .zone(cx, shelfY - 125, 208, 355)
+          .setOrigin(0.5, 0.5)
+          .setInteractive({ useHandCursor: true });
+        this.lowerShelfContentContainer.add(hitZone);
+
+        hitZone.on('pointerover', () => {
+          if (this.isLaunchingBook) return;
+          this.tweens.killTweensOf([toySprite, nameplate, hoverGlow]);
+          this.tweens.add({
+            targets: toySprite,
+            y: shelfY - 8,
+            scaleX: baseScale * 1.05,
+            scaleY: baseScale * 1.05,
+            duration: 180,
+            ease: 'Quad.easeOut'
+          });
+          this.tweens.add({
+            targets: nameplate,
+            scaleX: 1.04,
+            scaleY: 1.04,
+            duration: 180,
+            ease: 'Quad.easeOut'
+          });
+          this.tweens.add({
+            targets: hoverGlow,
+            alpha: 0.48,
+            duration: 180
+          });
+        });
+
+        hitZone.on('pointerout', () => {
+          if (this.isLaunchingBook) return;
+          this.tweens.killTweensOf([toySprite, nameplate, hoverGlow]);
+          this.tweens.add({
+            targets: toySprite,
+            y: shelfY,
+            scaleX: baseScale,
+            scaleY: baseScale,
+            angle: 0,
+            duration: 180,
+            ease: 'Quad.easeOut'
+          });
+          this.tweens.add({
+            targets: nameplate,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 180,
+            ease: 'Quad.easeOut'
+          });
+          this.tweens.add({
+            targets: hoverGlow,
+            alpha: card.unlocked ? 0.24 : 0.08,
+            duration: 180
+          });
+        });
+
+        hitZone.on('pointerdown', () => {
+          if (this.isLaunchingBook) return;
+          AudioBus.playSfx(card.previewSfx);
+          Juice.burstStars(this, cx, shelfY - 150, 20, [card.accentColor, 0xfef08a, 0xffffff]);
+
+          if (card.unlocked && card.targetScene) {
+            this.isLaunchingBook = true;
+            if (!AudioBus.getMuted() && this.cache.audio.exists('sfx-book-select')) {
+              this.sound.play('sfx-book-select', { volume: 0.9 });
+            }
+            this.tweens.killTweensOf([toySprite, nameplate]);
+            this.tweens.add({
+              targets: toySprite,
+              y: shelfY - 26,
+              scaleX: baseScale * 1.14,
+              scaleY: baseScale * 1.14,
+              angle: -3,
+              duration: 500,
+              ease: 'Back.easeOut',
+              onComplete: () => {
+                this.scene.start(card.targetScene!);
+              }
+            });
+          } else {
+            // Interactive toy bounce & warm glow for upcoming toys
+            this.tweens.add({
+              targets: toySprite,
+              y: shelfY - 22,
+              scaleX: baseScale * 1.09,
+              scaleY: baseScale * 0.94,
+              duration: 130,
+              yoyo: true,
+              ease: 'Quad.easeOut'
+            });
+            Juice.squashAndStretch(this, nameplate, 0.16, 130);
+          }
+        });
+
+        return;
+      }
+
+      // Case B: Standing Heirloom Mahogany & Brass Clockwork Pedestal on the Oak Shelf (Page 2 upcoming toys)
       const shadow = this.add.graphics();
-      shadow.fillStyle(0x090401, 0.52);
-      shadow.fillEllipse(0, cardH / 2 + 12, 184, 22);
-      container.add(shadow);
+      shadow.fillStyle(0x0c0502, 0.5);
+      shadow.fillEllipse(cx, shelfY - 4, 188, 24);
+      shadow.fillStyle(0x050201, 0.34);
+      shadow.fillEllipse(cx, shelfY - 2, 140, 14);
+      this.lowerShelfContentContainer.add(shadow);
 
-      // Heirloom Walnut & Cream Parchment Card Frame
-      const bg = this.add.graphics();
-      bg.fillStyle(0x2a1508, 0.96);
-      bg.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 16);
-      bg.lineStyle(3, 0xd97706, 1);
-      bg.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 16);
+      const hoverGlow = this.add
+        .image(cx, shelfY - 135, 'hub-radial-glow')
+        .setOrigin(0.5, 0.5)
+        .setDisplaySize(220, 200)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0.12);
+      this.lowerShelfContentContainer.add(hoverGlow);
 
-      // Inner warm parchment face
-      bg.fillStyle(0xfdf8ec, 0.96);
-      bg.fillRoundedRect(-cardW / 2 + 8, -cardH / 2 + 8, cardW - 16, cardH - 16, 12);
-      bg.lineStyle(1.5, 0xb45309, 0.7);
-      bg.strokeRoundedRect(-cardW / 2 + 8, -cardH / 2 + 8, cardW - 16, cardH - 16, 12);
+      const pedestal = this.add.container(cx + slideOffset, shelfY);
+      const pedG = this.add.graphics();
 
-      // Top dark-wood art recessed alcove inside card
-      bg.fillStyle(0x3b1d0a, 0.94);
-      bg.fillRoundedRect(-cardW / 2 + 16, -cardH / 2 + 42, cardW - 32, 112, 10);
-      bg.lineStyle(1.5, 0xfbbf24, 0.75);
-      bg.strokeRoundedRect(-cardW / 2 + 16, -cardH / 2 + 42, cardW - 32, 112, 10);
+      // Carved walnut base resting directly on the oak shelf plank (`y: 0` down to `-36`)
+      pedG.fillStyle(0x3b1d0a, 0.98);
+      pedG.fillRoundedRect(-76, -34, 152, 34, 8);
+      pedG.lineStyle(2.5, 0xd97706, 1);
+      pedG.strokeRoundedRect(-76, -34, 152, 34, 8);
 
-      // Top brass badge header
-      bg.fillStyle(0x451a03, 1);
-      bg.fillRoundedRect(-78, -cardH / 2 + 14, 156, 22, 11);
-      bg.lineStyle(1.5, 0xfbbf24, 0.9);
-      bg.strokeRoundedRect(-78, -cardH / 2 + 14, 156, 22, 11);
+      // Ornate brass clockwork medallion ring rising above the wooden base (`y: -135`)
+      pedG.fillStyle(0x271308, 0.96);
+      pedG.fillCircle(0, -135, 68);
+      pedG.lineStyle(4, 0xd97706, 1);
+      pedG.strokeCircle(0, -135, 68);
+      pedG.lineStyle(1.5, 0xfef08a, 0.78);
+      pedG.strokeCircle(0, -135, 61);
 
-      const badgeTxt = this.add
-        .text(0, -cardH / 2 + 25, card.badgeText, {
+      // Brass stem connecting medallion to walnut pedestal base
+      pedG.fillStyle(0xb45309, 1);
+      pedG.fillRect(-12, -68, 24, 36);
+      pedG.lineStyle(1.5, 0xfef08a, 0.8);
+      pedG.strokeRect(-12, -68, 24, 36);
+
+      // "COMING SOON" antique brass ribbon across the pedestal
+      pedG.fillStyle(0x573012, 0.98);
+      pedG.fillRoundedRect(-68, -56, 136, 22, 11);
+      pedG.lineStyle(1.5, 0xfbbf24, 0.95);
+      pedG.strokeRoundedRect(-68, -56, 136, 22, 11);
+
+      const ribbonTxt = this.add
+        .text(0, -45, 'COMING SOON', {
           fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: '10.5px',
+          fontSize: '10px',
           fontStyle: 'bold',
           color: '#fef08a'
         })
         .setOrigin(0.5);
 
-      const mainEmoji = this.add
-        .text(0, -cardH / 2 + 98, card.emoji, {
-          fontSize: '56px'
+      const iconTxt = this.add
+        .text(0, -138, card.emoji, {
+          fontSize: '58px'
         })
         .setOrigin(0.5);
 
-      const titleTxt = this.add
-        .text(0, 26, card.title, {
-          fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: '17px',
-          fontStyle: 'bold',
-          color: '#451a03',
-          align: 'center',
-          wordWrap: { width: cardW - 28 }
-        })
-        .setOrigin(0.5);
+      pedestal.add([pedG, ribbonTxt, iconTxt]);
+      pedestal.setScale(0.92);
+      pedestal.setAlpha(0);
+      this.lowerShelfContentContainer.add(pedestal);
 
-      const subTxt = this.add
-        .text(0, 72, card.subtitle, {
-          fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: '12.5px',
-          color: '#78350f',
-          align: 'center',
-          wordWrap: { width: cardW - 30 }
-        })
-        .setOrigin(0.5);
-
-      // Bottom antique brass action plaque
-      const btnBg = this.add.graphics();
-      btnBg.fillStyle(0xb45309, 1);
-      btnBg.fillRoundedRect(-80, cardH / 2 - 46, 160, 30, 15);
-      btnBg.lineStyle(2, 0xfde047, 1);
-      btnBg.strokeRoundedRect(-80, cardH / 2 - 46, 160, 30, 15);
-
-      const btnTxt = this.add
-        .text(0, cardH / 2 - 31, '✨ TAP TO PLAY', {
-          fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: '12.5px',
-          fontStyle: 'bold',
-          color: '#fef08a'
-        })
-        .setOrigin(0.5);
-
-      container.add([bg, badgeTxt, mainEmoji, titleTxt, subTxt, btnBg, btnTxt]);
-
-      container.setScale(0.85);
-      container.setAlpha(0);
       this.tweens.add({
-        targets: container,
+        targets: pedestal,
+        x: cx,
         scaleX: 1,
         scaleY: 1,
         alpha: 1,
@@ -1319,20 +1753,97 @@ export class HubScene extends Phaser.Scene {
         ease: 'Back.easeOut'
       });
 
-      Juice.makeTactileButton(
-        this,
-        container,
-        cardW,
-        cardH,
-        () => {
-          AudioBus.playSfx(card.previewSfx);
-          Juice.jumpFlip(this, mainEmoji, 28, true);
-          Juice.burstStars(this, cx, cardY - 40, 14, [card.accentColor, 0xfef08a, 0xffffff]);
-        },
-        card.previewSfx
-      );
+      // Matching Brass/Parchment Nameplate on the front wooden shelf lip (`y: 668`)
+      const plateW = 204;
+      const plateH = 40;
+      const nameplate = this.add.container(cx, plaqueY);
+      const plateG = this.add.graphics();
 
-      this.lowerShelfContentContainer.add(container);
+      plateG.fillStyle(0x090401, 0.58);
+      plateG.fillRoundedRect(-plateW / 2 + 2, -plateH / 2 + 2, plateW, plateH, 7);
+      plateG.fillStyle(0x27232a, 0.92);
+      plateG.fillRoundedRect(-plateW / 2, -plateH / 2, plateW, plateH, 7);
+      plateG.lineStyle(1.8, 0xd97706, 0.85);
+      plateG.strokeRoundedRect(-plateW / 2, -plateH / 2, plateW, plateH, 7);
+
+      plateG.fillStyle(0xb45309, 0.9);
+      plateG.fillCircle(-plateW / 2 + 6, -plateH / 2 + 6, 1.8);
+      plateG.fillCircle(plateW / 2 - 6, -plateH / 2 + 6, 1.8);
+      plateG.fillCircle(-plateW / 2 + 6, plateH / 2 - 6, 1.8);
+      plateG.fillCircle(plateW / 2 - 6, plateH / 2 - 6, 1.8);
+
+      const titleTxt = this.add
+        .text(0, -7, card.title, {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '12px',
+          fontStyle: 'bold',
+          color: '#fef08a'
+        })
+        .setOrigin(0.5);
+
+      const subTxt = this.add
+        .text(0, 9, `🔒 ${card.subtitle}`, {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '11px',
+          fontStyle: 'bold',
+          color: '#cbd5e1'
+        })
+        .setOrigin(0.5);
+
+      nameplate.add([plateG, titleTxt, subTxt]);
+      this.lowerShelfContentContainer.add(nameplate);
+
+      const hitZone = this.add
+        .zone(cx, shelfY - 115, 204, 310)
+        .setOrigin(0.5, 0.5)
+        .setInteractive({ useHandCursor: true });
+      this.lowerShelfContentContainer.add(hitZone);
+
+      hitZone.on('pointerover', () => {
+        if (this.isLaunchingBook) return;
+        this.tweens.add({
+          targets: pedestal,
+          y: shelfY - 8,
+          scaleX: 1.04,
+          scaleY: 1.04,
+          duration: 180,
+          ease: 'Quad.easeOut'
+        });
+        this.tweens.add({
+          targets: hoverGlow,
+          alpha: 0.36,
+          duration: 180
+        });
+      });
+
+      hitZone.on('pointerout', () => {
+        if (this.isLaunchingBook) return;
+        this.tweens.add({
+          targets: pedestal,
+          y: shelfY,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 180,
+          ease: 'Quad.easeOut'
+        });
+        this.tweens.add({
+          targets: hoverGlow,
+          alpha: 0.12,
+          duration: 180
+        });
+      });
+
+      hitZone.on('pointerdown', () => {
+        if (this.isLaunchingBook) return;
+        AudioBus.playSfx(card.previewSfx);
+        Juice.squashAndStretch(this, pedestal, 0.14, 140);
+        Juice.squashAndStretch(this, nameplate, 0.14, 140);
+        Juice.burstStars(this, cx, shelfY - 135, 14, [card.accentColor, 0xfef08a, 0xffffff]);
+        Juice.popFloatingLabel(this, cx, shelfY - 185, '✨ COMING SOON!', '#fef08a');
+      });
     });
+
+    // Render Left/Right Brass Carousel Arrow Buttons & Page Pips whenever totalPages > 1
+    this.renderShelfPaginationControls(tab, currentPage, totalPages);
   }
 }
