@@ -12,12 +12,77 @@ Complete Automated Sprite Sheet Generator & Slicer for Animal Match Safari (`Mem
     6) `public/assets/hub/raw/arcade-toy-match-raw.jpg` -> `public/assets/hub/arcade/arcade-toy-match.png`
 """
 
+import base64
+import json
 import os
+import shutil
 import sys
+import urllib.request
 from collections import deque
 from typing import List, Optional
 import numpy as np
 from PIL import Image
+
+CLEAN_MATCH_STAGE_PROMPT = (
+    "16:9 widescreen (1280x720) 32-bit Hi-Bit Pixel Art (Sea of Stars / Owlboy masterpiece aesthetic) "
+    "top-down heirloom mahogany-and-brass tabletop memory card game cabinet board for young children. "
+    "VIBE & LAYOUT: Warm, calm, spacious, and completely uncluttered. "
+    "1) Fill 84% of the upper canvas (x: 90..1190, y: 35..565) with a huge, wide, smooth rectangular "
+    "emerald-green baize felt playing surface with subtle soft inner vignette and thin gold pinstripe trim. "
+    "2) Frame the green felt with a clean, warm carved mahogany wood border and simple polished brass corner accents "
+    "(NO Victorian room background, NO curtains, NO wall lamps, NO chairs, NO top clock alcove, and NO exposed cogs or gears). "
+    "3) Along the bottom edge (y: 575..705), render a clean, flat, empty recessed mahogany-and-brass horizontal dock tray "
+    "with ZERO baked-in buttons, ZERO levers, ZERO gauges, ZERO clock dials, and ZERO text plaques so interactive UI buttons can sit cleanly on top."
+)
+
+
+def load_env(env_path: str) -> dict:
+    env = {}
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                env[k.strip()] = v.strip().strip('"').strip("'")
+    return env
+
+
+def generate_clean_stage_with_gemini(api_key: str, raw_out_path: str) -> bool:
+    models = [
+        "gemini-2.5-flash-image-preview",
+        "gemini-2.0-flash-exp-image-generation",
+    ]
+    for model in models:
+        try:
+            url = (
+                f"https://generativelanguage.googleapis.com/v1beta/models/"
+                f"{model}:generateContent?key={api_key}"
+            )
+            payload = {
+                "contents": [{"parts": [{"text": CLEAN_MATCH_STAGE_PROMPT}]}],
+                "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]},
+            }
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                for cand in data.get("candidates", []):
+                    for part in cand.get("content", {}).get("parts", []):
+                        inline = part.get("inlineData") or part.get("inline_data")
+                        if inline and inline.get("data"):
+                            with open(raw_out_path, "wb") as out_f:
+                                out_f.write(base64.b64decode(inline["data"]))
+                            print(f"[Generated] {raw_out_path} via {model}")
+                            return True
+        except Exception as exc:
+            print(f"[Warn] {model} failed: {exc}")
+    return False
 
 SAFARI_GRID_NAMES: List[List[str]] = [
     ["safari-lion.png", "safari-lion-cub.png", "safari-elephant.png", "safari-elephant-calf.png"],
@@ -232,9 +297,26 @@ def main() -> int:
     os.makedirs(sprites_dir, exist_ok=True)
 
     stage_raw = os.path.join(raw_dir, "match-stage-raw.jpg")
+    stage_bg_png = os.path.join(sprites_dir, "match-stage-bg.png")
+    if "--refresh-stage" in sys.argv or "--force" in sys.argv:
+        if os.path.exists(stage_raw):
+            backup_raw = os.path.join(raw_dir, "match-stage-raw-v1-backup.jpg")
+            if not os.path.exists(backup_raw):
+                shutil.copy2(stage_raw, backup_raw)
+                print(f"[Backup] Saved {backup_raw}")
+        if os.path.exists(stage_bg_png):
+            backup_png = os.path.join(sprites_dir, "match-stage-bg-v1-backup.png")
+            if not os.path.exists(backup_png):
+                shutil.copy2(stage_bg_png, backup_png)
+                print(f"[Backup] Saved {backup_png}")
+        env = load_env(os.path.join(root_dir, ".env"))
+        api_key = env.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY", "")
+        if api_key:
+            generate_clean_stage_with_gemini(api_key, stage_raw)
+
     if os.path.exists(stage_raw):
         bg = Image.open(stage_raw).convert("RGB").resize((1280, 720), Image.LANCZOS)
-        bg.save(os.path.join(sprites_dir, "match-stage-bg.png"), "PNG")
+        bg.save(stage_bg_png, "PNG")
         print("[Saved] match-stage-bg.png (1280x720)")
 
     for raw_name, grid, y_splits in (

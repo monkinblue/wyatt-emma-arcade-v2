@@ -450,6 +450,13 @@ class AudioBusManager {
     }
   }
 
+  public stopLayerSfx(customSfxSrc: string): void {
+    const howl = this.sfxHowls.get(customSfxSrc);
+    if (howl) {
+      howl.stop();
+    }
+  }
+
   private getOrDetectLeadingSilenceOffset(url: string, howl: Howl): number {
     if (this.sfxOnsetOffsets.has(url)) {
       return this.sfxOnsetOffsets.get(url) ?? 0;

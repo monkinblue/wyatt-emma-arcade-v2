@@ -23,6 +23,8 @@ export class BootScene extends Phaser.Scene {
    * on Frame 0 when entering `StoryEngineScene`!
    */
   public preload(): void {
+    this.mountHeirloomLoadingBar();
+
     // 0a. Hub Heirloom Bookshelf, 3 Mode Objects, 3 Individual Book Sprites & 3 Create Shelf Objects
     this.load.image('bookshelf-bg', '/assets/hub/bookshelf-bg.jpg?v=hub2');
     this.load.image('mode-read', '/assets/hub/sprites/mode-read.png?v=hub2');
@@ -38,8 +40,12 @@ export class BootScene extends Phaser.Scene {
     this.load.image('create-music-box', '/assets/hub/sprites/create-music-box.png?v=create1');
     this.load.image('arcade-toy-balloon', '/assets/hub/arcade/arcade-toy-balloon.png?v=arcade1');
     this.load.image('arcade-toy-match', '/assets/hub/arcade/arcade-toy-match.png?v=arcade2');
+    this.load.image('hub-toy-shutthebox', '/assets/hub/arcade/hub-toy-shutthebox.png?v=stb1');
+    this.load.image('arcade-toy-shutthebox', '/assets/hub/arcade/hub-toy-shutthebox.png?v=stb1');
     this.load.image('arcade-toy-bounce', '/assets/hub/arcade/arcade-toy-bounce.png?v=arcade1');
     this.load.image('arcade-toy-kart', '/assets/hub/arcade/arcade-toy-kart.png?v=arcade1');
+    this.load.image('hub-toy-rocket', '/assets/hub/arcade/hub-toy-rocket.png?v=rk1');
+    this.load.image('hub-toy-unicorn', '/assets/hub/arcade/hub-toy-unicorn.png?v=uc1');
 
     // 0a-2. Heirloom Art & Sticker Studio Frame + 8 Illustrated Tool Icons + 12 Coloring Book Templates (936x560)
     this.load.image('studio-frame-bg', '/assets/games/art-studio/studio-frame-bg.jpg?v=studio2');
@@ -104,32 +110,43 @@ export class BootScene extends Phaser.Scene {
     this.load.image('rhythm-campfire', '/assets/games/melody-maker/sprites/rhythm-campfire.png?v=melody1');
     this.load.image('rhythm-parade', '/assets/games/melody-maker/sprites/rhythm-parade.png?v=melody1');
 
-    // 0a-4. Heirloom Tinker Workshop (`TinkerWorkshopScene.ts`) Frame + 31 Custom Sprites
-    this.load.image('tinker-frame-bg', '/assets/games/tinker-workshop/tinker-frame-bg.jpg?v=tinker2');
-    this.load.image('part-chute', '/assets/games/tinker-workshop/sprites/part-chute.png?v=tinker2');
-    this.load.image('part-gear', '/assets/games/tinker-workshop/sprites/part-gear.png?v=tinker2');
-    this.load.image('part-seesaw', '/assets/games/tinker-workshop/sprites/part-seesaw.png?v=tinker2');
+    // 0a-4. Heirloom Tinker Workshop (`TinkerWorkshopScene.ts`) v2 Open Workshop Wall + 32-Bit Contraptions
+    this.load.image('tinker-bg-v2', '/assets/games/tinker-workshop/tinker-bg-v2.png?v=tinker3');
+    this.load.image('tinker-frame-bg', '/assets/games/tinker-workshop/tinker-frame-bg.jpg?v=tinker3');
+    this.load.image('part-ramp', '/assets/games/tinker-workshop/sprites/part-ramp.png?v=tinker3');
+    this.load.image('part-chute', '/assets/games/tinker-workshop/sprites/part-chute.png?v=tinker3');
+    this.load.image('part-bowl', '/assets/games/tinker-workshop/sprites/part-bowl.png?v=tinker3');
+    this.load.image('part-drum-bumper', '/assets/games/tinker-workshop/sprites/part-drum-bumper.png?v=tinker3');
+    this.load.image('part-trampoline', '/assets/games/tinker-workshop/sprites/part-trampoline.png?v=tinker3');
+    this.load.image('prop-bumper', '/assets/games/tinker-workshop/sprites/prop-bumper.png?v=tinker3');
+    this.load.image('part-paddle-wheel', '/assets/games/tinker-workshop/sprites/part-paddle-wheel.png?v=tinker3');
+    this.load.image('part-gear', '/assets/games/tinker-workshop/sprites/part-gear.png?v=tinker3');
+    this.load.image('part-chime-bar', '/assets/games/tinker-workshop/sprites/part-chime-bar.png?v=tinker3');
+    this.load.image('part-funnel', '/assets/games/tinker-workshop/sprites/part-funnel.png?v=tinker3');
+    this.load.image('part-bellows', '/assets/games/tinker-workshop/sprites/part-bellows.png?v=tinker3');
+    this.load.image('part-cannon', '/assets/games/tinker-workshop/sprites/part-cannon.png?v=tinker4');
+    this.load.image('part-seesaw', '/assets/games/tinker-workshop/sprites/part-seesaw.png?v=tinker4');
+    this.load.image('tinker-trash-can', '/assets/games/tinker-workshop/sprites/tinker-trash-can.png?v=tinker4');
     this.load.image('part-flipper', '/assets/games/tinker-workshop/sprites/part-flipper.png?v=tinker2');
-    this.load.image('part-trampoline', '/assets/games/tinker-workshop/sprites/part-trampoline.png?v=tinker2');
-    this.load.image('part-bellows', '/assets/games/tinker-workshop/sprites/part-bellows.png?v=tinker2');
-    this.load.image('part-bowl', '/assets/games/tinker-workshop/sprites/part-bowl.png?v=tinker2');
     this.load.image('part-wedge', '/assets/games/tinker-workshop/sprites/part-wedge.png?v=tinker2');
     this.load.image('part-hammer', '/assets/games/tinker-workshop/sprites/part-hammer.png?v=tinker2');
-    this.load.image('part-funnel', '/assets/games/tinker-workshop/sprites/part-funnel.png?v=tinker2');
     this.load.image('part-wall', '/assets/games/tinker-workshop/sprites/part-wall.png?v=tinker2');
 
-    this.load.image('prop-marble', '/assets/games/tinker-workshop/sprites/prop-marble.png?v=tinker2');
-    this.load.image('prop-acorn', '/assets/games/tinker-workshop/sprites/prop-acorn.png?v=tinker2');
-    this.load.image('prop-bumper', '/assets/games/tinker-workshop/sprites/prop-bumper.png?v=tinker2');
-    this.load.image('prop-star', '/assets/games/tinker-workshop/sprites/prop-star.png?v=tinker2');
+    this.load.image('marble-cobalt', '/assets/games/tinker-workshop/sprites/marble-cobalt.png?v=tinker3');
+    this.load.image('marble-comet', '/assets/games/tinker-workshop/sprites/marble-comet.png?v=tinker3');
+    this.load.image('marble-steel', '/assets/games/tinker-workshop/sprites/marble-steel.png?v=tinker3');
+    this.load.image('marble-emerald', '/assets/games/tinker-workshop/sprites/marble-emerald.png?v=tinker3');
+    this.load.image('prop-marble', '/assets/games/tinker-workshop/sprites/prop-marble.png?v=tinker3');
+    this.load.image('prop-acorn', '/assets/games/tinker-workshop/sprites/prop-acorn.png?v=tinker3');
+    this.load.image('prop-star', '/assets/games/tinker-workshop/sprites/prop-star.png?v=tinker3');
     this.load.image('prop-chain', '/assets/games/tinker-workshop/sprites/prop-chain.png?v=tinker2');
     this.load.image('prop-pull-chain', '/assets/games/tinker-workshop/sprites/prop-chain.png?v=tinker2');
 
     for (let f = 0; f < 3; f++) {
-      this.load.image(`tinker-sparky-${f}`, `/assets/games/tinker-workshop/sprites/tinker-sparky-${f}.png?v=tinker2`);
-      this.load.image(`tinker-doggie-${f}`, `/assets/games/tinker-workshop/sprites/tinker-doggie-${f}.png?v=tinker2`);
-      this.load.image(`sparky-hopper-${f + 1}`, `/assets/games/tinker-workshop/sprites/tinker-sparky-${f}.png?v=tinker2`);
-      this.load.image(`doggie-cart-${f + 1}`, `/assets/games/tinker-workshop/sprites/tinker-doggie-${f}.png?v=tinker2`);
+      this.load.image(`tinker-sparky-${f}`, `/assets/games/tinker-workshop/sprites/tinker-sparky-${f}.png?v=tinker3`);
+      this.load.image(`tinker-doggie-${f}`, `/assets/games/tinker-workshop/sprites/tinker-doggie-${f}.png?v=tinker3`);
+      this.load.image(`sparky-hopper-${f + 1}`, `/assets/games/tinker-workshop/sprites/sparky-hopper-${f + 1}.png?v=tinker3`);
+      this.load.image(`doggie-cart-${f + 1}`, `/assets/games/tinker-workshop/sprites/doggie-cart-${f + 1}.png?v=tinker3`);
     }
 
     for (let p = 1; p <= 5; p++) {
@@ -140,7 +157,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('tinker-mode-stars', '/assets/games/tinker-workshop/sprites/tinker-mode-stars.png?v=tinker1');
     this.load.image('tinker-mode-fountain', '/assets/games/tinker-workshop/sprites/tinker-mode-fountain.png?v=tinker1');
     this.load.image('tinker-action-drop', '/assets/games/tinker-workshop/sprites/tinker-action-drop.png?v=tinker1');
-    this.load.image('tinker-action-clear', '/assets/games/tinker-workshop/sprites/tinker-action-clear.png?v=tinker1');
+    this.load.image('tinker-action-clear', '/assets/games/tinker-workshop/sprites/tinker-action-clear.png?v=tinker4');
 
     // 0a-5. Balloon Letter Pop (`BalloonPopScene.ts`) Stage Background + 26 Custom Sprites
     this.load.image('balloon-stage', '/assets/games/balloon-pop/balloon-stage.jpg?v=balloon1');
@@ -172,7 +189,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('ui-album', '/assets/games/balloon-pop/sprites/ui-album.png?v=balloon1');
 
     // 0a-6. Animal Match Safari (`MemoryMatchScene.ts`) Stage Background + 60 Custom Sprites
-    this.load.image('match-stage-bg', '/assets/games/memory-match/sprites/match-stage-bg.png?v=match1');
+    this.load.image('match-stage-bg', '/assets/games/memory-match/sprites/match-stage-bg.png?v=match2');
     this.load.image('card-back', '/assets/games/memory-match/sprites/card-back.png?v=match1');
     this.load.image('card-front', '/assets/games/memory-match/sprites/card-front.png?v=match1');
     this.load.image('match-prop-key', '/assets/games/memory-match/sprites/prop-key.png?v=match1');
@@ -202,6 +219,166 @@ export class BootScene extends Phaser.Scene {
     ];
     for (const key of matchCardSprites) {
       this.load.image(key, `/assets/games/memory-match/sprites/${key}.png?v=match1`);
+    }
+
+    // 0a-6b. Great Hall Box of Ten (`ShutTheBoxScene.ts`) Stage Background + 24 Custom Sprites
+    this.load.image('shutthebox-stage', '/assets/games/shutthebox/shutthebox-stage.png?v=stb1');
+    const shutTheBoxSprites = [
+      'tile-wood-up',
+      'tile-wood-down',
+      'tile-wood-gold',
+      'prop-dice-cup',
+      'die-face-1',
+      'die-face-2',
+      'die-face-3',
+      'die-face-4',
+      'die-face-5',
+      'die-face-6',
+      'die-tumble-1',
+      'die-tumble-2',
+      'prop-math-scroll',
+      'orb-choice',
+      'gem-ruby',
+      'gem-emerald',
+      'prof-sparky-idle',
+      'prof-sparky-roll',
+      'prof-sparky-cheer',
+      'doggie-mage-cheer',
+      'doggie-mage-idle',
+      'hourglass-player',
+      'hourglass-sparky',
+      'prop-wizard-trophy'
+    ];
+    for (const sKey of shutTheBoxSprites) {
+      this.load.image(`stb-${sKey}`, `/assets/games/shutthebox/sprites/${sKey}.png?v=stb2`);
+    }
+    for (let d = 1; d <= 6; d++) {
+      this.load.image(`die-${d}`, `/assets/games/shutthebox/sprites/die-${d}.png?v=stb2`);
+    }
+
+    // 0a-6c. Zoomy Cloud Kart (`CloudKartScene.ts`) Stage Background + 16 Custom Sprites
+    this.load.image('cloudkart-stage-bg', '/assets/games/cloudkart/cloudkart-stage-bg.png?v=ck1');
+    const cloudKartSprites = [
+      'kart-wyatt',
+      'kart-emma',
+      'kart-sparky',
+      'kart-doggie',
+      'spr-sky-gate',
+      'spr-flag-start',
+      'spr-flag-finish',
+      'spr-boost-pad',
+      'spr-cloud-ramp',
+      'spr-star-coin',
+      'spr-quill-kart',
+      'spr-eraser-sponge',
+      'spr-trophy-podium',
+      'spr-golden-cup',
+      'spr-cloud-puff',
+      'spr-finish-arch'
+    ];
+    for (const ckKey of cloudKartSprites) {
+      this.load.image(ckKey, `/assets/games/cloudkart/sprites/${ckKey}.png?v=ck1`);
+    }
+
+    // 0a-6d. Rocket Number Blast (`RocketBlastScene.ts`) Stage Background + 16 Custom Sprites
+    this.load.image('rocket-bg', '/assets/games/rocket/rocket-bg.png?v=rk1');
+    const rocketBlastSprites = [
+      'rocket-stage-100',
+      'rocket-stage-10',
+      'rocket-stage-1',
+      'gantry-tower',
+      'steam-valve-lever',
+      'ignition-lever',
+      'astro-sparky',
+      'astro-doggie',
+      'fuel-core-100',
+      'fuel-cluster-10',
+      'fuel-gem-1',
+      'bonus-satellite',
+      'planet-cheese-moon',
+      'planet-mars-saturn',
+      'planet-crystal-nebula',
+      'space-flag'
+    ];
+    for (const rkKey of rocketBlastSprites) {
+      this.load.image(rkKey, `/assets/games/rocket/sprites/${rkKey}.png?v=rk1`);
+    }
+
+    // 0a-6e. Princess Emma's Unicorn Castle (`UnicornCastleScene.ts`) 5 Stage Backgrounds + 56 Custom Sprites
+    const unicornBackgrounds = [
+      'unicorn-spa-bg',
+      'unicorn-teaparty-bg',
+      'unicorn-sticker-meadow-bg',
+      'unicorn-sticker-ballroom-bg',
+      'unicorn-sticker-bedroom-bg'
+    ];
+    for (const ucBg of unicornBackgrounds) {
+      this.load.image(ucBg, `/assets/games/unicorn/${ucBg}.png?v=uc1`);
+    }
+    const unicornCastleSprites = [
+      // Characters & Accessories (8)
+      'char-emma-princess',
+      'char-emma-wand',
+      'char-unicorn-base',
+      'char-unicorn-happy',
+      'char-sparky-bowtie',
+      'char-doggie-crown',
+      'acc-royal-saddle',
+      'acc-royal-tiara',
+      // Spa Tools & Gems (12)
+      'spa-potion-pink',
+      'spa-potion-blue',
+      'spa-potion-gold',
+      'spa-brush-starlight',
+      'spa-shower-cloud',
+      'spa-soap-bubble',
+      'acc-wing-bow',
+      'spa-wand-rainbow',
+      'gem-circle-ruby',
+      'gem-heart-quartz',
+      'gem-star-topaz',
+      'gem-square-emerald',
+      // Tea Party, Bakery, Caretaking & Sapphire Gem (12)
+      'gem-triangle-sapphire',
+      'tea-teapot',
+      'tea-cup-saucer',
+      'tea-plate-silver',
+      'treat-cupcake',
+      'treat-star-cookie',
+      'treat-sugar-heart',
+      'treat-rainbow-berry',
+      'tea-bakery-stand',
+      'care-velvet-blanket',
+      'care-starlight-pillow',
+      'care-feather-wand',
+      // Peel-and-Stick Living Stickers (24)
+      'stk-unicorn-prance',
+      'stk-baby-pegasus-blue',
+      'stk-baby-unicorn-gold',
+      'stk-unicorn-sleepy',
+      'stk-pegasus-rainbow',
+      'stk-unicorn-carousel',
+      'stk-emma-curtsy',
+      'stk-emma-twirl',
+      'stk-sparky-prince',
+      'stk-doggie-jester',
+      'stk-fairy-butterfly',
+      'stk-royal-swan',
+      'stk-diamond-crown',
+      'stk-crystal-slipper',
+      'stk-magic-scepter',
+      'stk-treasure-chest',
+      'stk-heart-locket',
+      'stk-birthday-cake',
+      'stk-icecream-sundae',
+      'stk-macaron-tower',
+      'stk-candy-carriage',
+      'stk-rainbow-arch',
+      'stk-royal-kitten',
+      'stk-hot-air-balloon'
+    ];
+    for (const ucKey of unicornCastleSprites) {
+      this.load.image(ucKey, `/assets/games/unicorn/sprites/${ucKey}.png?v=uc1`);
     }
 
     // 0a-7. Book 2: "To Babci and Grandpa's House We Go! / A Colorado Adventure" (`ColoradoStoryScene.ts`)
@@ -797,6 +974,174 @@ export class BootScene extends Phaser.Scene {
     AudioBus.registerSfx('sfx-book-select', ['/assets/hub/audio/sfx-book-select.mp3'], 0.9);
     AudioBus.registerSfx('sfx-book-locked', ['/assets/hub/audio/sfx-book-locked.mp3'], 0.85);
     AudioBus.preloadPage1Audio();
+  }
+
+  /**
+   * Renders an ornate, centered Mahogany & Polished Brass Progress Bar (`560x38px`) with a warm
+   * golden starlight fill, live percentage (`0%` -> `100%`), cycling status subtitles, and a
+   * twinkling starlight shimmer on the leading edge while assets preload. Also fades out and
+   * removes the pre-boot HTML `#heirloom-boot-splash` overlay once Phaser mounts.
+   */
+  private mountHeirloomLoadingBar(): void {
+    if (typeof document !== 'undefined') {
+      const htmlSplash = document.getElementById('heirloom-boot-splash');
+      if (htmlSplash) {
+        htmlSplash.style.opacity = '0';
+        window.setTimeout(() => {
+          htmlSplash.remove();
+        }, 420);
+      }
+    }
+
+    this.cameras.main.setBackgroundColor('#120c08');
+
+    const root = this.add.container(640, 360).setDepth(500);
+
+    // Ornate Mahogany & Brass Cabinet Backing Plaque
+    const plaque = this.add.graphics();
+    plaque.fillStyle(0x1c1008, 0.96);
+    plaque.fillRoundedRect(-350, -145, 700, 290, 24);
+    plaque.lineStyle(4, 0xd97706, 1);
+    plaque.strokeRoundedRect(-350, -145, 700, 290, 24);
+    plaque.lineStyle(1.5, 0xfef08a, 0.45);
+    plaque.strokeRoundedRect(-342, -137, 684, 274, 20);
+
+    // Corner brass rivets
+    const rivetCoords = [
+      [-326, -121],
+      [326, -121],
+      [-326, 121],
+      [326, 121]
+    ];
+    for (const [rx, ry] of rivetCoords) {
+      plaque.fillStyle(0xfbbf24, 1);
+      plaque.fillCircle(rx, ry, 5);
+      plaque.lineStyle(1.5, 0x78350f, 1);
+      plaque.strokeCircle(rx, ry, 5);
+    }
+
+    const titleText = this.add
+      .text(0, -96, "WYATT & EMMA'S HEIRLOOM ARCADE", {
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontSize: '26px',
+        fontStyle: 'bold',
+        color: '#fef08a',
+        stroke: '#271206',
+        strokeThickness: 4
+      })
+      .setOrigin(0.5);
+
+    const percentText = this.add
+      .text(0, -44, '0%', {
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontSize: '32px',
+        fontStyle: 'bold',
+        color: '#fde047',
+        stroke: '#271206',
+        strokeThickness: 5
+      })
+      .setOrigin(0.5);
+
+    // Mahogany & Polished Brass Progress Bar Frame (`width: 560px, height: 38px`)
+    const barW = 560;
+    const barH = 38;
+    const barX = -barW / 2;
+    const barY = -barH / 2 + 8;
+
+    const barTrack = this.add.graphics();
+    // Recessed dark walnut trough
+    barTrack.fillStyle(0x120904, 1);
+    barTrack.fillRoundedRect(barX, barY, barW, barH, 19);
+    // Outer polished brass bezel
+    barTrack.lineStyle(4, 0xf59e0b, 1);
+    barTrack.strokeRoundedRect(barX, barY, barW, barH, 19);
+    // Inner golden rim highlight
+    barTrack.lineStyle(1.5, 0xfef08a, 0.65);
+    barTrack.strokeRoundedRect(barX + 3, barY + 3, barW - 6, barH - 6, 16);
+
+    const barFill = this.add.graphics();
+
+    // Twinkling Starlight Shimmer along the leading edge of the progress fill bar
+    const leadingShimmer = this.add.graphics();
+    leadingShimmer.fillStyle(0xffffff, 0.95);
+    leadingShimmer.fillCircle(0, 0, 7);
+    leadingShimmer.fillStyle(0xfef08a, 0.55);
+    leadingShimmer.fillCircle(0, 0, 15);
+    leadingShimmer.setPosition(barX + 14, barY + barH / 2);
+
+    const shimmerTween = this.tweens.add({
+      targets: leadingShimmer,
+      scaleX: { from: 0.82, to: 1.28 },
+      scaleY: { from: 0.82, to: 1.28 },
+      alpha: { from: 0.72, to: 1.0 },
+      duration: 420,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    const statusSubtitles = [
+      'Polishing the brass gears...',
+      'Inflating the cloud karts...',
+      'Fueling the moon rocket...',
+      'Setting up the unicorn tea party...'
+    ];
+
+    const subtitleText = this.add
+      .text(0, 68, statusSubtitles[0], {
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontSize: '20px',
+        fontStyle: 'italic',
+        color: '#fcd34d',
+        stroke: '#1c0d06',
+        strokeThickness: 3
+      })
+      .setOrigin(0.5);
+
+    root.add([plaque, titleText, percentText, barTrack, barFill, leadingShimmer, subtitleText]);
+
+    const drawProgress = (rawVal: number) => {
+      const clamped = Phaser.Math.Clamp(rawVal, 0, 1);
+      const pct = Math.round(clamped * 100);
+      percentText.setText(`${pct}%`);
+
+      const stageIdx = Math.min(
+        statusSubtitles.length - 1,
+        Math.floor(clamped * statusSubtitles.length)
+      );
+      subtitleText.setText(statusSubtitles[stageIdx]);
+
+      const pad = 5;
+      const innerMaxW = barW - pad * 2;
+      const fillW = Math.max(24, innerMaxW * clamped);
+      const innerH = barH - pad * 2;
+
+      barFill.clear();
+      if (clamped > 0.005) {
+        // Warm golden starlight body fill
+        barFill.fillStyle(0xf59e0b, 1);
+        barFill.fillRoundedRect(barX + pad, barY + pad, fillW, innerH, 14);
+        // Upper starlight specular ribbon
+        barFill.fillStyle(0xfef08a, 0.85);
+        barFill.fillRoundedRect(barX + pad + 4, barY + pad + 3, Math.max(12, fillW - 8), innerH * 0.42, 7);
+      }
+
+      leadingShimmer.setPosition(barX + pad + fillW - 6, barY + barH / 2);
+    };
+
+    drawProgress(0);
+
+    const onProgress = (value: number) => {
+      drawProgress(value);
+    };
+
+    this.load.on('progress', onProgress);
+    this.load.once('complete', () => {
+      drawProgress(1);
+      this.load.off('progress', onProgress);
+      shimmerTween.stop();
+      root.destroy(true);
+    });
   }
 
   public create(): void {

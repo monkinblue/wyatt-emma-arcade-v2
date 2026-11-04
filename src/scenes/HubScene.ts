@@ -37,12 +37,13 @@ interface ShelfActivityCardConfig {
   unlocked?: boolean;
   targetScene?: string;
   comingSoon?: boolean;
+  announceAudio?: string;
 }
 
 const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]> = {
   play: [
     // Page 1: 3 Painted Heirloom Arcade Toys standing directly on the oak shelf
-    // (Balloon Letter Pop + Animal Match Safari both playable right on Page 1!)
+    // (Balloon Letter Pop, Animal Match Safari & Great Hall Box of Ten all playable on Page 1!)
     {
       id: 'bubble-pop',
       title: 'BALLOON LETTER POP',
@@ -70,19 +71,34 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
       targetScene: 'MemoryMatchScene'
     },
     {
-      id: 'doggie-catch',
-      title: "DOGGIE'S TREAT BOUNCE",
-      subtitle: 'Cloud Trampoline Fun',
-      texKey: 'arcade-toy-bounce',
-      baseScale: 0.74,
-      emoji: '🦴',
-      badgeText: 'ARCADE MINI-GAME',
-      accentColor: 0xf472b6,
-      previewSfx: 'doggie',
-      unlocked: false,
-      comingSoon: true
+      id: 'great-hall-box-of-ten',
+      title: 'GREAT HALL BOX OF TEN',
+      subtitle: 'Wizard Dice & 1-10 Math',
+      texKey: 'hub-toy-shutthebox',
+      baseScale: 0.56,
+      emoji: '🎲',
+      badgeText: 'GREAT HALL MATH',
+      accentColor: 0x10b981,
+      previewSfx: 'chime',
+      unlocked: true,
+      targetScene: 'ShutTheBoxScene',
+      announceAudio: '/assets/audio/shutthebox/prompts/welcome_title.mp3'
     },
-    // Page 2: 2 Upcoming Heirloom Arcade Shelf Toys & Pedestals
+    // Page 2: 3 Heirloom Arcade Shelf Toys & Pedestals
+    {
+      id: 'unicorn-castle',
+      title: 'UNICORN CASTLE',
+      subtitle: 'Royal Sticker Kingdom',
+      texKey: 'hub-toy-unicorn',
+      baseScale: 0.72,
+      emoji: '🦄',
+      badgeText: 'ROYAL STICKER KINGDOM',
+      accentColor: 0xf472b6,
+      previewSfx: 'chime',
+      unlocked: true,
+      targetScene: 'UnicornCastleScene',
+      announceAudio: '/assets/audio/unicorn/prompts/welcome_title.mp3'
+    },
     {
       id: 'cloud-racer',
       title: 'ZOOMY CLOUD KART',
@@ -93,19 +109,23 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
       badgeText: 'ARCADE MINI-GAME',
       accentColor: 0xfacc15,
       previewSfx: 'horn',
-      unlocked: false,
-      comingSoon: true
+      unlocked: true,
+      targetScene: 'CloudKartScene',
+      announceAudio: '/assets/audio/cloudkart/prompts/welcome_title.mp3'
     },
     {
       id: 'rocket-number-blast',
       title: 'ROCKET NUMBER BLAST',
-      subtitle: 'Coming Soon',
+      subtitle: 'Starlight Launchpad',
+      texKey: 'hub-toy-rocket',
+      baseScale: 0.72,
       emoji: '🚀',
-      badgeText: 'COMING SOON',
+      badgeText: 'STARLIGHT LAUNCHPAD',
       accentColor: 0x38bdf8,
       previewSfx: 'chime',
-      unlocked: false,
-      comingSoon: true
+      unlocked: true,
+      targetScene: 'RocketBlastScene',
+      announceAudio: '/assets/audio/rocket/prompts/welcome_title.mp3'
     }
   ],
   create: [
@@ -1485,6 +1505,7 @@ export class HubScene extends Phaser.Scene {
           .setAlpha(card.unlocked ? 0.24 : 0.08);
         this.lowerShelfContentContainer.add(hoverGlow);
 
+        this.textures.get(card.texKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
         const toySprite = this.add
           .image(cx + slideOffset, shelfY, card.texKey)
           .setOrigin(0.5, 1.0)
@@ -1646,6 +1667,10 @@ export class HubScene extends Phaser.Scene {
             if (!AudioBus.getMuted() && this.cache.audio.exists('sfx-book-select')) {
               this.sound.play('sfx-book-select', { volume: 0.9 });
             }
+            if (!AudioBus.getMuted() && card.announceAudio) {
+              AudioBus.playLayerSfx(card.announceAudio, 0.8);
+            }
+            Juice.squashAndStretch(this, nameplate, 0.16, 130);
             this.tweens.killTweensOf([toySprite, nameplate]);
             this.tweens.add({
               targets: toySprite,

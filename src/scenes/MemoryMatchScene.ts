@@ -1,27 +1,27 @@
 /**
  * MemoryMatchScene.ts
  * -------------------
- * Mentor Note: "Animal Match Safari" — 10x Heirloom Clockwork Parlor Memory Match Game
+ * Mentor Note: "Animal Match Safari" — Heirloom Mahogany & Emerald Felt Memory Match Game
  * for Wyatt (age 4) and Emma (age 3).
  *
  * Key Architectural Highlights:
- * 1. Tactile 2-Stage 3D Card Flip (`scaleX: 1 -> 0 -> 1`) on an emerald-green baize felt parlor table.
- * 2. Strict Audio Discretion: Card flips play ONLY the crisp tactile `card_flip` wooden click
- *    (zero voice chatter on card flips!). Josh speaks calmly ONLY when a pair is matched, when the
- *    Golden Key unlocks the Mystery Treasure Chest, or when tapping unlocked stickers in the Sanctuary Album.
- * 3. Three Kid-Tailored Grid Sizes:
- *    - `2x3 COZY` (6 giant cards / 3 pairs for Emma)
- *    - `3x4 EXPLORER` (12 cards / 6 pairs)
- *    - `4x4 MASTER` (16 cards / 8 pairs for Wyatt)
- * 4. Three Educational Match Modes:
- *    - `TWINS`: Classic identical pairs across 4 richly painted theme decks
- *    - `MAMA & BABY`: Match adult Safari animals (`Lion`, `Elephant`, `Bear`, `Owl`, `Frog`, `Fox`, `Monkey`, `Duck`)
- *      to their babies (`Cub`, `Calf`, `Owlet`, `Tadpole`, `Kit`, `Duckling`) with color-matched family heart badges
- *    - `LETTERS`: Match carved wooden uppercase starting letters (`L` on `prop-tile`) to painted creatures (`Lion`)
- * 5. Companion Helpers & Mystery Chest:
- *    - Left (`x: 105, y: 500`): Sparky with his Brass Spyglass (2-streak X-Ray Peek reveals 2 unmatched cards!)
- *    - Right (`x: 1175, y: 500`): Doggie with her Firefly Lantern (zero-penalty Firefly Peek hint!)
- *    - Hidden Golden Clockwork Key under one pair on every board that flies up to unlock the Mystery Treasure Chest!
+ * 1. Calm, Spacious Emerald-Green Baize Felt Tabletop (`x: 90..1190, y: 35..565`) with
+ *    oversized cards (`x: 130..1150, y: 55..550`) and zero HUD/text clutter.
+ * 2. Round-Start Face-Up Memorization Preview:
+ *    - Every round deals all cards FACE-UP with a warm golden shimmer countdown bar along the
+ *      top edge of the felt (`3.5s` on `2x3`, `4.5s` on `3x4` / `4x4`), then flips all cards
+ *      face-down in a smooth staggered wave with a crisp wooden card-flip sound.
+ * 3. Strict Audio Discretion:
+ *    - Card flips play ONLY the crisp tactile `card_flip` wooden click.
+ *    - Voice narration speaks ONLY when a pair is matched or when tapping unlocked stickers in
+ *      the Sanctuary Album.
+ * 4. Five Oversized Pure-Picture Bottom Buttons (`96x96px` at `y: 640`, zero text labels):
+ *    - Hub (Arcade House), Grid Size (dynamic mini-grid of 6, 12, or 16 golden cards),
+ *      Match Mode (dynamic Twins / Mama & Baby / Letters illustration), Theme/World (dynamic
+ *      Safari Lion / Ocean Turtle / Dino T-Rex / Treasure Crown sprite), and Sanctuary Album.
+ * 5. Corner Companions:
+ *    - Far Bottom-Left (`x: 65, y: 635`): Sparky (Spyglass X-Ray Peek helper)
+ *    - Far Bottom-Right (`x: 1215, y: 635`): Doggie (Firefly Lantern Hint helper)
  */
 
 import Phaser from 'phaser';
@@ -48,7 +48,7 @@ export interface SanctuaryItemDef {
 }
 
 export const SANCTUARY_CATALOG: SanctuaryItemDef[] = [
-  // 1. SAFARI & WOODLAND (8 Adult + Baby Pairs = 16 sprites, 8 catalog slots + 8 baby bonus)
+  // 1. SAFARI & WOODLAND (8 Adult + Baby Pairs = 16 sprites)
   {
     id: 'safari-lion',
     spriteKey: 'safari-lion',
@@ -454,28 +454,22 @@ export class MemoryMatchScene extends Phaser.Scene {
   private isBoardLocked = false;
   private streakCount = 0;
   private comboCount = 0;
-  private lastMatchedWordKey = 'lion';
-
-  // Hidden Golden Key & Mystery Chest state
-  private hiddenKeyPairId = '';
-  private hiddenKeyUnderCardUid = -1;
-  private isKeyFoundThisRound = false;
-  private underCardKeyProp?: Phaser.GameObjects.Image;
 
   // Stage UI Containers & Sprites
   private boardContainer!: Phaser.GameObjects.Container;
   private fxContainer!: Phaser.GameObjects.Container;
   private sparkySprite!: Phaser.GameObjects.Image;
   private doggieSprite!: Phaser.GameObjects.Image;
-  private streakPipGraphics!: Phaser.GameObjects.Graphics;
-  private topChestSprite!: Phaser.GameObjects.Image;
-  private topKeySlotSprite!: Phaser.GameObjects.Image;
-  private topStickerCountText!: Phaser.GameObjects.Text;
 
-  // Bottom Control Bar Labels
-  private gridBtnLabel?: Phaser.GameObjects.Text;
-  private modeBtnLabel?: Phaser.GameObjects.Text;
-  private themeBtnLabel?: Phaser.GameObjects.Text;
+  // Dynamic Icon Containers for the 5 Pure-Picture Bottom Buttons
+  private gridBtnIconContainer?: Phaser.GameObjects.Container;
+  private modeBtnIconContainer?: Phaser.GameObjects.Container;
+  private themeBtnIconContainer?: Phaser.GameObjects.Container;
+
+  // Round-Start Face-Up Memorization Preview Timers & Shimmer Bar
+  private previewTimers: Phaser.Time.TimerEvent[] = [];
+  private previewBarTween?: Phaser.Tweens.Tween;
+  private previewBarContainer?: Phaser.GameObjects.Container;
 
   // Sanctuary Album Modal
   private sanctuaryModal?: Phaser.GameObjects.Container;
@@ -495,7 +489,6 @@ export class MemoryMatchScene extends Phaser.Scene {
 
     this.ensureGlowTexture();
     this.buildStageBackground();
-    this.buildTopTrophyAlcove();
     this.buildCompanions();
 
     this.boardContainer = this.add.container(0, 0).setDepth(20);
@@ -510,16 +503,24 @@ export class MemoryMatchScene extends Phaser.Scene {
   private loadSaveData(): void {
     const activeKid = ArcadeState.getActiveKid();
     const defaultGrid: MatchGridSizeId = activeKid.id === 'emma' ? '2x3' : '3x4';
-    const defaultUnlocked = ['safari-lion', 'safari-elephant', 'safari-bear', 'ocean-whale', 'dino-trex', 'veh-airship'];
+    const defaultUnlocked = [
+      'safari-lion',
+      'safari-elephant',
+      'safari-bear',
+      'ocean-whale',
+      'dino-trex',
+      'veh-airship'
+    ];
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<MatchSaveData>;
         this.saveData = {
-          unlockedIds: Array.isArray(parsed.unlockedIds) && parsed.unlockedIds.length > 0
-            ? parsed.unlockedIds
-            : defaultUnlocked,
+          unlockedIds:
+            Array.isArray(parsed.unlockedIds) && parsed.unlockedIds.length > 0
+              ? parsed.unlockedIds
+              : defaultUnlocked,
           gridSize: parsed.gridSize ?? defaultGrid,
           mode: parsed.mode ?? 'twins',
           theme: parsed.theme ?? 'safari'
@@ -583,148 +584,75 @@ export class MemoryMatchScene extends Phaser.Scene {
       g.fillStyle(0x1e110a, 1);
       g.fillRect(0, 0, 1280, 720);
       g.fillStyle(0x064e3b, 1);
-      g.fillRoundedRect(170, 115, 940, 480, 22);
+      g.fillRoundedRect(90, 35, 1100, 530, 22);
     }
   }
 
   /**
-   * Top Trophy Alcove (`x: 640, y: 58`):
-   * Houses the Golden Key slot (`match-prop-key`), the Mystery Brass Treasure Chest
-   * (`chest-closed` -> `chest-open`), and the unlocked Sanctuary Sticker counter.
-   */
-  private buildTopTrophyAlcove(): void {
-    const alcove = this.add.container(640, 56).setDepth(30);
-
-    const bg = this.add.graphics();
-    bg.fillStyle(0x1e0f07, 0.94);
-    bg.fillRoundedRect(-175, -36, 350, 72, 18);
-    bg.lineStyle(3, 0xd97706, 0.96);
-    bg.strokeRoundedRect(-175, -36, 350, 72, 18);
-    bg.lineStyle(1.2, 0xfef08a, 0.72);
-    bg.strokeRoundedRect(-169, -30, 338, 60, 14);
-    alcove.add(bg);
-
-    const chestGlow = this.add
-      .image(-12, 0, 'match-radial-glow')
-      .setDisplaySize(110, 82)
-      .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.38);
-    alcove.add(chestGlow);
-
-    // 1. Golden Key Slot (`x: -112` relative to 640 -> `x: 528`)
-    const keyRecess = this.add.graphics();
-    keyRecess.fillStyle(0x0f0703, 0.85);
-    keyRecess.fillCircle(-112, 0, 25);
-    keyRecess.lineStyle(1.5, 0x92400e, 0.85);
-    keyRecess.strokeCircle(-112, 0, 25);
-    alcove.add(keyRecess);
-
-    this.topKeySlotSprite = this.add
-      .image(-112, 0, 'match-prop-key')
-      .setDisplaySize(26, 46)
-      .setTint(0x3b2313)
-      .setAlpha(0.65);
-    alcove.add(this.topKeySlotSprite);
-
-    // 2. Mystery Brass Treasure Chest (`x: -14` relative to 640 -> `x: 626`)
-    this.topChestSprite = this.add
-      .image(-14, 0, 'chest-closed')
-      .setDisplaySize(66, 58);
-    alcove.add(this.topChestSprite);
-
-    // 3. Sanctuary Unlocked Count (`x: 92` relative to 640 -> `x: 732`)
-    this.topStickerCountText = this.add
-      .text(92, 0, `★ ${this.saveData.unlockedIds.length}/${SANCTUARY_CATALOG.length}`, {
-        fontFamily: '"Fredoka", Georgia, serif',
-        fontSize: '20px',
-        fontStyle: 'bold',
-        color: '#fef08a',
-        stroke: '#1c0d06',
-        strokeThickness: 4
-      })
-      .setOrigin(0.5);
-    alcove.add(this.topStickerCountText);
-
-    const hitZone = this.add
-      .zone(640, 56, 350, 72)
-      .setOrigin(0.5)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(31);
-
-    hitZone.on('pointerdown', () => {
-      AudioBus.playSfx('pop');
-      this.openSanctuaryModal();
-    });
-  }
-
-  /**
-   * Left Companion (`x: 105, y: 500`): Sparky with Brass Spyglass + 2-Pip Streak Meter
-   * Right Companion (`x: 1175, y: 500`): Doggie with Firefly Lantern
+   * Far Bottom-Left (`x: 65, y: 635`): Sparky with Brass Spyglass
+   * Far Bottom-Right (`x: 1215, y: 635`): Doggie with Firefly Lantern
+   * Scaled cleanly so they never overlap the expanded card arena or the 5 bottom buttons.
    */
   private buildCompanions(): void {
-    // 1. Sparky (`x: 105, y: 500`)
+    // 1. Sparky (`x: 65, y: 635`)
     const sparkyShadow = this.add.graphics().setDepth(14);
     sparkyShadow.fillStyle(0x080301, 0.55);
-    sparkyShadow.fillEllipse(105, 582, 134, 24);
+    sparkyShadow.fillEllipse(65, 692, 92, 18);
 
     const sparkyGlow = this.add
-      .image(105, 495, 'match-radial-glow')
-      .setDisplaySize(210, 210)
+      .image(65, 632, 'match-radial-glow')
+      .setDisplaySize(145, 145)
       .setTint(0x34d399)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.28)
+      .setAlpha(0.24)
       .setDepth(14);
 
     this.sparkySprite = this.add
-      .image(105, 500, 'char-sparky-spyglass')
-      .setDisplaySize(148, 154)
+      .image(65, 635, 'char-sparky-spyglass')
+      .setDisplaySize(102, 106)
       .setDepth(15);
 
     this.tweens.add({
       targets: [this.sparkySprite, sparkyGlow],
-      y: '-=5',
+      y: '-=4',
       duration: 1900,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
 
-    // 2-Pip Brass Spyglass Charge Meter below Sparky (`x: 105, y: 602`)
-    this.streakPipGraphics = this.add.graphics().setDepth(16);
-    this.drawSparkyStreakPips();
-
     const sparkyZone = this.add
-      .zone(105, 510, 155, 190)
+      .zone(65, 635, 112, 116)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
-      .setDepth(25);
+      .setDepth(36);
 
     sparkyZone.on('pointerdown', () => {
-      if (this.sanctuaryModal) return;
+      if (this.sanctuaryModal || this.isBoardLocked) return;
       this.triggerSparkySpyglassPeek();
     });
 
-    // 2. Doggie (`x: 1175, y: 500`)
+    // 2. Doggie (`x: 1215, y: 635`)
     const doggieShadow = this.add.graphics().setDepth(14);
     doggieShadow.fillStyle(0x080301, 0.55);
-    doggieShadow.fillEllipse(1175, 582, 134, 24);
+    doggieShadow.fillEllipse(1215, 692, 92, 18);
 
     const doggieGlow = this.add
-      .image(1175, 495, 'match-radial-glow')
-      .setDisplaySize(215, 215)
+      .image(1215, 632, 'match-radial-glow')
+      .setDisplaySize(145, 145)
       .setTint(0xfde047)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.34)
+      .setAlpha(0.28)
       .setDepth(14);
 
     this.doggieSprite = this.add
-      .image(1175, 500, 'char-doggie-lantern')
-      .setDisplaySize(136, 154)
+      .image(1215, 635, 'char-doggie-lantern')
+      .setDisplaySize(96, 108)
       .setDepth(15);
 
     this.tweens.add({
       targets: [this.doggieSprite, doggieGlow],
-      y: '-=6',
+      y: '-=4',
       duration: 1650,
       yoyo: true,
       repeat: -1,
@@ -732,52 +660,40 @@ export class MemoryMatchScene extends Phaser.Scene {
     });
 
     const doggieZone = this.add
-      .zone(1175, 510, 155, 190)
+      .zone(1215, 635, 112, 116)
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
-      .setDepth(25);
+      .setDepth(36);
 
     doggieZone.on('pointerdown', () => {
-      if (this.sanctuaryModal) return;
+      if (this.sanctuaryModal || this.isBoardLocked) return;
       this.triggerDoggieFireflyHint();
     });
   }
 
-  private drawSparkyStreakPips(): void {
-    this.streakPipGraphics.clear();
-    const cx = 105;
-    const cy = 602;
-    this.streakPipGraphics.fillStyle(0x1f1108, 0.92);
-    this.streakPipGraphics.fillRoundedRect(cx - 44, cy - 13, 88, 26, 12);
-    this.streakPipGraphics.lineStyle(2, 0xd97706, 0.95);
-    this.streakPipGraphics.strokeRoundedRect(cx - 44, cy - 13, 88, 26, 12);
-
-    for (let i = 0; i < 2; i++) {
-      const px = cx - 18 + i * 36;
-      const active = this.streakCount > i;
-      this.streakPipGraphics.fillStyle(active ? 0xfde047 : 0x3b2313, 1);
-      this.streakPipGraphics.fillCircle(px, cy, 8);
-      this.streakPipGraphics.lineStyle(1.5, active ? 0xffffff : 0x78350f, 0.9);
-      this.streakPipGraphics.strokeCircle(px, cy, 8);
-    }
-  }
-
   // ---------------------------------------------------------------------------
-  // BOARD DEALING & 3D CARD CONTAINERS
+  // BOARD DEALING, EXPANDED FELT BOUNDS (`x: 130..1150, y: 55..550`) & PREVIEW
   // ---------------------------------------------------------------------------
 
-  private getGridDimensions(): { rows: number; cols: number; cardW: number; cardH: number; stepX: number; stepY: number } {
+  private getGridDimensions(): {
+    rows: number;
+    cols: number;
+    cardW: number;
+    cardH: number;
+    stepX: number;
+    stepY: number;
+  } {
+    // Maximized across the spacious emerald-green felt arena (`x: 130..1150, y: 55..550`)
     if (this.gridSize === '2x3') {
-      return { rows: 2, cols: 3, cardW: 158, cardH: 198, stepX: 215, stepY: 214 };
+      return { rows: 2, cols: 3, cardW: 218, cardH: 220, stepX: 280, stepY: 238 };
     }
     if (this.gridSize === '3x4') {
-      return { rows: 3, cols: 4, cardW: 124, cardH: 138, stepX: 175, stepY: 148 };
+      return { rows: 3, cols: 4, cardW: 174, cardH: 148, stepX: 226, stepY: 162 };
     }
-    return { rows: 4, cols: 4, cardW: 104, cardH: 104, stepX: 160, stepY: 112 };
+    return { rows: 4, cols: 4, cardW: 166, cardH: 112, stepX: 220, stepY: 122 };
   }
 
   private selectPairsForBoard(numPairs: number): SanctuaryItemDef[] {
-    // In Mama & Baby mode, always use the 8 Safari Adult+Baby pairs
     let pool: SanctuaryItemDef[];
     if (this.matchMode === 'mama-baby') {
       pool = SANCTUARY_CATALOG.filter((it) => it.theme === 'safari' && Boolean(it.babySpriteKey));
@@ -788,7 +704,6 @@ export class MemoryMatchScene extends Phaser.Scene {
     const shuffled = Phaser.Utils.Array.Shuffle([...pool]);
 
     if (this.matchMode === 'letters') {
-      // Ensure every pair on the board has a unique starting letter so letter matching is 100% unambiguous!
       const uniqueByLetter: SanctuaryItemDef[] = [];
       const usedLetters = new Set<string>();
       for (const item of shuffled) {
@@ -814,28 +729,42 @@ export class MemoryMatchScene extends Phaser.Scene {
     return shuffled.slice(0, numPairs);
   }
 
+  private clearPreviewTimersAndBar(): void {
+    for (const timer of this.previewTimers) {
+      timer.remove(false);
+    }
+    this.previewTimers = [];
+
+    if (this.previewBarTween) {
+      this.previewBarTween.stop();
+      this.previewBarTween = undefined;
+    }
+
+    if (this.previewBarContainer) {
+      this.previewBarContainer.destroy(true);
+      this.previewBarContainer = undefined;
+    }
+  }
+
   private dealNewBoard(): void {
-    this.isBoardLocked = false;
+    this.clearPreviewTimersAndBar();
+
+    // Lock board during the round-start face-up memorization preview
+    this.isBoardLocked = true;
     this.flippedCards = [];
     this.cards = [];
     this.comboCount = 0;
-    this.isKeyFoundThisRound = false;
+    this.streakCount = 0;
     this.boardContainer.removeAll(true);
     this.fxContainer.removeAll(true);
-
-    // Reset top alcove key & chest for the new board
-    this.topKeySlotSprite.setTint(0x3b2313).setAlpha(0.65).setScale(1);
-    this.topChestSprite.setTexture('chest-closed').setDisplaySize(66, 58);
 
     const { rows, cols, cardW, cardH, stepX, stepY } = this.getGridDimensions();
     const numPairs = (rows * cols) / 2;
     const chosenPairs = this.selectPairsForBoard(numPairs);
 
-    // Choose 1 random pair to hide the Golden Clockwork Key underneath!
-    const keyPair = Phaser.Utils.Array.GetRandom(chosenPairs);
-    this.hiddenKeyPairId = keyPair.id;
-
-    const paletteColors = [0xf59e0b, 0x38bdf8, 0x22c55e, 0xa855f7, 0xef4444, 0xfacc15, 0x14b8a6, 0xf472b6];
+    const paletteColors = [
+      0xf59e0b, 0x38bdf8, 0x22c55e, 0xa855f7, 0xef4444, 0xfacc15, 0x14b8a6, 0xf472b6
+    ];
 
     interface RawCardSpec {
       pairId: string;
@@ -907,12 +836,11 @@ export class MemoryMatchScene extends Phaser.Scene {
     });
 
     const shuffledDeck = Phaser.Utils.Array.Shuffle(deckSpecs);
+    // Centered inside the expanded green felt bounds (`x: 130..1150, y: 55..550`)
     const centerX = 640;
-    const centerY = 352;
+    const centerY = 304;
     const startX = centerX - ((cols - 1) * stepX) / 2;
     const startY = centerY - ((rows - 1) * stepY) / 2;
-
-    let keyAssigned = false;
 
     shuffledDeck.forEach((spec, idx) => {
       const r = Math.floor(idx / cols);
@@ -920,32 +848,114 @@ export class MemoryMatchScene extends Phaser.Scene {
       const targetX = Math.round(startX + c * stepX);
       const targetY = Math.round(startY + r * stepY);
 
-      if (!keyAssigned && spec.pairId === this.hiddenKeyPairId) {
-        keyAssigned = true;
-        this.hiddenKeyUnderCardUid = idx;
-
-        // Place subtle glinting Golden Key peeking under this card on the felt tabletop
-        this.underCardKeyProp = this.add
-          .image(targetX, targetY, 'match-prop-key')
-          .setDisplaySize(Math.round(cardW * 0.34), Math.round(cardH * 0.56))
-          .setAngle(-22)
-          .setAlpha(0.85);
-        this.boardContainer.add(this.underCardKeyProp);
-      }
-
-      const card = this.createCardInstance(idx, spec, targetX, targetY, cardW, cardH);
+      // Deal all cards FACE-UP initially for the round-start memorization preview
+      const card = this.createCardInstance(idx, spec, targetX, targetY, cardW, cardH, true);
       this.cards.push(card);
 
-      // Staggered deal-in animation
       card.container.setScale(0.01);
       this.tweens.add({
         targets: card.container,
         scaleX: 1,
         scaleY: 1,
-        duration: 240,
-        delay: idx * 28,
+        duration: 230,
+        delay: idx * 24,
         ease: 'Back.easeOut'
       });
+    });
+
+    // Start the face-up memorization preview countdown (3.5s on 2x3, 4.5s on 3x4 / 4x4)
+    const previewDurationMs = this.gridSize === '2x3' ? 3500 : 4500;
+    this.startMemorizationPreview(previewDurationMs);
+  }
+
+  /**
+   * Non-intrusive golden shimmer bar along the top edge of the felt (`y: 44`) that counts down
+   * the face-up memorization phase (`3.5s` on `2x3`, `4.5s` on `3x4` / `4x4`) before flipping
+   * all cards face-down in a smooth staggered wave.
+   */
+  private startMemorizationPreview(durationMs: number): void {
+    const barW = 540;
+    const barH = 8;
+    const barX = 640;
+    const barY = 44;
+
+    const container = this.add.container(barX, barY).setDepth(48);
+    this.previewBarContainer = container;
+
+    const track = this.add.graphics();
+    track.fillStyle(0x042619, 0.78);
+    track.fillRoundedRect(-barW / 2 - 3, -barH / 2 - 3, barW + 6, barH + 6, 7);
+    track.lineStyle(1.5, 0xd97706, 0.85);
+    track.strokeRoundedRect(-barW / 2 - 3, -barH / 2 - 3, barW + 6, barH + 6, 7);
+    container.add(track);
+
+    const fill = this.add.graphics();
+    const sparkle = this.add
+      .image(barW / 2, 0, 'match-radial-glow')
+      .setDisplaySize(32, 32)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.85);
+    container.add([fill, sparkle]);
+
+    const progressState = { p: 1 };
+    const redrawBar = (p: number): void => {
+      fill.clear();
+      const currentW = Math.max(4, Math.round(barW * p));
+      fill.fillStyle(0xfbbf24, 0.95);
+      fill.fillRoundedRect(-barW / 2, -barH / 2, currentW, barH, 4);
+      fill.fillStyle(0xfef08a, 0.75);
+      fill.fillRoundedRect(-barW / 2, -barH / 2, currentW, Math.max(2, barH * 0.45), 3);
+      sparkle.setX(-barW / 2 + currentW);
+    };
+    redrawBar(1);
+
+    this.previewBarTween = this.tweens.add({
+      targets: progressState,
+      p: 0,
+      duration: durationMs,
+      ease: 'Linear',
+      onUpdate: () => {
+        redrawBar(progressState.p);
+      },
+      onComplete: () => {
+        if (this.previewBarContainer) {
+          this.tweens.add({
+            targets: this.previewBarContainer,
+            alpha: 0,
+            duration: 200,
+            onComplete: () => {
+              this.previewBarContainer?.destroy(true);
+              this.previewBarContainer = undefined;
+            }
+          });
+        }
+        this.flipAllCardsFaceDownWave();
+      }
+    });
+  }
+
+  private flipAllCardsFaceDownWave(): void {
+    const total = this.cards.length;
+    if (total === 0) {
+      this.isBoardLocked = false;
+      return;
+    }
+
+    let completedCount = 0;
+    this.cards.forEach((card, idx) => {
+      const t = this.time.delayedCall(idx * 42, () => {
+        // Play pleasant staggered wooden flip clicks across the wave without overlapping every single frame
+        if (idx === 0 || idx === Math.floor(total / 2) || idx === total - 1) {
+          this.audio.playCardFlip();
+        }
+        this.flipCardFaceDown(card, () => {
+          completedCount++;
+          if (completedCount >= total) {
+            this.isBoardLocked = false;
+          }
+        });
+      });
+      this.previewTimers.push(t);
     });
   }
 
@@ -963,7 +973,8 @@ export class MemoryMatchScene extends Phaser.Scene {
     x: number,
     y: number,
     width: number,
-    height: number
+    height: number,
+    startFaceUp = true
   ): CardInstance {
     const container = this.add.container(x, y);
 
@@ -981,7 +992,10 @@ export class MemoryMatchScene extends Phaser.Scene {
     container.add(highlightRing);
 
     // 3. Face-down card back (`card-back`)
-    const backImage = this.add.image(0, 0, 'card-back').setDisplaySize(width, height);
+    const backImage = this.add
+      .image(0, 0, 'card-back')
+      .setDisplaySize(width, height)
+      .setVisible(!startFaceUp);
     container.add(backImage);
 
     // 4. Translucent X-Ray Spyglass overlay icon on the back of the card (hidden until Sparky peeks)
@@ -993,18 +1007,19 @@ export class MemoryMatchScene extends Phaser.Scene {
     container.add(xraySprite);
 
     // 5. Face-up card front container (`card-front` + centered illustration or wooden letter tile)
-    const frontContainer = this.add.container(0, 0).setVisible(false);
+    const frontContainer = this.add.container(0, 0).setVisible(startFaceUp);
     const frontFrame = this.add.image(0, 0, 'card-front').setDisplaySize(width, height);
     frontContainer.add(frontFrame);
 
     if (spec.cardKind === 'letter') {
+      const tileSize = Math.round(Math.min(width, height) * 0.72);
       const tileImg = this.add
         .image(0, 0, 'prop-tile')
-        .setDisplaySize(Math.round(width * 0.72), Math.round(width * 0.72));
+        .setDisplaySize(tileSize, tileSize);
       const letterTxt = this.add
         .text(0, -2, spec.letter, {
           fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: `${Math.round(width * 0.42)}px`,
+          fontSize: `${Math.round(tileSize * 0.58)}px`,
           fontStyle: 'bold',
           color: '#2c1507',
           stroke: '#fef3c7',
@@ -1024,9 +1039,9 @@ export class MemoryMatchScene extends Phaser.Scene {
       const by = -height / 2 + 18;
       const badgeG = this.add.graphics();
       badgeG.fillStyle(spec.badgeColor, 1);
-      badgeG.fillCircle(bx, by, 11);
+      badgeG.fillCircle(bx, by, 12);
       badgeG.lineStyle(2, 0xffffff, 0.9);
-      badgeG.strokeCircle(bx, by, 11);
+      badgeG.strokeCircle(bx, by, 12);
       frontContainer.add(badgeG);
 
       const badgeSymbol =
@@ -1039,7 +1054,7 @@ export class MemoryMatchScene extends Phaser.Scene {
       const badgeTxt = this.add
         .text(bx, by, badgeSymbol, {
           fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: '12px',
+          fontSize: '13px',
           fontStyle: 'bold',
           color: '#1e0f07'
         })
@@ -1063,7 +1078,7 @@ export class MemoryMatchScene extends Phaser.Scene {
       y,
       width,
       height,
-      isFlipped: false,
+      isFlipped: startFaceUp,
       isMatched: false,
       isAnimating: false,
       container,
@@ -1099,7 +1114,13 @@ export class MemoryMatchScene extends Phaser.Scene {
   // ---------------------------------------------------------------------------
 
   private onCardTapped(card: CardInstance): void {
-    if (this.sanctuaryModal || this.isBoardLocked || card.isFlipped || card.isMatched || card.isAnimating) {
+    if (
+      this.sanctuaryModal ||
+      this.isBoardLocked ||
+      card.isFlipped ||
+      card.isMatched ||
+      card.isAnimating
+    ) {
       return;
     }
     if (this.flippedCards.length >= 2) {
@@ -1194,8 +1215,6 @@ export class MemoryMatchScene extends Phaser.Scene {
 
       this.comboCount++;
       this.streakCount = Math.min(2, this.streakCount + 1);
-      this.drawSparkyStreakPips();
-      this.lastMatchedWordKey = first.wordKey;
 
       // Unlock this creature in the Sanctuary Album if not yet unlocked
       this.unlockSanctuaryItem(first.pairId);
@@ -1214,22 +1233,13 @@ export class MemoryMatchScene extends Phaser.Scene {
         ease: 'Back.easeOut'
       });
 
-      // Check if this matched pair was hiding the Golden Clockwork Key!
-      const foundKeyNow = !this.isKeyFoundThisRound && first.pairId === this.hiddenKeyPairId;
-
-      // 2. Speak the matched creature/treasure word calmly at volume 0.82
-      void this.audio
-        .playMatchAnnouncement(
-          this.matchMode,
-          first.wordKey,
-          second.wordKey,
-          first.letter
-        )
-        .then(() => {
-          if (foundKeyNow) {
-            this.launchGoldenKeyToChest(first, second);
-          }
-        });
+      // 2. Speak the matched creature/treasure word calmly
+      void this.audio.playMatchAnnouncement(
+        this.matchMode,
+        first.wordKey,
+        second.wordKey,
+        first.letter
+      );
 
       this.flippedCards = [];
       this.isBoardLocked = false;
@@ -1240,19 +1250,17 @@ export class MemoryMatchScene extends Phaser.Scene {
         this.time.delayedCall(650, () => {
           if (this.streakCount >= 2) {
             this.streakCount = 0;
-            this.drawSparkyStreakPips();
             this.triggerSparkySpyglassPeek();
           }
         });
       }
 
       if (remainingUnmatched.length === 0) {
-        this.onBoardCleared(foundKeyNow ? 2200 : 1200);
+        this.onBoardCleared(1200);
       }
     } else {
       // MISMATCH — zero penalty, gentle pause so Wyatt & Emma can memorize the pictures
       this.streakCount = 0;
-      this.drawSparkyStreakPips();
 
       this.time.delayedCall(920, () => {
         this.audio.playMismatchThud();
@@ -1265,84 +1273,11 @@ export class MemoryMatchScene extends Phaser.Scene {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // HIDDEN GOLDEN KEY & MYSTERY TREASURE CHEST UNLOCK
-  // ---------------------------------------------------------------------------
-
-  private launchGoldenKeyToChest(cardA: CardInstance, cardB: CardInstance): void {
-    if (this.isKeyFoundThisRound) return;
-    this.isKeyFoundThisRound = true;
-
-    if (this.underCardKeyProp) {
-      this.underCardKeyProp.destroy();
-      this.underCardKeyProp = undefined;
-    }
-
-    const originCard = cardA.uid === this.hiddenKeyUnderCardUid ? cardA : cardB;
-    const startX = originCard.x;
-    const startY = originCard.y;
-    const endX = 626;
-    const endY = 56;
-
-    const flyingKey = this.add
-      .image(startX, startY, 'match-prop-key')
-      .setDisplaySize(44, 78)
-      .setDepth(55);
-    this.fxContainer.add(flyingKey);
-
-    const curve = new Phaser.Curves.QuadraticBezier(
-      new Phaser.Math.Vector2(startX, startY),
-      new Phaser.Math.Vector2((startX + endX) / 2, Math.min(startY, endY) - 120),
-      new Phaser.Math.Vector2(endX, endY)
-    );
-
-    const pathFollower = { t: 0 };
-    this.tweens.add({
-      targets: pathFollower,
-      t: 1,
-      duration: 780,
-      ease: 'Cubic.easeInOut',
-      onUpdate: () => {
-        const pt = curve.getPoint(pathFollower.t);
-        flyingKey.setPosition(pt.x, pt.y);
-        flyingKey.setAngle(pathFollower.t * 360);
-      },
-      onComplete: () => {
-        flyingKey.destroy();
-
-        // Light up Key Slot & Swap Closed Chest -> Open Chest with Gems!
-        this.topKeySlotSprite.clearTint().setAlpha(1);
-        Juice.squashAndStretch(this, this.topKeySlotSprite, 0.25, 180);
-
-        this.topChestSprite.setTexture('chest-open').setDisplaySize(72, 68);
-        Juice.squashAndStretch(this, this.topChestSprite, 0.28, 220);
-        Juice.burstStars(this, 626, 56, 22, [0xfef08a, 0xfbbf24, 0x34d399, 0x60a5fa]);
-
-        this.audio.playChestUnlock();
-        void this.audio.playWhisper('key_found');
-
-        // Bonus unlock a locked Sanctuary sticker!
-        this.unlockRandomLockedSanctuarySticker();
-      }
-    });
-  }
-
   private unlockSanctuaryItem(itemId: string): void {
     if (!this.saveData.unlockedIds.includes(itemId)) {
       this.saveData.unlockedIds.push(itemId);
       this.persistSaveData();
-      this.topStickerCountText.setText(
-        `★ ${this.saveData.unlockedIds.length}/${SANCTUARY_CATALOG.length}`
-      );
-      Juice.squashAndStretch(this, this.topStickerCountText, 0.2, 150);
     }
-  }
-
-  private unlockRandomLockedSanctuarySticker(): void {
-    const locked = SANCTUARY_CATALOG.filter((it) => !this.saveData.unlockedIds.includes(it.id));
-    if (locked.length === 0) return;
-    const chosen = Phaser.Utils.Array.GetRandom(locked);
-    this.unlockSanctuaryItem(chosen.id);
   }
 
   private onBoardCleared(delayMs: number): void {
@@ -1350,7 +1285,7 @@ export class MemoryMatchScene extends Phaser.Scene {
       this.audio.playChestUnlock();
       void this.audio.playWhisper('board_clear');
 
-      Juice.burstStars(this, 640, 340, 32, [0xfef08a, 0xfbbf24, 0x34d399, 0xf472b6]);
+      Juice.burstStars(this, 640, 304, 32, [0xfef08a, 0xfbbf24, 0x34d399, 0xf472b6]);
       Juice.squashAndStretch(this, this.sparkySprite, 0.22, 220);
       Juice.squashAndStretch(this, this.doggieSprite, 0.22, 220);
 
@@ -1364,11 +1299,6 @@ export class MemoryMatchScene extends Phaser.Scene {
   // SPARKY'S SPYGLASS X-RAY PEEK & DOGGIE'S FIREFLY LANTERN HINT
   // ---------------------------------------------------------------------------
 
-  /**
-   * Shines a warm golden spyglass beam from Sparky (`105, 480`) across 2 unmatched face-down cards,
-   * briefly revealing their translucent ghostly icons (`alpha: 0.72`) through the mahogany card backs
-   * for 2.2 seconds!
-   */
   private triggerSparkySpyglassPeek(): void {
     const faceDownUnmatched = this.cards.filter((c) => !c.isMatched && !c.isFlipped);
     if (faceDownUnmatched.length === 0) return;
@@ -1376,7 +1306,6 @@ export class MemoryMatchScene extends Phaser.Scene {
     this.audio.playSpyglassPeek();
     Juice.squashAndStretch(this, this.sparkySprite, 0.22, 180);
 
-    // Pick a matching pair if available so the X-Ray peek is super helpful!
     const byPair = new Map<string, CardInstance[]>();
     for (const c of faceDownUnmatched) {
       const list = byPair.get(c.pairId) ?? [];
@@ -1395,7 +1324,7 @@ export class MemoryMatchScene extends Phaser.Scene {
     targets.forEach((card) => {
       beamG.fillStyle(0xfef08a, 0.16);
       beamG.beginPath();
-      beamG.moveTo(135, 485);
+      beamG.moveTo(95, 615);
       beamG.lineTo(card.x - 36, card.y - 36);
       beamG.lineTo(card.x + 36, card.y + 36);
       beamG.closePath();
@@ -1420,10 +1349,6 @@ export class MemoryMatchScene extends Phaser.Scene {
     });
   }
 
-  /**
-   * Launches a glowing `match-prop-firefly` from Doggie's lantern (`1175, 480`) that hovers over
-   * a matching pair on the board and makes both tiles gently wiggle with golden sparkles—zero penalty!
-   */
   private triggerDoggieFireflyHint(): void {
     const unmatched = this.cards.filter((c) => !c.isMatched);
     if (unmatched.length < 2) return;
@@ -1431,7 +1356,6 @@ export class MemoryMatchScene extends Phaser.Scene {
     this.audio.playFireflyTwinkle();
     Juice.squashAndStretch(this, this.doggieSprite, 0.22, 180);
 
-    // Find a matching pair (prioritizing any currently flipped card's partner!)
     let targetPairId = unmatched[0].pairId;
     if (this.flippedCards.length === 1) {
       targetPairId = this.flippedCards[0].pairId;
@@ -1445,7 +1369,7 @@ export class MemoryMatchScene extends Phaser.Scene {
 
     pairCards.forEach((card, idx) => {
       const firefly = this.add
-        .image(1155, 485, 'match-prop-firefly')
+        .image(1185, 615, 'match-prop-firefly')
         .setDisplaySize(54, 44)
         .setDepth(52);
       this.fxContainer.add(firefly);
@@ -1488,118 +1412,103 @@ export class MemoryMatchScene extends Phaser.Scene {
   }
 
   // ---------------------------------------------------------------------------
-  // BOTTOM CONTROL BAR (`y: 672` — 7 EVENLY SPACED BRASS BUTTONS)
+  // FIVE OVERSIZED PURE-PICTURE BOTTOM BUTTONS (`96x96px` at `y: 640`)
   // ---------------------------------------------------------------------------
 
   private buildBottomControlBar(): void {
-    const barY = 672;
-    const xs = [200, 346, 493, 640, 786, 933, 1080];
+    const barY = 640;
+    const xs = [300, 470, 640, 810, 980];
 
-    const specs: Array<{
+    const buttonDefs: Array<{
       id: string;
-      iconKey: string;
-      label: string;
       x: number;
+      mountIcon: (iconContainer: Phaser.GameObjects.Container) => void;
       onClick: () => void;
-      assignLabel?: (txt: Phaser.GameObjects.Text) => void;
     }> = [
+      // 1. Hub Button (Arcade House icon)
       {
         id: 'hub',
-        iconKey: 'ui-back',
-        label: 'HUB',
         x: xs[0],
+        mountIcon: (iconContainer) => {
+          const icon = this.add.image(0, 0, 'ui-back');
+          this.fitSpriteInsideBox(icon, 68, 68);
+          iconContainer.add(icon);
+        },
         onClick: () => {
+          this.clearPreviewTimersAndBar();
           this.audio.stopVoiceQueue();
           AudioBus.playSfx('pop');
           this.scene.start('HubScene');
         }
       },
+      // 2. Grid Size Button (`2x3` -> `3x4` -> `4x4` dynamic visual mini-grid)
       {
         id: 'grid',
-        iconKey: 'ui-grid',
-        label: this.getGridLabelText(),
         x: xs[1],
-        assignLabel: (txt) => {
-          this.gridBtnLabel = txt;
+        mountIcon: (iconContainer) => {
+          this.gridBtnIconContainer = iconContainer;
+          this.renderGridButtonIcon();
         },
         onClick: () => {
           const order: MatchGridSizeId[] = ['2x3', '3x4', '4x4'];
           this.gridSize = order[(order.indexOf(this.gridSize) + 1) % order.length];
-          this.gridBtnLabel?.setText(this.getGridLabelText());
+          this.renderGridButtonIcon();
           this.persistSaveData();
           AudioBus.playSfx('tab');
           this.dealNewBoard();
         }
       },
+      // 3. Match Mode Button (`Twins` -> `Mama & Baby` -> `Letters` dynamic visual picture)
       {
         id: 'mode',
-        iconKey: 'ui-mode',
-        label: this.getModeLabelText(),
         x: xs[2],
-        assignLabel: (txt) => {
-          this.modeBtnLabel = txt;
+        mountIcon: (iconContainer) => {
+          this.modeBtnIconContainer = iconContainer;
+          this.renderModeButtonIcon();
         },
         onClick: () => {
           const order: MatchModeId[] = ['twins', 'mama-baby', 'letters'];
           this.matchMode = order[(order.indexOf(this.matchMode) + 1) % order.length];
           if (this.matchMode === 'mama-baby') {
             this.activeTheme = 'safari';
-            this.themeBtnLabel?.setText(this.getThemeLabelText());
+            this.renderThemeButtonIcon();
           }
-          this.modeBtnLabel?.setText(this.getModeLabelText());
+          this.renderModeButtonIcon();
           this.persistSaveData();
           AudioBus.playSfx('tab');
           this.dealNewBoard();
         }
       },
+      // 4. Theme / World Button (`Safari` -> `Ocean` -> `Dinos` -> `Treasures` dynamic sprite)
       {
         id: 'theme',
-        iconKey: 'ui-theme',
-        label: this.getThemeLabelText(),
         x: xs[3],
-        assignLabel: (txt) => {
-          this.themeBtnLabel = txt;
+        mountIcon: (iconContainer) => {
+          this.themeBtnIconContainer = iconContainer;
+          this.renderThemeButtonIcon();
         },
         onClick: () => {
           const order: MatchThemeId[] = ['safari', 'ocean', 'dino', 'treasures'];
           this.activeTheme = order[(order.indexOf(this.activeTheme) + 1) % order.length];
           if (this.matchMode === 'mama-baby' && this.activeTheme !== 'safari') {
             this.matchMode = 'twins';
-            this.modeBtnLabel?.setText(this.getModeLabelText());
+            this.renderModeButtonIcon();
           }
-          this.themeBtnLabel?.setText(this.getThemeLabelText());
+          this.renderThemeButtonIcon();
           this.persistSaveData();
           AudioBus.playSfx('tab');
           this.dealNewBoard();
         }
       },
-      {
-        id: 'peek',
-        iconKey: 'ui-hint',
-        label: 'PEEK',
-        x: xs[4],
-        onClick: () => {
-          this.triggerDoggieFireflyHint();
-        }
-      },
-      {
-        id: 'hear',
-        iconKey: 'ui-speak',
-        label: 'HEAR',
-        x: xs[5],
-        onClick: () => {
-          if (this.matchMode === 'mama-baby') {
-            void this.audio.playWhisper('mama_baby');
-          } else {
-            void this.audio.playWord(this.lastMatchedWordKey);
-          }
-        }
-      },
+      // 5. Album Button (Ornate Sanctuary Sticker Book icon)
       {
         id: 'album',
-        iconKey: 'ui-sanctuary',
-        label: 'ALBUM',
-        x: xs[6],
+        x: xs[4],
+        mountIcon: (iconContainer) => {
+          const icon = this.add.image(0, 0, 'ui-sanctuary');
+          this.fitSpriteInsideBox(icon, 70, 70);
+          iconContainer.add(icon);
+        },
         onClick: () => {
           AudioBus.playSfx('pop');
           this.openSanctuaryModal();
@@ -1607,52 +1516,170 @@ export class MemoryMatchScene extends Phaser.Scene {
       }
     ];
 
-    specs.forEach((spec) => {
-      const btn = this.add.container(spec.x, barY - 8).setDepth(35);
+    buttonDefs.forEach((def) => {
+      const btn = this.add.container(def.x, barY).setDepth(35);
 
-      const icon = this.add.image(0, -4, spec.iconKey).setDisplaySize(54, 54);
-      const plaque = this.add.graphics();
-      plaque.fillStyle(0x1f1108, 0.94);
-      plaque.fillRoundedRect(-52, 20, 104, 20, 6);
-      plaque.lineStyle(1.5, 0xd97706, 0.92);
-      plaque.strokeRoundedRect(-52, 20, 104, 20, 6);
+      // Tactile 96x96 brass-and-mahogany square picture button frame (zero text plaques!)
+      const frameG = this.add.graphics();
+      // Drop shadow
+      frameG.fillStyle(0x090402, 0.65);
+      frameG.fillRoundedRect(-48, -43, 96, 96, 18);
+      // Polished brass outer bezel
+      frameG.fillStyle(0xd97706, 1);
+      frameG.fillRoundedRect(-48, -48, 96, 96, 18);
+      frameG.lineStyle(2.5, 0xfef08a, 0.95);
+      frameG.strokeRoundedRect(-48, -48, 96, 96, 18);
+      // Warm mahogany recessed face
+      frameG.fillStyle(0x26130a, 0.98);
+      frameG.fillRoundedRect(-41, -41, 82, 82, 13);
+      frameG.lineStyle(1.5, 0x92400e, 0.9);
+      frameG.strokeRoundedRect(-41, -41, 82, 82, 13);
+      // 4 brass corner rivets
+      frameG.fillStyle(0xfde047, 0.9);
+      frameG.fillCircle(-36, -36, 2.2);
+      frameG.fillCircle(36, -36, 2.2);
+      frameG.fillCircle(-36, 36, 2.2);
+      frameG.fillCircle(36, 36, 2.2);
 
-      const txt = this.add
-        .text(0, 30, spec.label, {
-          fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: '11px',
-          fontStyle: 'bold',
-          color: '#fef08a'
-        })
-        .setOrigin(0.5);
+      const iconContainer = this.add.container(0, 0);
+      def.mountIcon(iconContainer);
 
-      spec.assignLabel?.(txt);
-      btn.add([icon, plaque, txt]);
+      btn.add([frameG, iconContainer]);
 
-      Juice.makeTactileButton(this, btn, 96, 72, () => {
-        if (this.sanctuaryModal && spec.id !== 'album') return;
-        spec.onClick();
+      Juice.makeTactileButton(this, btn, 96, 96, () => {
+        if (this.sanctuaryModal && def.id !== 'album') return;
+        def.onClick();
       });
     });
   }
 
-  private getGridLabelText(): string {
-    if (this.gridSize === '2x3') return '2x3 COZY';
-    if (this.gridSize === '3x4') return '3x4 EXPLORER';
-    return '4x4 MASTER';
+  /**
+   * Dynamically draws 6 big golden rectangles (`2x3`), 12 medium rectangles (`3x4`),
+   * or 16 small rectangles (`4x4`) inside the Grid Size button face.
+   */
+  private renderGridButtonIcon(): void {
+    if (!this.gridBtnIconContainer) return;
+    this.gridBtnIconContainer.removeAll(true);
+
+    const g = this.add.graphics();
+    let rows = 2;
+    let cols = 3;
+    let cellW = 19;
+    let cellH = 25;
+    let gapX = 5;
+    let gapY = 6;
+    let radius = 4;
+
+    if (this.gridSize === '3x4') {
+      rows = 3;
+      cols = 4;
+      cellW = 14;
+      cellH = 17;
+      gapX = 4;
+      gapY = 4;
+      radius = 3;
+    } else if (this.gridSize === '4x4') {
+      rows = 4;
+      cols = 4;
+      cellW = 14;
+      cellH = 13;
+      gapX = 4;
+      gapY = 3.5;
+      radius = 2.5;
+    }
+
+    const totalW = cols * cellW + (cols - 1) * gapX;
+    const totalH = rows * cellH + (rows - 1) * gapY;
+    const startX = -totalW / 2;
+    const startY = -totalH / 2;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const rx = startX + c * (cellW + gapX);
+        const ry = startY + r * (cellH + gapY);
+        g.fillStyle(0x0f0703, 0.65);
+        g.fillRoundedRect(rx + 1, ry + 1.5, cellW, cellH, radius);
+        g.fillStyle(0xfbbf24, 1);
+        g.fillRoundedRect(rx, ry, cellW, cellH, radius);
+        g.lineStyle(1.4, 0xfef08a, 0.95);
+        g.strokeRoundedRect(rx, ry, cellW, cellH, radius);
+      }
+    }
+
+    this.gridBtnIconContainer.add(g);
   }
 
-  private getModeLabelText(): string {
-    if (this.matchMode === 'twins') return 'TWINS';
-    if (this.matchMode === 'mama-baby') return 'MAMA & BABY';
-    return 'LETTERS';
+  /**
+   * Cycles the Match Mode button picture clearly on every click:
+   * - `twins`: Two identical animal sprites side-by-side (`safari-lion` + `safari-lion`)
+   * - `mama-baby`: Large adult animal sprite (`safari-lion`) next to small baby sprite (`safari-lion-cub`)
+   * - `letters`: Bold wooden letter block (`A`) next to an animal badge (`safari-lion`)
+   */
+  private renderModeButtonIcon(): void {
+    if (!this.modeBtnIconContainer) return;
+    this.modeBtnIconContainer.removeAll(true);
+
+    const representativeKey = this.getThemeRepresentativeSpriteKey();
+
+    if (this.matchMode === 'twins') {
+      const leftSprite = this.add.image(-17, 2, representativeKey).setAngle(-5);
+      this.fitSpriteInsideBox(leftSprite, 40, 46);
+      const rightSprite = this.add.image(17, 2, representativeKey).setAngle(5);
+      this.fitSpriteInsideBox(rightSprite, 40, 46);
+      this.modeBtnIconContainer.add([leftSprite, rightSprite]);
+    } else if (this.matchMode === 'mama-baby') {
+      const mamaSprite = this.add.image(-14, 0, 'safari-lion');
+      this.fitSpriteInsideBox(mamaSprite, 46, 52);
+      const babySprite = this.add.image(19, 9, 'safari-lion-cub');
+      this.fitSpriteInsideBox(babySprite, 30, 34);
+      const heart = this.add
+        .text(10, -20, '♥', {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '18px',
+          fontStyle: 'bold',
+          color: '#f472b6',
+          stroke: '#1e0f07',
+          strokeThickness: 3
+        })
+        .setOrigin(0.5);
+      this.modeBtnIconContainer.add([mamaSprite, babySprite, heart]);
+    } else {
+      const tile = this.add.image(-17, 0, 'prop-tile').setDisplaySize(38, 38);
+      const letterTxt = this.add
+        .text(-17, -1, 'A', {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '23px',
+          fontStyle: 'bold',
+          color: '#2c1507',
+          stroke: '#fef3c7',
+          strokeThickness: 2
+        })
+        .setOrigin(0.5);
+      const animalBadge = this.add.image(18, 2, representativeKey);
+      this.fitSpriteInsideBox(animalBadge, 38, 44);
+      this.modeBtnIconContainer.add([tile, letterTxt, animalBadge]);
+    }
   }
 
-  private getThemeLabelText(): string {
-    if (this.activeTheme === 'safari') return 'SAFARI';
-    if (this.activeTheme === 'ocean') return 'OCEAN';
-    if (this.activeTheme === 'dino') return 'DINOS';
-    return 'TREASURES';
+  /**
+   * Displays a large, vibrant artwork sprite from the currently active theme right inside
+   * the Theme / World button (`safari-lion`, `ocean-turtle`, `dino-trex`, `tr-crown`).
+   */
+  private renderThemeButtonIcon(): void {
+    if (!this.themeBtnIconContainer) return;
+    this.themeBtnIconContainer.removeAll(true);
+
+    const spriteKey = this.getThemeRepresentativeSpriteKey();
+    const icon = this.add.image(0, 0, spriteKey);
+    this.fitSpriteInsideBox(icon, 68, 68);
+    this.themeBtnIconContainer.add(icon);
+  }
+
+  private getThemeRepresentativeSpriteKey(): string {
+    if (this.activeTheme === 'safari') return 'safari-lion';
+    if (this.activeTheme === 'ocean') return 'ocean-turtle';
+    if (this.activeTheme === 'dino') return 'dino-trex';
+    return 'tr-crown';
   }
 
   // ---------------------------------------------------------------------------

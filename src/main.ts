@@ -15,6 +15,10 @@ import { MelodyMakerScene } from './scenes/MelodyMakerScene';
 import { TinkerWorkshopScene } from './scenes/TinkerWorkshopScene';
 import { BalloonPopScene } from './scenes/BalloonPopScene';
 import { MemoryMatchScene } from './scenes/MemoryMatchScene';
+import { ShutTheBoxScene } from './scenes/ShutTheBoxScene';
+import { CloudKartScene } from './scenes/CloudKartScene';
+import { RocketBlastScene } from './scenes/RocketBlastScene';
+import { UnicornCastleScene } from './scenes/UnicornCastleScene';
 import { ColoradoStoryScene } from './scenes/ColoradoStoryScene';
 import { AudioBus } from './core/AudioBus';
 
@@ -75,6 +79,10 @@ const config: Phaser.Types.Core.GameConfig = {
     TinkerWorkshopScene,
     BalloonPopScene,
     MemoryMatchScene,
+    ShutTheBoxScene,
+    CloudKartScene,
+    RocketBlastScene,
+    UnicornCastleScene,
     ColoradoStoryScene
   ]
 };

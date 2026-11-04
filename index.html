@@ -8,7 +8,7 @@
     />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="theme-color" content="#1a1635" />
+    <meta name="theme-color" content="#120c08" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Wyatt &amp; Emma Arcade v2.0</title>
     <style>
@@ -27,7 +27,7 @@
         width: 100vw;
         height: 100vh;
         overflow: hidden;
-        background: radial-gradient(circle at center, #1e1942 0%, #0d0a1f 100%);
+        background: radial-gradient(circle at center, #24160e 0%, #120c08 100%);
         touch-action: none;
         font-family: 'Fredoka', 'Nunito', 'Comic Sans MS', 'Chalkboard SE', system-ui, -apple-system, sans-serif;
       }
@@ -47,9 +47,80 @@
         border-radius: 14px;
         box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
       }
+
+      /* Instant Zero-Dependency Heirloom Mahogany & Brass Pre-Boot Splash */
+      #heirloom-boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 50% 42%, #29180e 0%, #120c08 78%, #090604 100%);
+        transition: opacity 0.38s ease-out;
+        pointer-events: none;
+      }
+
+      .heirloom-splash-plaque {
+        padding: 36px 52px;
+        border-radius: 22px;
+        background: linear-gradient(180deg, #2d1a0e 0%, #1a0f08 100%);
+        border: 3px solid #d97706;
+        box-shadow:
+          0 0 0 6px rgba(120, 53, 15, 0.45),
+          0 22px 60px rgba(0, 0, 0, 0.85),
+          inset 0 2px 12px rgba(254, 240, 138, 0.22);
+        text-align: center;
+        max-width: 90vw;
+      }
+
+      .heirloom-splash-crest {
+        font-size: 32px;
+        letter-spacing: 8px;
+        color: #fde047;
+        margin-bottom: 10px;
+        text-shadow: 0 0 14px rgba(251, 191, 36, 0.65);
+        animation: heirloomTwinkle 1.6s ease-in-out infinite alternate;
+      }
+
+      .heirloom-splash-title {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: clamp(22px, 3.2vw, 34px);
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: #fef08a;
+        text-shadow: 0 3px 8px rgba(0, 0, 0, 0.9), 0 0 18px rgba(245, 158, 11, 0.35);
+        margin-bottom: 12px;
+      }
+
+      .heirloom-splash-subtitle {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: clamp(15px, 2vw, 20px);
+        font-style: italic;
+        color: #fcd34d;
+        opacity: 0.92;
+      }
+
+      @keyframes heirloomTwinkle {
+        0% {
+          transform: scale(0.97);
+          opacity: 0.82;
+        }
+        100% {
+          transform: scale(1.04);
+          opacity: 1;
+        }
+      }
     </style>
   </head>
   <body>
+    <div id="heirloom-boot-splash">
+      <div class="heirloom-splash-plaque">
+        <div class="heirloom-splash-crest">&#10022; &#9733; &#10022;</div>
+        <div class="heirloom-splash-title">WYATT &amp; EMMA'S HEIRLOOM ARCADE</div>
+        <div class="heirloom-splash-subtitle">Waking up the Toy Cabinet...</div>
+      </div>
+    </div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
