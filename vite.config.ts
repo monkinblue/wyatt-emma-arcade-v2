@@ -6,28 +6,58 @@ export default defineConfig({
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'assets/**/*'],
+      includeAssets: [
+        'favicon.svg',
+        'apple-touch-icon.png',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'assets/**/*'
+      ],
       manifest: {
-        name: 'Wyatt & Emma Arcade v2.0',
-        short_name: 'W&E Arcade',
+        name: "Wyatt & Emma's Heirloom Arcade",
+        short_name: 'Wyatt & Emma',
         description: 'Nintendo-polished 2D tablet stories and arcade games for Wyatt & Emma!',
-        theme_color: '#1a1635',
-        background_color: '#0f0c24',
-        display: 'standalone',
+        theme_color: '#120c08',
+        background_color: '#120c08',
+        display: 'fullscreen',
+        display_override: ['fullscreen', 'standalone'],
         orientation: 'landscape',
+        start_url: '/',
+        scope: '/',
         icons: [
           {
-            src: 'favicon.svg',
+            src: '/pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/favicon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
-            purpose: 'any maskable'
+            purpose: 'any'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,json,mp3,m4a,ogg,wav}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,mp3,wav,ogg,json,woff,woff2}'],
         globIgnores: ['**/raw/**', '**/refs/**'],
-        maximumFileSizeToCacheInBytes: 15 * 1024 * 1024
+        maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true
       }
     })
   ],

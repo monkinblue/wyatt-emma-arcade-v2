@@ -21,6 +21,10 @@ import { RocketBlastScene } from './scenes/RocketBlastScene';
 import { UnicornCastleScene } from './scenes/UnicornCastleScene';
 import { ColoradoStoryScene } from './scenes/ColoradoStoryScene';
 import { AudioBus } from './core/AudioBus';
+import { PWAInstallManager } from './core/PWAInstallManager';
+
+// Capture `beforeinstallprompt` and monitor offline PWA Service Worker readiness immediately
+PWAInstallManager.init();
 
 // In DEV mode, immediately unregister any stale Service Workers and purge old Workbox caches
 // so localhost never serves cached old artwork or 404s for newly staged sprites/audio!

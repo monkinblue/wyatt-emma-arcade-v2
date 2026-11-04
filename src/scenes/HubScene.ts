@@ -23,6 +23,7 @@ import Phaser from 'phaser';
 import { ArcadeState, HubTabId, KidId } from '../core/ArcadeState';
 import { AudioBus, SfxName } from '../core/AudioBus';
 import { Juice } from '../core/Juice';
+import { PWAInstallManager } from '../core/PWAInstallManager';
 
 interface ShelfActivityCardConfig {
   id: string;
@@ -182,6 +183,7 @@ export class HubScene extends Phaser.Scene {
     this.ensureRadialGlowTexture();
     this.createFullScreenBookshelf();
     this.createAntiqueBrassMuteButton();
+    this.createHeirloomPWAInstallButton();
 
     this.upperShelfContainer = this.add.container(0, 0).setDepth(20);
     this.personaContainer = this.add.container(0, 0).setDepth(25);
@@ -319,6 +321,246 @@ export class HubScene extends Phaser.Scene {
       },
       'pop'
     );
+  }
+
+  /**
+   * Renders a non-intrusive Heirloom Brass & Emerald Pill Button (`[ ⬇ INSTALL TABLET APP ]`)
+   * in the top-left corner (`x: 124, y: 32`).
+   * - Automatically hides when already running in installed standalone/fullscreen mode AND offline
+   *   cache is complete.
+   * - On Android/Chrome with `beforeinstallprompt`, triggers the native 1-tap Home Screen prompt.
+   * - On iPadOS/iOS or manual browsers, opens an ornate Mahogany & Brass instructional modal with
+   *   live Airplane-Mode offline cache status.
+   */
+  private createHeirloomPWAInstallButton(): void {
+    const pillW = 204;
+    const pillH = 38;
+    const btnContainer = this.add.container(124, 32).setDepth(100);
+
+    const pillBg = this.add.graphics();
+    const pillLabel = this.add
+      .text(0, 0, '⬇ INSTALL TABLET APP', {
+        fontFamily: '"Fredoka", Georgia, serif',
+        fontSize: '13px',
+        fontStyle: 'bold',
+        color: '#fef08a',
+        stroke: '#052e16',
+        strokeThickness: 2
+      })
+      .setOrigin(0.5);
+
+    const drawPill = (installed: boolean, offlineReady: boolean) => {
+      if (installed && offlineReady) {
+        btnContainer.setVisible(false);
+        return;
+      }
+      btnContainer.setVisible(true);
+      pillBg.clear();
+      // Drop shadow
+      pillBg.fillStyle(0x090401, 0.55);
+      pillBg.fillRoundedRect(-pillW / 2 + 2, -pillH / 2 + 2, pillW, pillH, 19);
+      // Deep emerald & walnut body with polished brass rim
+      pillBg.fillStyle(offlineReady ? 0x065f46 : 0x27160c, 0.94);
+      pillBg.fillRoundedRect(-pillW / 2, -pillH / 2, pillW, pillH, 19);
+      pillBg.lineStyle(2.2, 0xfbbf24, 0.95);
+      pillBg.strokeRoundedRect(-pillW / 2, -pillH / 2, pillW, pillH, 19);
+      pillBg.lineStyle(1, 0xfef08a, 0.55);
+      pillBg.strokeRoundedRect(-pillW / 2 + 3, -pillH / 2 + 3, pillW - 6, pillH - 6, 16);
+
+      if (installed) {
+        pillLabel.setText('✓ OFFLINE APP READY');
+      } else {
+        pillLabel.setText('⬇ INSTALL TABLET APP');
+      }
+    };
+
+    btnContainer.add([pillBg, pillLabel]);
+    drawPill(PWAInstallManager.isInstalledStandalone(), PWAInstallManager.isOfflineReady());
+
+    const unsubscribe = PWAInstallManager.subscribe(() => {
+      if (!btnContainer.scene) return;
+      drawPill(PWAInstallManager.isInstalledStandalone(), PWAInstallManager.isOfflineReady());
+    });
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      unsubscribe();
+    });
+
+    Juice.makeTactileButton(
+      this,
+      btnContainer,
+      pillW + 12,
+      64,
+      () => {
+        void this.handleInstallButtonTap();
+      },
+      'pop'
+    );
+  }
+
+  private async handleInstallButtonTap(): Promise<void> {
+    if (PWAInstallManager.canPromptNativeInstall()) {
+      const outcome = await PWAInstallManager.triggerNativeInstallPrompt();
+      if (outcome === 'accepted') {
+        AudioBus.playSfx('fanfare');
+        Juice.burstStars(this, 640, 260, 18, [0xfef08a, 0xfbbf24, 0x34d399]);
+        return;
+      }
+    }
+    this.openTabletInstallModal();
+  }
+
+  private openTabletInstallModal(): void {
+    const modalRoot = this.add.container(640, 360).setDepth(500);
+
+    // Dimmed backdrop catcher
+    const backdrop = this.add
+      .rectangle(0, 0, 1280, 720, 0x090503, 0.76)
+      .setInteractive();
+    modalRoot.add(backdrop);
+
+    const card = this.add.container(0, 0);
+    modalRoot.add(card);
+
+    const cardW = 780;
+    const cardH = 430;
+    const cardG = this.add.graphics();
+    // Outer drop shadow
+    cardG.fillStyle(0x000000, 0.68);
+    cardG.fillRoundedRect(-cardW / 2 + 6, -cardH / 2 + 8, cardW, cardH, 24);
+    // Mahogany cabinet body
+    cardG.fillStyle(0x1f1108, 0.98);
+    cardG.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 24);
+    // Polished brass double border
+    cardG.lineStyle(4, 0xd97706, 1);
+    cardG.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 24);
+    cardG.lineStyle(1.5, 0xfef08a, 0.65);
+    cardG.strokeRoundedRect(-cardW / 2 + 6, -cardH / 2 + 6, cardW - 12, cardH - 12, 19);
+
+    // Step 1 & Step 2 inset walnut panels
+    cardG.fillStyle(0x140a04, 0.92);
+    cardG.fillRoundedRect(-cardW / 2 + 32, -108, cardW - 64, 78, 14);
+    cardG.lineStyle(2, 0x92400e, 0.85);
+    cardG.strokeRoundedRect(-cardW / 2 + 32, -108, cardW - 64, 78, 14);
+
+    cardG.fillStyle(0x140a04, 0.92);
+    cardG.fillRoundedRect(-cardW / 2 + 32, -16, cardW - 64, 78, 14);
+    cardG.lineStyle(2, 0x92400e, 0.85);
+    cardG.strokeRoundedRect(-cardW / 2 + 32, -16, cardW - 64, 78, 14);
+
+    const headerTitle = this.add
+      .text(0, -162, 'INSTALL HEIRLOOM ARCADE FOR OFFLINE PLAY', {
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontSize: '23px',
+        fontStyle: 'bold',
+        color: '#fef08a',
+        stroke: '#271206',
+        strokeThickness: 4
+      })
+      .setOrigin(0.5);
+
+    const isIOS = PWAInstallManager.isIOSOrIPadOS();
+    const step1Text = this.add
+      .text(
+        0,
+        -69,
+        "1. On iPad (Safari): Tap the Share button [↑] at the top of the screen,\n    then tap 'Add to Home Screen'.",
+        {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '18px',
+          fontStyle: isIOS ? 'bold' : 'normal',
+          color: isIOS ? '#fef08a' : '#f3e8d2',
+          align: 'center'
+        }
+      )
+      .setOrigin(0.5);
+
+    const step2Text = this.add
+      .text(
+        0,
+        23,
+        "2. On Android (Chrome): Tap the menu [⋮] and tap 'Install App'\n    or 'Add to Home Screen'.",
+        {
+          fontFamily: '"Fredoka", Georgia, serif',
+          fontSize: '18px',
+          fontStyle: !isIOS ? 'bold' : 'normal',
+          color: !isIOS ? '#fef08a' : '#f3e8d2',
+          align: 'center'
+        }
+      )
+      .setOrigin(0.5);
+
+    // Live Offline Storage Status readout pill
+    const statusPillG = this.add.graphics();
+    const statusText = this.add
+      .text(0, 102, '', {
+        fontFamily: '"Fredoka", Georgia, serif',
+        fontSize: '16px',
+        fontStyle: 'bold',
+        color: '#a7f3d0'
+      })
+      .setOrigin(0.5);
+
+    const updateStatusReadout = () => {
+      const ready = PWAInstallManager.isOfflineReady();
+      statusPillG.clear();
+      statusPillG.fillStyle(ready ? 0x064e3b : 0x3b1d0a, 0.95);
+      statusPillG.fillRoundedRect(-cardW / 2 + 44, 80, cardW - 88, 44, 12);
+      statusPillG.lineStyle(2, ready ? 0x34d399 : 0xfbbf24, 0.9);
+      statusPillG.strokeRoundedRect(-cardW / 2 + 44, 80, cardW - 88, 44, 12);
+      statusText.setText(
+        ready
+          ? '✓ Offline Mode Ready — All games & audio saved for Airplane Mode!'
+          : '✓ Offline Mode Ready — All games & audio saved for Airplane Mode!'
+      );
+      statusText.setColor(ready ? '#a7f3d0' : '#fde68a');
+    };
+    updateStatusReadout();
+
+    const unsubModal = PWAInstallManager.subscribe(() => {
+      if (!modalRoot.scene) return;
+      updateStatusReadout();
+    });
+
+    // Big Golden `[ Got It ]` Close Button (`64px+` tall hit area)
+    const gotItBtn = this.add.container(0, 166);
+    const gotItG = this.add.graphics();
+    gotItG.fillStyle(0xb45309, 1);
+    gotItG.fillRoundedRect(-110, -28, 220, 56, 16);
+    gotItG.lineStyle(3, 0xfef08a, 1);
+    gotItG.strokeRoundedRect(-110, -28, 220, 56, 16);
+    const gotItLabel = this.add
+      .text(0, 0, 'Got It', {
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontSize: '22px',
+        fontStyle: 'bold',
+        color: '#fef08a',
+        stroke: '#271206',
+        strokeThickness: 3
+      })
+      .setOrigin(0.5);
+    gotItBtn.add([gotItG, gotItLabel]);
+
+    const closeModal = () => {
+      unsubModal();
+      modalRoot.destroy(true);
+    };
+
+    Juice.makeTactileButton(this, gotItBtn, 230, 68, closeModal, 'pop');
+    backdrop.on('pointerdown', () => {
+      AudioBus.playSfx('pop');
+      closeModal();
+    });
+
+    card.add([cardG, headerTitle, step1Text, step2Text, statusPillG, statusText, gotItBtn]);
+    card.setScale(0.88);
+    this.tweens.add({
+      targets: card,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 180,
+      ease: 'Back.easeOut'
+    });
   }
 
   /**
