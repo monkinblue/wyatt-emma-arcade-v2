@@ -263,6 +263,85 @@ public static class UnicornSpriteProcessor {
             }
         }
     }
+
+    public static void ApplyDieCutStickerBorder(string pngPath, int borderPx) {
+        byte[] rawBytes = System.IO.File.ReadAllBytes(pngPath);
+        using (System.IO.MemoryStream ms = new System.IO.MemoryStream(rawBytes))
+        using (Bitmap src = new Bitmap(ms)) {
+            int pad = borderPx + 3;
+            int w = src.Width + pad * 2;
+            int h = src.Height + pad * 2;
+            using (Bitmap dst = new Bitmap(w, h, PixelFormat.Format32bppArgb)) {
+                using (Graphics g = Graphics.FromImage(dst)) {
+                    g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                    g.PixelOffsetMode = PixelOffsetMode.Half;
+                    g.SmoothingMode = SmoothingMode.None;
+                    g.DrawImage(src, new Rectangle(pad, pad, src.Width, src.Height));
+                }
+
+                BitmapData data = dst.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+                int stride = data.Stride;
+                byte[] buf = new byte[stride * h];
+                Marshal.Copy(data.Scan0, buf, 0, buf.Length);
+
+                bool[] isOrigOpaque = new bool[w * h];
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        int idx = y * stride + x * 4;
+                        if (buf[idx + 3] > 180) {
+                            isOrigOpaque[y * w + x] = true;
+                        }
+                    }
+                }
+
+                int rSq = borderPx * borderPx;
+                int outerSq = (borderPx + 1) * (borderPx + 1);
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        if (isOrigOpaque[y * w + x]) continue;
+                        int minDistSq = 999999;
+                        int yMin = Math.Max(0, y - borderPx - 1);
+                        int yMax = Math.Min(h - 1, y + borderPx + 1);
+                        int xMin = Math.Max(0, x - borderPx - 1);
+                        int xMax = Math.Min(w - 1, x + borderPx + 1);
+
+                        for (int ny = yMin; ny <= yMax; ny++) {
+                            int dy = ny - y;
+                            int dy2 = dy * dy;
+                            if (dy2 >= minDistSq) continue;
+                            int rowOff = ny * w;
+                            for (int nx = xMin; nx <= xMax; nx++) {
+                                if (isOrigOpaque[rowOff + nx]) {
+                                    int dx = nx - x;
+                                    int d2 = dx * dx + dy2;
+                                    if (d2 < minDistSq) minDistSq = d2;
+                                }
+                            }
+                        }
+
+                        int idx = y * stride + x * 4;
+                        if (minDistSq <= rSq) {
+                            // Crisp 4px-5px white die-cut puffy sticker border
+                            buf[idx] = 255;
+                            buf[idx + 1] = 255;
+                            buf[idx + 2] = 255;
+                            buf[idx + 3] = 255;
+                        } else if (minDistSq <= outerSq) {
+                            // Subtle warm cream-silver die-cut outer edge
+                            buf[idx] = 235;
+                            buf[idx + 1] = 240;
+                            buf[idx + 2] = 248;
+                            buf[idx + 3] = 220;
+                        }
+                    }
+                }
+
+                Marshal.Copy(buf, 0, data.Scan0, buf.Length);
+                dst.UnlockBits(data);
+                dst.Save(pngPath, ImageFormat.Png);
+            }
+        }
+    }
 }
 "@
 
@@ -440,5 +519,28 @@ if (Test-Path $stk2Raw) {
     foreach ($s in $stk2Specs) {
         $outP = Join-Path $spritesDir $s.Name
         [UnicornSpriteProcessor]::SliceSpriteCellFrac($stk2Raw, @($outP), $s.X0, $s.Y0, $s.X1, $s.Y1, $s.MaxW, $s.MaxH, $true)
+    }
+}
+
+# 8. Bake 4px-5px Crisp White Die-Cut Puffy Sticker Borders onto all Crown/Bow, Teapot, Treat & Gem Sticker Sprites
+$puffyStickerFiles = @(
+    "acc-royal-tiara.png",
+    "acc-wing-bow.png",
+    "tea-teapot.png",
+    "treat-cupcake.png",
+    "treat-star-cookie.png",
+    "treat-sugar-heart.png",
+    "treat-rainbow-berry.png",
+    "gem-circle-ruby.png",
+    "gem-heart-quartz.png",
+    "gem-star-topaz.png",
+    "gem-square-emerald.png",
+    "gem-triangle-sapphire.png"
+)
+foreach ($pf in $puffyStickerFiles) {
+    $pfPath = Join-Path $spritesDir $pf
+    if (Test-Path $pfPath) {
+        [UnicornSpriteProcessor]::ApplyDieCutStickerBorder($pfPath, 5)
+        Write-Host ("  [PUFFY DIE-CUT BORDER] {0} (+5px white sticker border)" -f $pf)
     }
 }

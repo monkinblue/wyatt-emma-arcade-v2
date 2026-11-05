@@ -402,4 +402,56 @@ export class UnicornAudioEngine {
       osc.stop(now + idx * 0.065 + 0.36);
     });
   }
+
+  /**
+   * Happy royal teacup sip & contented sigh when the Guest drinks their freshly poured tea.
+   */
+  public playTeacupSip(): void {
+    this.playSfxFile('teacup_sip', 0.68);
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    [659.25, 783.99, 1046.5].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.055);
+      gain.gain.setValueAtTime(0.12, now + idx * 0.055);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.24);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.055);
+      osc.stop(now + idx * 0.055 + 0.26);
+    });
+  }
+
+  /**
+   * Joyful cupcake/cookie munching sound when the Guest enjoys their full plate of treats.
+   */
+  public playTreatMunch(): void {
+    this.playSfxFile('treat_munch', 0.68);
+  }
+
+  /**
+   * Soft, friendly wooden xylophone wobble when Emma taps a non-matching sticker in the tray.
+   */
+  public playGentleWobble(): void {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    [392.0, 349.23].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.075);
+      gain.gain.setValueAtTime(0.11, now + idx * 0.075);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.075 + 0.14);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + idx * 0.075);
+      osc.stop(now + idx * 0.075 + 0.16);
+    });
+  }
 }

@@ -62,7 +62,35 @@ const PROMPTS_DICT = {
   spatial_high_sky: 'Can you stick a rainbow high up in the sky.',
   spatial_next_to_emma: "Let's put a baby unicorn next to Princess Emma.",
   spatial_on_stairs: 'Try placing a royal friend on the grand staircase.',
-  spatial_by_water: 'Can you place a friend near the sparkling water.'
+  spatial_by_water: 'Can you place a friend near the sparkling water.',
+  // New Nintendo-Polished "Emma's Royal Sticker Tea Party" 1-Step Prompts
+  step1_unicorn_pink_heart: 'Give the Unicorn the pink heart crown.',
+  step1_unicorn_purple_star: 'Give the Unicorn the purple star crown.',
+  step1_doggie_yellow_star: 'Give Doggie the yellow star crown.',
+  step1_doggie_blue_circle: 'Give Doggie the blue circle crown.',
+  step1_sparky_green_square: 'Give Sparky the green square bow.',
+  step1_sparky_pink_heart: 'Give Sparky the pink heart bow.',
+  step1_grandparents_gold_crown: 'Give Babci and Grandpa the golden star crown.',
+  hint_color_pink: 'That one is pink.',
+  hint_color_blue: 'That one is blue.',
+  hint_color_yellow: 'That one is yellow.',
+  hint_color_green: 'That one is green.',
+  hint_color_purple: 'That one is purple.',
+  step1_done_crown: 'What a royal crown.',
+  step2_pour_pink_tea: 'Pour the pink strawberry tea.',
+  step2_pour_blue_tea: 'Pour the blue skyberry tea.',
+  step2_pour_gold_tea: 'Pour the golden honey tea.',
+  step2_done_sip: 'Warm royal tea. Delicious.',
+  step3_put_1_cupcake: 'Put one cupcake on the plate.',
+  step3_put_2_cupcakes: 'Put two cupcakes on the plate.',
+  step3_put_3_cupcakes: 'Put three cupcakes on the plate.',
+  step3_put_2_cookies: 'Put two star cookies on the plate.',
+  step3_put_3_hearts: 'Put three strawberry hearts on the plate.',
+  count_1_cupcake: 'One cupcake.',
+  count_2_cupcakes: 'Two cupcakes.',
+  count_3_hearts: 'Three strawberry hearts.',
+  guest_star_earned: 'Hooray. You earned a golden crown star.',
+  finale_party_prompt: 'Wonderful tea party, Princess Emma. Tap anywhere to place magical stickers.'
 };
 
 const SFX_DICT = {
@@ -97,6 +125,14 @@ const SFX_DICT = {
   royal_fanfare: [
     'Warm enchanting harp and celesta music box royal princess castle fanfare',
     2.6
+  ],
+  teacup_sip: [
+    'Gentle happy royal teacup sip with a warm contented sigh and soft sparkle chime',
+    1.3
+  ],
+  treat_munch: [
+    'Cute happy cartoon pastry cupcake munching and gentle sweet cookie crunch',
+    1.4
   ]
 };
 

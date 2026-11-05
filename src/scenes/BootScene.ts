@@ -379,7 +379,7 @@ export class BootScene extends Phaser.Scene {
       'stk-hot-air-balloon'
     ];
     for (const ucKey of unicornCastleSprites) {
-      this.load.image(ucKey, `/assets/games/unicorn/sprites/${ucKey}.png?v=uc1`);
+      this.load.image(ucKey, `/assets/games/unicorn/sprites/${ucKey}.png?v=uc2`);
     }
 
     // 0a-6f. I Spy Curio Cabinet (`ISpyScene.ts`) 4 High-Res 2560x1440 Studio Tableaux + 36 Miniature Object Sprites
