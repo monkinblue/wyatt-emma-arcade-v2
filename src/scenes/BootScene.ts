@@ -46,7 +46,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('arcade-toy-kart', '/assets/hub/arcade/arcade-toy-kart.png?v=arcade1');
     this.load.image('hub-toy-rocket', '/assets/hub/arcade/hub-toy-rocket.png?v=rk1');
     this.load.image('hub-toy-unicorn', '/assets/hub/arcade/hub-toy-unicorn.png?v=uc1');
-    this.load.image('hub-toy-ispy', '/assets/hub/arcade/hub-toy-ispy.png?v=ispy1');
+    this.load.image('hub-toy-ispy', '/assets/hub/arcade/hub-toy-ispy.png?v=ispy2');
 
     // 0a-2. Heirloom Art & Sticker Studio Frame + 8 Illustrated Tool Icons + 12 Coloring Book Templates (936x560)
     this.load.image('studio-frame-bg', '/assets/games/art-studio/studio-frame-bg.jpg?v=studio2');

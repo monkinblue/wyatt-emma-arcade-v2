@@ -454,7 +454,7 @@ New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
 $artifactDir = "C:\Users\RobaD\.gemini\antigravity\brain\518e621f-c14d-4402-b6d0-16ff0ca8bac0"
 
 $stagedMap = @{
-    (Join-Path $hubRawDir "hub-toy-ispy-raw.jpg")            = (Join-Path $artifactDir "hub_toy_ispy_raw_1793839133055.jpg")
+    (Join-Path $hubRawDir "hub-toy-ispy-raw.jpg")            = (Join-Path $artifactDir "hub_toy_ispy_hd_raw_1793844567998.jpg")
     (Join-Path $rawDir "board-1-watchmaker-raw.jpg")         = (Join-Path $artifactDir "ispy_board_1_watchmaker_raw_1793839147346.jpg")
     (Join-Path $rawDir "board-2-pirate-raw.jpg")             = (Join-Path $artifactDir "ispy_board_2_pirate_raw_1793839161240.jpg")
     (Join-Path $rawDir "board-3-attic-raw.jpg")              = (Join-Path $artifactDir "ispy_board_3_attic_raw_1793839172681.jpg")
@@ -471,12 +471,10 @@ foreach ($dest in $stagedMap.Keys) {
     }
 }
 
-# 1. Slice Hub Shelf Toy (`hub-toy-ispy.png`)
-$hubToyRaw = Join-Path $hubRawDir "hub-toy-ispy-raw.jpg"
-if (Test-Path $hubToyRaw) {
-    $out1 = Join-Path $hubArcadeDir "hub-toy-ispy.png"
-    $out2 = Join-Path $hubSpritesDir "hub-toy-ispy.png"
-    [ISpyAssetProcessor]::SliceSpriteCellFrac($hubToyRaw, @($out1, $out2), 0.02, 0.02, 0.98, 0.98, 380, 420, $true)
+# 1. Slice HD Hub Shelf Toy (`hub-toy-ispy.png` at 471x512 with 3px de-spill & optical lens polish)
+$rebuildHubIconScript = Join-Path $PSScriptRoot "rebuild_ispy_hub_icon.ps1"
+if (Test-Path $rebuildHubIconScript) {
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $rebuildHubIconScript
 }
 
 # 2. Slice 36 Walter Wick Studio-Lit Miniature Objects (3 sheets of 3x4 = 36 items)

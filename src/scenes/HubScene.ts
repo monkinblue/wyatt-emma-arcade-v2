@@ -49,7 +49,7 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
       title: 'I SPY CURIO CABINET',
       subtitle: 'Magnifying Glass Detective',
       texKey: 'hub-toy-ispy',
-      baseScale: 0.72,
+      baseScale: 0.59,
       emoji: '🔍',
       badgeText: 'CURIO DETECTIVE',
       accentColor: 0xfbbf24,
@@ -1760,7 +1760,13 @@ export class HubScene extends Phaser.Scene {
           .setAlpha(card.unlocked ? 0.24 : 0.08);
         this.lowerShelfContentContainer.add(hoverGlow);
 
-        this.textures.get(card.texKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
+        this.textures
+          .get(card.texKey)
+          .setFilter(
+            card.texKey === 'hub-toy-ispy'
+              ? Phaser.Textures.FilterMode.LINEAR
+              : Phaser.Textures.FilterMode.NEAREST
+          );
         const toySprite = this.add
           .image(cx + slideOffset, shelfY, card.texKey)
           .setOrigin(0.5, 1.0)
