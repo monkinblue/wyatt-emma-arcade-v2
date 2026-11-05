@@ -45,6 +45,20 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
   play: [
     // Page 1: 3 Painted Heirloom Arcade Toys standing directly on the oak shelf
     {
+      id: 'clockwork-train-table',
+      title: 'CLOCKWORK TRAIN TABLE',
+      subtitle: 'Wooden Railway Builder',
+      texKey: 'hub-toy-train',
+      baseScale: 0.72,
+      emoji: '🚂',
+      badgeText: 'WOODEN RAILWAY BUILDER',
+      accentColor: 0xf59e0b,
+      previewSfx: 'horn',
+      unlocked: true,
+      targetScene: 'TrainTableScene',
+      announceAudio: '/assets/audio/train/prompts/welcome_title.mp3'
+    },
+    {
       id: 'ispy-curio-cabinet',
       title: 'I SPY CURIO CABINET',
       subtitle: 'Magnifying Glass Detective',

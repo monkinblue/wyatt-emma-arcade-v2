@@ -47,6 +47,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hub-toy-rocket', '/assets/hub/arcade/hub-toy-rocket.png?v=rk1');
     this.load.image('hub-toy-unicorn', '/assets/hub/arcade/hub-toy-unicorn.png?v=uc1');
     this.load.image('hub-toy-ispy', '/assets/hub/arcade/hub-toy-ispy.png?v=ispy2');
+    this.load.image('hub-toy-train', '/assets/hub/arcade/hub-toy-train.png?v=tr1');
 
     // 0a-2. Heirloom Art & Sticker Studio Frame + 8 Illustrated Tool Icons + 12 Coloring Book Templates (936x560)
     this.load.image('studio-frame-bg', '/assets/games/art-studio/studio-frame-bg.jpg?v=studio2');
@@ -432,6 +433,38 @@ export class BootScene extends Phaser.Scene {
     ];
     for (const ispyKey of ispySprites) {
       this.load.image(ispyKey, `/assets/games/ispy/sprites/${ispyKey}.png?v=ispy1`);
+    }
+
+    // 0a-6g. Grandpa's Clockwork Train Table (`TrainTableScene.ts`) Stage Background + 24 Custom Sprites
+    this.load.image('train-table-bg', '/assets/games/train/train-table-bg.png?v=tr1');
+    const trainTableSprites = [
+      'train-locomotive',
+      'train-car-red',
+      'train-car-blue',
+      'train-car-gold',
+      'char-grandpa',
+      'char-wyatt',
+      'char-emma',
+      'char-doggie',
+      'char-sparky',
+      'mod-royal-bridge',
+      'mod-stone-tunnel',
+      'mod-xylophone-track',
+      'mod-crossing-gate',
+      'prop-station-depot',
+      'prop-trex',
+      'prop-unicorn-pasture',
+      'prop-windmill',
+      'prop-pine-forest',
+      'prop-water-tower',
+      'cargo-golden-log',
+      'cargo-milk-barrel',
+      'cargo-treasure-chest',
+      'cargo-star-crate',
+      'prop-whistle-cord'
+    ];
+    for (const trKey of trainTableSprites) {
+      this.load.image(trKey, `/assets/games/train/sprites/${trKey}.png?v=tr1`);
     }
 
     // 0a-7. Book 2: "To Babci and Grandpa's House We Go! / A Colorado Adventure" (`ColoradoStoryScene.ts`)
