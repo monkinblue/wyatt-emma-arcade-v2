@@ -44,7 +44,20 @@ interface ShelfActivityCardConfig {
 const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]> = {
   play: [
     // Page 1: 3 Painted Heirloom Arcade Toys standing directly on the oak shelf
-    // (Balloon Letter Pop, Animal Match Safari & Great Hall Box of Ten all playable on Page 1!)
+    {
+      id: 'ispy-curio-cabinet',
+      title: 'I SPY CURIO CABINET',
+      subtitle: 'Magnifying Glass Detective',
+      texKey: 'hub-toy-ispy',
+      baseScale: 0.72,
+      emoji: '🔍',
+      badgeText: 'CURIO DETECTIVE',
+      accentColor: 0xfbbf24,
+      previewSfx: 'chime',
+      unlocked: true,
+      targetScene: 'ISpyScene',
+      announceAudio: '/assets/audio/ispy/prompts/welcome_title.mp3'
+    },
     {
       id: 'bubble-pop',
       title: 'BALLOON LETTER POP',
@@ -85,7 +98,7 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
       targetScene: 'ShutTheBoxScene',
       announceAudio: '/assets/audio/shutthebox/prompts/welcome_title.mp3'
     },
-    // Page 2: 3 Heirloom Arcade Shelf Toys & Pedestals
+    // Page 2 & 3: Heirloom Arcade Shelf Toys
     {
       id: 'unicorn-castle',
       title: 'UNICORN CASTLE',

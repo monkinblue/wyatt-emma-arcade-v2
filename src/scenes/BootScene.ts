@@ -46,6 +46,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('arcade-toy-kart', '/assets/hub/arcade/arcade-toy-kart.png?v=arcade1');
     this.load.image('hub-toy-rocket', '/assets/hub/arcade/hub-toy-rocket.png?v=rk1');
     this.load.image('hub-toy-unicorn', '/assets/hub/arcade/hub-toy-unicorn.png?v=uc1');
+    this.load.image('hub-toy-ispy', '/assets/hub/arcade/hub-toy-ispy.png?v=ispy1');
 
     // 0a-2. Heirloom Art & Sticker Studio Frame + 8 Illustrated Tool Icons + 12 Coloring Book Templates (936x560)
     this.load.image('studio-frame-bg', '/assets/games/art-studio/studio-frame-bg.jpg?v=studio2');
@@ -379,6 +380,58 @@ export class BootScene extends Phaser.Scene {
     ];
     for (const ucKey of unicornCastleSprites) {
       this.load.image(ucKey, `/assets/games/unicorn/sprites/${ucKey}.png?v=uc1`);
+    }
+
+    // 0a-6f. I Spy Curio Cabinet (`ISpyScene.ts`) 4 High-Res 2560x1440 Studio Tableaux + 36 Miniature Object Sprites
+    this.load.image('ispy-board-1', '/assets/games/ispy/boards/board-1-watchmaker.jpg?v=ispy1');
+    this.load.image('ispy-board-1-full', '/assets/games/ispy/boards/board-1-watchmaker-full.jpg?v=ispy1');
+    this.load.image('ispy-board-2', '/assets/games/ispy/boards/board-2-pirate.jpg?v=ispy1');
+    this.load.image('ispy-board-2-full', '/assets/games/ispy/boards/board-2-pirate-full.jpg?v=ispy1');
+    this.load.image('ispy-board-3', '/assets/games/ispy/boards/board-3-attic.jpg?v=ispy1');
+    this.load.image('ispy-board-3-full', '/assets/games/ispy/boards/board-3-attic-full.jpg?v=ispy1');
+    this.load.image('ispy-board-4', '/assets/games/ispy/boards/board-4-crater.jpg?v=ispy1');
+    this.load.image('ispy-board-4-full', '/assets/games/ispy/boards/board-4-crater-full.jpg?v=ispy1');
+
+    const ispySprites = [
+      'item-alphabet-block',
+      'item-amethyst-crystal',
+      'item-blue-domino',
+      'item-bowling-pin',
+      'item-brass-compass',
+      'item-brass-gear',
+      'item-brass-key',
+      'item-brass-sextant',
+      'item-chess-knight',
+      'item-doggie-figurine',
+      'item-glass-marble',
+      'item-gold-doubloon',
+      'item-golden-acorn',
+      'item-golden-crown',
+      'item-green-trex',
+      'item-jade-turtle',
+      'item-music-bell',
+      'item-painted-ladybug',
+      'item-paperclip',
+      'item-pearl-button',
+      'item-pocket-watch',
+      'item-porcelain-teacup',
+      'item-red-die',
+      'item-red-racecar',
+      'item-red-roadster',
+      'item-retro-rocket',
+      'item-ruby-ring',
+      'item-seashell',
+      'item-silver-thimble',
+      'item-silver-whistle',
+      'item-sparky-figurine',
+      'item-starfish',
+      'item-strawberry-eraser',
+      'item-t6-airplane',
+      'item-triceratops',
+      'item-wooden-train'
+    ];
+    for (const ispyKey of ispySprites) {
+      this.load.image(ispyKey, `/assets/games/ispy/sprites/${ispyKey}.png?v=ispy1`);
     }
 
     // 0a-7. Book 2: "To Babci and Grandpa's House We Go! / A Colorado Adventure" (`ColoradoStoryScene.ts`)

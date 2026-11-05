@@ -20,6 +20,7 @@ import { CloudKartScene } from './scenes/CloudKartScene';
 import { RocketBlastScene } from './scenes/RocketBlastScene';
 import { UnicornCastleScene } from './scenes/UnicornCastleScene';
 import { ColoradoStoryScene } from './scenes/ColoradoStoryScene';
+import { ISpyScene } from './scenes/ISpyScene';
 import { AudioBus } from './core/AudioBus';
 import { PWAInstallManager } from './core/PWAInstallManager';
 
@@ -87,7 +88,8 @@ const config: Phaser.Types.Core.GameConfig = {
     CloudKartScene,
     RocketBlastScene,
     UnicornCastleScene,
-    ColoradoStoryScene
+    ColoradoStoryScene,
+    ISpyScene
   ]
 };
 
