@@ -6,29 +6,26 @@
  * and miniature diorama world-builder for Wyatt (age 4) and Emma (age 3).
  *
  * Architectural Highlights:
- * 1. **Zero-Frustration Continuous Spline Track + Modular Node Socket System:**
- *    Instead of forcing a 3- or 4-year-old to assemble 20 tiny puzzle pieces before the train
- *    can move, the table always starts with a complete, working grand loop of carved beechwood
- *    Brio tracks. Kids can switch between 3 Classic Blueprints (Sunny Meadow Oval, Royal Gorge
- *    Figure-8 Bridge, Winding Mountain Canyon Loop) and snap Special Track Modules & Living
- *    Scenery Toys into glowing Golden Dotted Sockets at any time — even while the train chugs!
- * 2. **Uniform Arc-Length Catmull-Rom Spline Follower:**
- *    We sample the closed spline into a 1,000-point arc-length lookup table so the Crimson &
- *    Brass Steam Locomotive and its 3 trailing wooden cars (Red Hopper, Blue Gondola, Gold Coach)
- *    maintain exact constant pixel spacing around tight curves without bunching or stretching.
- * 3. **3-Act Tactile Play Loop:**
- *    - Act 1: Snap-and-Play Track Modules (Bridge, Tunnel, Xylophone Track, Crossing Gate) &
- *      Living Diorama Toys (Friendly T-Rex, Unicorn Pasture, Windmill, Pine Forest, Water Tower).
- *    - Act 2: Grand Central Station Cargo & Passenger Loader (Counting 1-5 logs, milk barrels,
- *      treasure chests, and crystal crates with Grandpa's swinging wooden crane + choosing who
- *      rides in the locomotive cab!).
- *    - Act 3: Tactile Brass Engineer Dashboard (5-Notch Brass Throttle Lever `STOP..5`, hanging
- *      Braided Golden Whistle Pull-Cord, and `1.55x` Camera Follow / Bird's-Eye Zoom Toggle).
+ * 1. **Interactive Brio Track Piece Builder + Active Connector + Magic Finish Loop:**
+ *    Kids can snap carved beechwood track pieces (`Straight`, `Curve Left`, `Curve Right`,
+ *    `Xylophone`, `Bridge`, `Tunnel`, `Crossing Gate`) onto the glowing Active Track Connector
+ *    with automatic tangent rotation, step backward with `[ Undo ]`, or close any open track
+ *    into a complete circuit with `[ Magic Finish Loop ]` (plus 3 Classic Blueprint presets).
+ * 2. **Free-Placement Living Scenery Toys on the Green Felt Table:**
+ *    Scenery toys (`T-Rex`, `Pasture`, `Tower`, `Windmill`, `Forest`) can be dragged from the
+ *    mahogany drawer and placed freely anywhere on the green felt table, repositioned at any
+ *    time, or tapped to trigger their animations and sound effects.
+ * 3. **Tangent-Aligned Consist & Top HUD Cab Cameo:**
+ *    The active Engineer portrait (`Grandpa`, `Wyatt`, `Emma`, `Doggie`, `Sparky`) is displayed
+ *    in the Top HUD Cab Cameo frame so the Crimson & Brass Steam Locomotive and its 3 tangent-aligned
+ *    wooden cars (Red Hopper, Blue Gondola, Gold Coach) are 100% unobstructed on the rails.
+ * 4. **Physical Sliding Brass Steam Throttle Lever (`STOP`, `1..5`):**
+ *    The Brass T-handle physically slides along the quadrant slot in screen coordinates when
+ *    dragged or tapped and snaps cleanly to the X coordinate of notches `STOP`, `1`, `2`, `3`, `4`, `5`.
  */
 
 import Phaser from 'phaser';
 import { ArcadeState } from '../core/ArcadeState';
-import { AudioBus } from '../core/AudioBus';
 import { Juice } from '../core/Juice';
 import { TrainAudioEngine } from '../core/TrainAudioEngine';
 
@@ -38,6 +35,24 @@ type EngineerId = 'grandpa' | 'wyatt' | 'emma' | 'doggie' | 'sparky';
 
 type CargoTypeId = 'logs' | 'barrels' | 'chests' | 'crates';
 
+type TrackPieceKey =
+  | 'track-straight'
+  | 'track-curve-left'
+  | 'track-curve-right'
+  | 'mod-xylophone-track'
+  | 'mod-royal-bridge'
+  | 'mod-stone-tunnel'
+  | 'mod-crossing-gate';
+
+type SceneryToyKey =
+  | 'prop-trex'
+  | 'prop-unicorn-pasture'
+  | 'prop-water-tower'
+  | 'prop-windmill'
+  | 'prop-pine-forest';
+
+type DrawerToyKey = TrackPieceKey | SceneryToyKey;
+
 interface SplineSample {
   x: number;
   y: number;
@@ -46,15 +61,31 @@ interface SplineSample {
   dist: number;
 }
 
-interface ToySocketSpec {
+interface PlacedTrackPiece {
   id: string;
-  kind: 'track' | 'scenery';
-  toyKey: string;
-  label: string;
+  pieceKey: TrackPieceKey;
+  startX: number;
+  startY: number;
+  startAngle: number;
+  endX: number;
+  endY: number;
+  endAngle: number;
+  midX: number;
+  midY: number;
+  midAngle: number;
+  points: Array<{ x: number; y: number }>;
+  lastTriggeredAt: number;
+}
+
+interface PlacedSceneryToy {
+  id: string;
+  toyKey: SceneryToyKey;
   x: number;
   y: number;
-  trackT?: number;
   scale: number;
+  container: Phaser.GameObjects.Container;
+  sprite: Phaser.GameObjects.Image;
+  lastTriggeredAt: number;
 }
 
 interface BlueprintConfig {
@@ -62,10 +93,9 @@ interface BlueprintConfig {
   name: string;
   shortLabel: string;
   promptId: string;
-  controlPoints: Array<{ x: number; y: number }>;
-  stationT: number;
   stationPos: { x: number; y: number };
-  sockets: ToySocketSpec[];
+  starterPieces: TrackPieceKey[];
+  starterScenery: Array<{ toyKey: SceneryToyKey; x: number; y: number }>;
 }
 
 interface CargoOrderSpec {
@@ -127,16 +157,47 @@ const ENGINEER_SPECS: Array<{
 ];
 
 const TOY_DRAWER_ITEMS: Array<{
-  toyKey: string;
+  toyKey: DrawerToyKey;
   kind: 'track' | 'scenery';
   title: string;
+  shortLabel: string;
   badgeColor: number;
   promptId?: string;
 }> = [
   {
+    toyKey: 'track-straight',
+    kind: 'track',
+    title: 'Straight Track',
+    shortLabel: 'Straight',
+    badgeColor: 0xd97706
+  },
+  {
+    toyKey: 'track-curve-left',
+    kind: 'track',
+    title: 'Curve Left Track',
+    shortLabel: 'Curve L',
+    badgeColor: 0xf59e0b
+  },
+  {
+    toyKey: 'track-curve-right',
+    kind: 'track',
+    title: 'Curve Right Track',
+    shortLabel: 'Curve R',
+    badgeColor: 0xf59e0b
+  },
+  {
+    toyKey: 'mod-xylophone-track',
+    kind: 'track',
+    title: 'Xylophone Track',
+    shortLabel: 'Xylophone',
+    badgeColor: 0xfbbf24,
+    promptId: 'module_xylophone'
+  },
+  {
     toyKey: 'mod-royal-bridge',
     kind: 'track',
     title: 'Royal Gorge Bridge',
+    shortLabel: 'Bridge',
     badgeColor: 0xef4444,
     promptId: 'module_bridge'
   },
@@ -144,20 +205,15 @@ const TOY_DRAWER_ITEMS: Array<{
     toyKey: 'mod-stone-tunnel',
     kind: 'track',
     title: 'Echo Tunnel',
+    shortLabel: 'Tunnel',
     badgeColor: 0x94a3b8,
     promptId: 'module_tunnel'
-  },
-  {
-    toyKey: 'mod-xylophone-track',
-    kind: 'track',
-    title: 'Xylophone Track',
-    badgeColor: 0xfbbf24,
-    promptId: 'module_xylophone'
   },
   {
     toyKey: 'mod-crossing-gate',
     kind: 'track',
     title: 'Crossing Gate',
+    shortLabel: 'Gate',
     badgeColor: 0xf87171,
     promptId: 'module_crossing'
   },
@@ -165,30 +221,35 @@ const TOY_DRAWER_ITEMS: Array<{
     toyKey: 'prop-trex',
     kind: 'scenery',
     title: 'Friendly T-Rex',
+    shortLabel: 'T-Rex',
     badgeColor: 0x22c55e
   },
   {
     toyKey: 'prop-unicorn-pasture',
     kind: 'scenery',
     title: 'Unicorn Pasture',
+    shortLabel: 'Pasture',
     badgeColor: 0xf472b6
   },
   {
     toyKey: 'prop-water-tower',
     kind: 'scenery',
     title: 'Water Tower',
+    shortLabel: 'Tower',
     badgeColor: 0x38bdf8
   },
   {
     toyKey: 'prop-windmill',
     kind: 'scenery',
     title: 'Spinning Windmill',
+    shortLabel: 'Windmill',
     badgeColor: 0xf59e0b
   },
   {
     toyKey: 'prop-pine-forest',
     kind: 'scenery',
     title: 'Pine Forest',
+    shortLabel: 'Forest',
     badgeColor: 0x10b981
   }
 ];
@@ -306,222 +367,56 @@ const TRACK_BLUEPRINTS: Record<TrackBlueprintId, BlueprintConfig> = {
     name: 'Sunny Meadow Oval',
     shortLabel: '1. Meadow Oval',
     promptId: 'layout_meadow',
-    controlPoints: [
-      { x: 560, y: 472 },
-      { x: 310, y: 465 },
-      { x: 185, y: 365 },
-      { x: 225, y: 215 },
-      { x: 455, y: 155 },
-      { x: 760, y: 162 },
-      { x: 985, y: 225 },
-      { x: 1020, y: 375 },
-      { x: 835, y: 470 }
+    stationPos: { x: 565, y: 406 },
+    starterPieces: [
+      'track-straight',
+      'track-straight',
+      'track-curve-right',
+      'track-curve-right',
+      'mod-xylophone-track',
+      'track-curve-right',
+      'track-curve-right',
+      'mod-royal-bridge',
+      'track-straight',
+      'mod-stone-tunnel',
+      'track-curve-right',
+      'track-curve-right',
+      'mod-crossing-gate'
     ],
-    stationT: 0.0,
-    stationPos: { x: 560, y: 404 },
-    sockets: [
-      {
-        id: 'sock-bridge',
-        kind: 'track',
-        toyKey: 'mod-royal-bridge',
-        label: 'Bridge Socket',
-        x: 475,
-        y: 158,
-        trackT: 0.45,
-        scale: 0.62
-      },
-      {
-        id: 'sock-tunnel',
-        kind: 'track',
-        toyKey: 'mod-stone-tunnel',
-        label: 'Tunnel Socket',
-        x: 880,
-        y: 185,
-        trackT: 0.64,
-        scale: 0.68
-      },
-      {
-        id: 'sock-xylo',
-        kind: 'track',
-        toyKey: 'mod-xylophone-track',
-        label: 'Xylophone Rail',
-        x: 205,
-        y: 290,
-        trackT: 0.28,
-        scale: 0.56
-      },
-      {
-        id: 'sock-crossing',
-        kind: 'track',
-        toyKey: 'mod-crossing-gate',
-        label: 'Crossing Gate',
-        x: 935,
-        y: 425,
-        trackT: 0.84,
-        scale: 0.58
-      },
-      {
-        id: 'sock-trex',
-        kind: 'scenery',
-        toyKey: 'prop-trex',
-        label: 'Dino Canyon',
-        x: 745,
-        y: 285,
-        trackT: 0.56,
-        scale: 0.58
-      },
-      {
-        id: 'sock-unicorn',
-        kind: 'scenery',
-        toyKey: 'prop-unicorn-pasture',
-        label: 'Unicorn Meadow',
-        x: 355,
-        y: 310,
-        trackT: 0.18,
-        scale: 0.6
-      },
-      {
-        id: 'sock-water',
-        kind: 'scenery',
-        toyKey: 'prop-water-tower',
-        label: 'Water Tower',
-        x: 330,
-        y: 485,
-        trackT: 0.11,
-        scale: 0.56
-      },
-      {
-        id: 'sock-windmill',
-        kind: 'scenery',
-        toyKey: 'prop-windmill',
-        label: 'Dutch Windmill',
-        x: 1095,
-        y: 285,
-        trackT: 0.74,
-        scale: 0.58
-      },
-      {
-        id: 'sock-pines',
-        kind: 'scenery',
-        toyKey: 'prop-pine-forest',
-        label: 'Pine Forest',
-        x: 135,
-        y: 175,
-        trackT: 0.34,
-        scale: 0.58
-      }
+    starterScenery: [
+      { toyKey: 'prop-unicorn-pasture', x: 355, y: 315 },
+      { toyKey: 'prop-trex', x: 755, y: 295 },
+      { toyKey: 'prop-windmill', x: 1085, y: 270 },
+      { toyKey: 'prop-pine-forest', x: 145, y: 185 },
+      { toyKey: 'prop-water-tower', x: 325, y: 488 }
     ]
   },
   gorge: {
     id: 'gorge',
-    name: 'Royal Gorge Figure-8',
-    shortLabel: '2. Figure-8 Gorge',
+    name: 'Royal Gorge Bend',
+    shortLabel: '2. Gorge Bend',
     promptId: 'layout_gorge',
-    controlPoints: [
-      { x: 560, y: 478 },
-      { x: 265, y: 470 },
-      { x: 165, y: 335 },
-      { x: 270, y: 175 },
-      { x: 565, y: 265 },
-      { x: 865, y: 425 },
-      { x: 1035, y: 315 },
-      { x: 925, y: 165 },
-      { x: 640, y: 255 },
-      { x: 775, y: 468 }
+    stationPos: { x: 565, y: 406 },
+    starterPieces: [
+      'track-straight',
+      'track-curve-right',
+      'track-curve-right',
+      'mod-xylophone-track',
+      'track-curve-right',
+      'track-curve-left',
+      'track-curve-right',
+      'mod-royal-bridge',
+      'track-curve-right',
+      'mod-stone-tunnel',
+      'track-curve-right',
+      'mod-crossing-gate'
     ],
-    stationT: 0.0,
-    stationPos: { x: 555, y: 410 },
-    sockets: [
-      {
-        id: 'sock-bridge',
-        kind: 'track',
-        toyKey: 'mod-royal-bridge',
-        label: 'Gorge Crossover',
-        x: 595,
-        y: 260,
-        trackT: 0.44,
-        scale: 0.64
-      },
-      {
-        id: 'sock-tunnel',
-        kind: 'track',
-        toyKey: 'mod-stone-tunnel',
-        label: 'Cliff Tunnel',
-        x: 945,
-        y: 185,
-        trackT: 0.74,
-        scale: 0.68
-      },
-      {
-        id: 'sock-xylo',
-        kind: 'track',
-        toyKey: 'mod-xylophone-track',
-        label: 'Melody Curve',
-        x: 215,
-        y: 245,
-        trackT: 0.27,
-        scale: 0.56
-      },
-      {
-        id: 'sock-crossing',
-        kind: 'track',
-        toyKey: 'mod-crossing-gate',
-        label: 'Crossing Gate',
-        x: 865,
-        y: 430,
-        trackT: 0.55,
-        scale: 0.58
-      },
-      {
-        id: 'sock-trex',
-        kind: 'scenery',
-        toyKey: 'prop-trex',
-        label: 'T-Rex Lookout',
-        x: 805,
-        y: 280,
-        trackT: 0.62,
-        scale: 0.58
-      },
-      {
-        id: 'sock-unicorn',
-        kind: 'scenery',
-        toyKey: 'prop-unicorn-pasture',
-        label: 'Unicorn Loop',
-        x: 345,
-        y: 335,
-        trackT: 0.16,
-        scale: 0.6
-      },
-      {
-        id: 'sock-water',
-        kind: 'scenery',
-        toyKey: 'prop-water-tower',
-        label: 'Water Tower',
-        x: 295,
-        y: 485,
-        trackT: 0.1,
-        scale: 0.56
-      },
-      {
-        id: 'sock-windmill',
-        kind: 'scenery',
-        toyKey: 'prop-windmill',
-        label: 'Windmill Hill',
-        x: 1105,
-        y: 285,
-        trackT: 0.66,
-        scale: 0.58
-      },
-      {
-        id: 'sock-pines',
-        kind: 'scenery',
-        toyKey: 'prop-pine-forest',
-        label: 'Pine Woods',
-        x: 435,
-        y: 150,
-        trackT: 0.36,
-        scale: 0.58
-      }
+    starterScenery: [
+      { toyKey: 'prop-trex', x: 790, y: 290 },
+      { toyKey: 'prop-unicorn-pasture', x: 345, y: 325 },
+      { toyKey: 'prop-water-tower', x: 305, y: 488 },
+      { toyKey: 'prop-windmill', x: 1095, y: 275 },
+      { toyKey: 'prop-pine-forest', x: 430, y: 155 }
     ]
   },
   canyon: {
@@ -529,114 +424,34 @@ const TRACK_BLUEPRINTS: Record<TrackBlueprintId, BlueprintConfig> = {
     name: 'Winding Mountain Canyon',
     shortLabel: '3. Mountain Canyon',
     promptId: 'layout_canyon',
-    controlPoints: [
-      { x: 560, y: 478 },
-      { x: 285, y: 475 },
-      { x: 175, y: 380 },
-      { x: 315, y: 285 },
-      { x: 225, y: 165 },
-      { x: 525, y: 150 },
-      { x: 695, y: 270 },
-      { x: 945, y: 165 },
-      { x: 1035, y: 335 },
-      { x: 845, y: 472 }
+    stationPos: { x: 565, y: 406 },
+    starterPieces: [
+      'track-straight',
+      'track-curve-right',
+      'track-curve-right',
+      'track-curve-left',
+      'track-curve-right',
+      'mod-xylophone-track',
+      'track-curve-right',
+      'mod-royal-bridge',
+      'track-straight',
+      'mod-stone-tunnel',
+      'track-curve-right',
+      'track-curve-right',
+      'mod-crossing-gate'
     ],
-    stationT: 0.0,
-    stationPos: { x: 560, y: 410 },
-    sockets: [
-      {
-        id: 'sock-bridge',
-        kind: 'track',
-        toyKey: 'mod-royal-bridge',
-        label: 'River Bridge',
-        x: 525,
-        y: 155,
-        trackT: 0.49,
-        scale: 0.62
-      },
-      {
-        id: 'sock-tunnel',
-        kind: 'track',
-        toyKey: 'mod-stone-tunnel',
-        label: 'Echo Tunnel',
-        x: 945,
-        y: 175,
-        trackT: 0.69,
-        scale: 0.68
-      },
-      {
-        id: 'sock-xylo',
-        kind: 'track',
-        toyKey: 'mod-xylophone-track',
-        label: 'Xylophone Pass',
-        x: 265,
-        y: 225,
-        trackT: 0.34,
-        scale: 0.56
-      },
-      {
-        id: 'sock-crossing',
-        kind: 'track',
-        toyKey: 'mod-crossing-gate',
-        label: 'Crossing Gate',
-        x: 945,
-        y: 420,
-        trackT: 0.85,
-        scale: 0.58
-      },
-      {
-        id: 'sock-trex',
-        kind: 'scenery',
-        toyKey: 'prop-trex',
-        label: 'Canyon T-Rex',
-        x: 705,
-        y: 325,
-        trackT: 0.59,
-        scale: 0.58
-      },
-      {
-        id: 'sock-unicorn',
-        kind: 'scenery',
-        toyKey: 'prop-unicorn-pasture',
-        label: 'Unicorn Glade',
-        x: 435,
-        y: 315,
-        trackT: 0.25,
-        scale: 0.6
-      },
-      {
-        id: 'sock-water',
-        kind: 'scenery',
-        toyKey: 'prop-water-tower',
-        label: 'Water Tower',
-        x: 315,
-        y: 485,
-        trackT: 0.1,
-        scale: 0.56
-      },
-      {
-        id: 'sock-windmill',
-        kind: 'scenery',
-        toyKey: 'prop-windmill',
-        label: 'Mesa Windmill',
-        x: 1105,
-        y: 265,
-        trackT: 0.77,
-        scale: 0.58
-      },
-      {
-        id: 'sock-pines',
-        kind: 'scenery',
-        toyKey: 'prop-pine-forest',
-        label: 'Alpine Pines',
-        x: 135,
-        y: 255,
-        trackT: 0.2,
-        scale: 0.58
-      }
+    starterScenery: [
+      { toyKey: 'prop-trex', x: 705, y: 320 },
+      { toyKey: 'prop-unicorn-pasture', x: 425, y: 315 },
+      { toyKey: 'prop-water-tower', x: 315, y: 488 },
+      { toyKey: 'prop-windmill', x: 1100, y: 265 },
+      { toyKey: 'prop-pine-forest', x: 145, y: 245 }
     ]
   }
 };
+
+const THROTTLE_NOTCH_BASE_X = 924;
+const THROTTLE_NOTCH_STEP_X = 56;
 
 export class TrainTableScene extends Phaser.Scene {
   private audio!: TrainAudioEngine;
@@ -644,49 +459,49 @@ export class TrainTableScene extends Phaser.Scene {
   // World & UI layers (World layers zoom with camera follow; UI layers stay pinned to screen!)
   private worldRoot!: Phaser.GameObjects.Container;
   private trackGraphics!: Phaser.GameObjects.Graphics;
-  private socketUnderlayContainer!: Phaser.GameObjects.Container;
+  private trackModulesContainer!: Phaser.GameObjects.Container;
+  private activeConnectorContainer!: Phaser.GameObjects.Container;
+  private sceneryContainer!: Phaser.GameObjects.Container;
   private stationContainer!: Phaser.GameObjects.Container;
   private trainConsistContainer!: Phaser.GameObjects.Container;
   private tunnelHoodContainer!: Phaser.GameObjects.Container;
   private worldFxContainer!: Phaser.GameObjects.Container;
   private uiRoot!: Phaser.GameObjects.Container;
 
-  // Active Track Blueprint & Uniform Arc-Length Spline Table
+  // Active Track Blueprint, Modular Track Pieces & Uniform Arc-Length Spline Table
   private currentBlueprintId: TrackBlueprintId = 'meadow';
+  private placedTrackPieces: PlacedTrackPiece[] = [];
+  private magicClosingPoints: Array<{ x: number; y: number }> = [];
+  private isLoopClosed = true;
   private splineSamples: SplineSample[] = [];
   private totalTrackLength = 1800;
 
-  // Placed Toys Map (`socketId -> toyKey`) & Live GameObjects
-  private placedToysBySocket: Map<string, string> = new Map();
-  private socketVisuals: Map<
+  // Track Module Visuals & Freely Placed Scenery Toys
+  private trackModuleSprites: Map<
     string,
-    {
-      container: Phaser.GameObjects.Container;
-      ringG: Phaser.GameObjects.Graphics;
-      toySprite?: Phaser.GameObjects.Image;
-      spec: ToySocketSpec;
-      lastTriggeredAt: number;
-    }
+    { sprite: Phaser.GameObjects.Image; hoodSprite?: Phaser.GameObjects.Image }
   > = new Map();
-  private tunnelHoodSprite: Phaser.GameObjects.Image | null = null;
+  private placedSceneryToys: PlacedSceneryToy[] = [];
   private stationCraneArm: Phaser.GameObjects.Graphics | null = null;
-  private stationBellSprite: Phaser.GameObjects.Container | null = null;
 
   // Train Consist State (Locomotive + Red Car, Blue Car, Gold Car)
   private locoDist = 0;
+  private shuttleDirection: 1 | -1 = 1;
   private throttleNotch = 2; // 0 = STOP, 1..5 = Speed Notches
   private currentSpeedPxPerSec = 110;
   private activeEngineer: EngineerId = 'wyatt';
-  private activePassenger: EngineerId = 'emma';
 
   private locoContainer!: Phaser.GameObjects.Container;
   private locoSprite!: Phaser.GameObjects.Image;
   private locoHeadlightCone!: Phaser.GameObjects.Graphics;
-  private locoEngineerBadge!: Phaser.GameObjects.Image;
   private carContainers: Phaser.GameObjects.Container[] = [];
   private carSprites: Phaser.GameObjects.Image[] = [];
   private carCargoContainers: Phaser.GameObjects.Container[] = [];
-  private coachPassengerBadge!: Phaser.GameObjects.Image;
+
+  // Top HUD Cab Cameo Portrait (moved off the locomotive so the engine & cars are 100% visible!)
+  private hudCabCameoSprite!: Phaser.GameObjects.Image;
+  private hudCabCameoNameText!: Phaser.GameObjects.Text;
+  private hudEngineerRingMap: Map<EngineerId, Phaser.GameObjects.Graphics> = new Map();
 
   // Act 2: Grand Central Station Cargo & Passenger Loader State
   private isStoppingForStation = false;
@@ -713,12 +528,12 @@ export class TrainTableScene extends Phaser.Scene {
   private drawerContainer!: Phaser.GameObjects.Container;
   private drawerCardMap: Map<string, Phaser.GameObjects.Container> = new Map();
   private activeDragGhost: Phaser.GameObjects.Image | null = null;
-  private activeDragToyKey: string | null = null;
+  private activeDragToyKey: DrawerToyKey | null = null;
+  private activeDragKind: 'track' | 'scenery' | null = null;
 
-  // Xylophone & Tunnel & Crossing Gate Trigger Trackers
+  // Xylophone & Tunnel Trigger Trackers
   private lastXyloBarPlayed = -1;
   private wasInsideTunnel = false;
-  private crossingGateArmAngle = 0;
 
   constructor() {
     super({ key: 'TrainTableScene' });
@@ -730,23 +545,18 @@ export class TrainTableScene extends Phaser.Scene {
     // Default engineer to the currently active kid profile in ArcadeState!
     const activeKid = ArcadeState.getActiveKid();
     this.activeEngineer = activeKid.id === 'emma' ? 'emma' : 'wyatt';
-    this.activePassenger = activeKid.id === 'emma' ? 'doggie' : 'sparky';
     this.throttleNotch = 2;
+    this.shuttleDirection = 1;
     this.isCameraFollow = false;
     this.isStoppingForStation = false;
     this.isAtStationModalOpen = false;
     this.currentLoadedCount = 0;
     this.starsEarnedCount = 0;
 
-    // Pre-populate Royal Gorge Bridge and Echo Mountain Tunnel on startup so the table feels rich
-    // immediately, while leaving 7 inviting sockets open (or swappable) for discovery!
-    this.placedToysBySocket.clear();
-    this.placedToysBySocket.set('sock-bridge', 'mod-royal-bridge');
-    this.placedToysBySocket.set('sock-tunnel', 'mod-stone-tunnel');
-
+    this.createProceduralTrackPieceTextures();
     this.createWorldLayers();
-    this.buildTrackBlueprint('meadow', false);
     this.createTrainConsist();
+    this.buildTrackBlueprint('meadow', false);
     this.createFixedUILayer();
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -759,6 +569,80 @@ export class TrainTableScene extends Phaser.Scene {
     this.time.delayedCall(220, () => {
       this.audio.speakPrompt('welcome_title');
     });
+  }
+
+  // ===========================================================================
+  // PROCEDURAL 32-BIT BEECHWOOD TRACK PIECE TEXTURES (IN-MEMORY ONLY)
+  // ===========================================================================
+
+  /**
+   * Mentor Note: We generate crisp in-memory textures for `track-straight`,
+   * `track-curve-left`, and `track-curve-right` using Phaser's Graphics -> `generateTexture`
+   * pipeline so kids have tactile Brio wooden track icons to drag and snap onto the
+   * Active Track Connector without touching any files on disk.
+   */
+  private createProceduralTrackPieceTextures(): void {
+    if (!this.textures.exists('track-straight')) {
+      const g = this.make.graphics({ x: 0, y: 0 });
+      // Beechwood straight plank + recessed rails + Brio jigsaw peg
+      g.fillStyle(0x784416, 1);
+      g.fillRoundedRect(10, 26, 88, 44, 8);
+      g.fillStyle(0xdfb178, 1);
+      g.fillRoundedRect(12, 28, 84, 38, 7);
+      g.lineStyle(3, 0xb88148, 0.85);
+      for (let x = 22; x <= 86; x += 16) {
+        g.lineBetween(x, 31, x, 63);
+      }
+      g.fillStyle(0x855022, 1);
+      g.fillRect(14, 35, 80, 5);
+      g.fillRect(14, 54, 80, 5);
+      // Jigsaw peg on right
+      g.fillStyle(0xd29c60, 1);
+      g.fillCircle(103, 47, 8);
+      g.lineStyle(2, 0x6b3a12, 1);
+      g.strokeCircle(103, 47, 8);
+      g.generateTexture('track-straight', 116, 96);
+      g.destroy();
+    }
+
+    const buildCurveTex = (key: string, flipY: boolean) => {
+      if (this.textures.exists(key)) return;
+      const g = this.make.graphics({ x: 0, y: 0 });
+      const cy = flipY ? 84 : 12;
+      const startA = flipY ? Phaser.Math.DegToRad(-85) : Phaser.Math.DegToRad(10);
+      const endA = flipY ? Phaser.Math.DegToRad(-10) : Phaser.Math.DegToRad(85);
+
+      g.lineStyle(38, 0x784416, 1);
+      g.beginPath();
+      g.arc(18, cy, 62, startA, endA, false);
+      g.strokePath();
+
+      g.lineStyle(31, 0xdfb178, 1);
+      g.beginPath();
+      g.arc(18, cy, 62, startA, endA, false);
+      g.strokePath();
+
+      g.lineStyle(4.5, 0x855022, 0.95);
+      g.beginPath();
+      g.arc(18, cy, 54, startA, endA, false);
+      g.strokePath();
+      g.beginPath();
+      g.arc(18, cy, 70, startA, endA, false);
+      g.strokePath();
+
+      const pegX = 18 + Math.cos(endA) * 62;
+      const pegY = cy + Math.sin(endA) * 62;
+      g.fillStyle(0xd29c60, 1);
+      g.fillCircle(pegX, pegY, 7);
+      g.lineStyle(2, 0x6b3a12, 1);
+      g.strokeCircle(pegX, pegY, 7);
+
+      g.generateTexture(key, 116, 96);
+      g.destroy();
+    };
+
+    buildCurveTex('track-curve-left', true);
+    buildCurveTex('track-curve-right', false);
   }
 
   // ===========================================================================
@@ -782,7 +666,9 @@ export class TrainTableScene extends Phaser.Scene {
     }
 
     this.trackGraphics = this.add.graphics();
-    this.socketUnderlayContainer = this.add.container(0, 0);
+    this.trackModulesContainer = this.add.container(0, 0);
+    this.activeConnectorContainer = this.add.container(0, 0);
+    this.sceneryContainer = this.add.container(0, 0);
     this.stationContainer = this.add.container(0, 0);
     this.trainConsistContainer = this.add.container(0, 0);
     this.tunnelHoodContainer = this.add.container(0, 0);
@@ -790,7 +676,9 @@ export class TrainTableScene extends Phaser.Scene {
 
     this.worldRoot.add([
       this.trackGraphics,
-      this.socketUnderlayContainer,
+      this.trackModulesContainer,
+      this.activeConnectorContainer,
+      this.sceneryContainer,
       this.stationContainer,
       this.trainConsistContainer,
       this.tunnelHoodContainer,
@@ -799,27 +687,37 @@ export class TrainTableScene extends Phaser.Scene {
   }
 
   // ===========================================================================
-  // SPLINE TRACK GENERATOR & MODULAR SOCKET BUILDER
+  // MODULAR BRIO TRACK BUILDER, ACTIVE CONNECTOR & MAGIC FINISH LOOP
   // ===========================================================================
 
   private buildTrackBlueprint(blueprintId: TrackBlueprintId, announceVoice = true): void {
     this.currentBlueprintId = blueprintId;
     const bp = TRACK_BLUEPRINTS[blueprintId];
 
-    // 1. Sample closed Catmull-Rom curve into uniform arc-length lookup table
-    this.computeUniformSplineTable(bp.controlPoints, 1000);
+    // 1. Reset track pieces to the blueprint's starter modular sequence
+    this.placedTrackPieces = [];
+    this.createStarterStationPiece();
+    for (const pieceKey of bp.starterPieces) {
+      this.appendTrackPieceInternal(pieceKey);
+    }
 
-    // 2. Render multi-layered carved beechwood Brio track along the spline
-    this.renderCarvedBeechwoodTrack();
+    // 2. Complete the loop smoothly back to Grandpa's Train Depot
+    this.isLoopClosed = true;
+    this.rebuildTrackSplineAndVisuals();
 
     // 3. Render Grandpa's Wooden Train Depot beside the southern straightaway
     this.renderGrandpasTrainDepot(bp);
 
-    // 4. Render Interactive Track & Scenery Sockets (and any placed toys)
-    this.renderSocketsAndPlacedToys(bp);
+    // 4. Populate initial free-placement Scenery Toys on the green felt table
+    this.clearAllSceneryToys();
+    for (const sc of bp.starterScenery) {
+      this.placeSceneryToyOnFelt(sc.toyKey, sc.x, sc.y, false);
+    }
 
-    // Place locomotive just departing the station
-    this.locoDist = bp.stationT * this.totalTrackLength;
+    // Place locomotive departing the station
+    this.locoDist = 60;
+    this.shuttleDirection = 1;
+    this.updateTrainConsistPositions();
 
     if (this.blueprintBtnText) {
       this.blueprintBtnText.setText(`🗺️ ${bp.shortLabel}`);
@@ -833,57 +731,311 @@ export class TrainTableScene extends Phaser.Scene {
   }
 
   /**
-   * Evaluates a closed Catmull-Rom spline through `pts` and resamples it at 1,000 uniform
-   * arc-length steps so train cars maintain rock-solid constant spacing around every curve.
+   * Creates the anchor Brio straight track piece in front of Grandpa's Wooden Train Depot.
    */
-  private computeUniformSplineTable(
-    pts: Array<{ x: number; y: number }>,
-    numUniformSamples: number
-  ): void {
-    const n = pts.length;
-    const rawCount = n * 80;
-    const rawPts: Array<{ x: number; y: number; cumDist: number }> = [];
+  private createStarterStationPiece(): void {
+    const startX = 635;
+    const startY = 474;
+    const endX = 505;
+    const endY = 474;
+    const angle = Math.PI; // Heading West along the southern straightaway
+    const points: Array<{ x: number; y: number }> = [];
+    const steps = 12;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      points.push({
+        x: Phaser.Math.Linear(startX, endX, t),
+        y: Phaser.Math.Linear(startY, endY, t)
+      });
+    }
+    this.placedTrackPieces.push({
+      id: 'piece-0-station',
+      pieceKey: 'track-straight',
+      startX,
+      startY,
+      startAngle: angle,
+      endX,
+      endY,
+      endAngle: angle,
+      midX: (startX + endX) * 0.5,
+      midY: (startY + endY) * 0.5,
+      midAngle: angle,
+      points,
+      lastTriggeredAt: 0
+    });
+  }
 
-    const evalCatmullRom = (tGlobal: number): { x: number; y: number } => {
-      const scaled = ((tGlobal % 1) + 1) % 1 * n;
-      const idx = Math.floor(scaled);
-      const u = scaled - idx;
+  public getActiveTrackConnector(): { x: number; y: number; angle: number } {
+    const tail = this.placedTrackPieces[this.placedTrackPieces.length - 1];
+    if (!tail) {
+      return { x: 505, y: 474, angle: Math.PI };
+    }
+    return { x: tail.endX, y: tail.endY, angle: tail.endAngle };
+  }
 
-      const p0 = pts[(idx - 1 + n) % n];
-      const p1 = pts[idx % n];
-      const p2 = pts[(idx + 1) % n];
-      const p3 = pts[(idx + 2) % n];
+  /**
+   * Computes the geometry for a newly snapped Track Piece (`Straight`, `Curve Left`, `Curve Right`,
+   * `Xylophone`, `Bridge`, `Tunnel`, `Crossing Gate`) with automatic tangent rotation from the
+   * Active Track Connector, gently steering inside the green felt table boundaries if needed.
+   */
+  private appendTrackPieceInternal(pieceKey: TrackPieceKey): PlacedTrackPiece {
+    const conn = this.getActiveTrackConnector();
+    const startX = conn.x;
+    const startY = conn.y;
+    let startAngle = conn.angle;
 
-      const u2 = u * u;
-      const u3 = u2 * u;
+    // Gentle playfield boundary assist so kids can never accidentally build off the felt table
+    const marginLeft = 175;
+    const marginRight = 1095;
+    const marginTop = 148;
+    const marginBottom = 486;
+    const testX = startX + Math.cos(startAngle) * 115;
+    const testY = startY + Math.sin(startAngle) * 115;
 
-      const x =
-        0.5 *
-        (2 * p1.x +
-          (-p0.x + p2.x) * u +
-          (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * u2 +
-          (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * u3);
-      const y =
-        0.5 *
-        (2 * p1.y +
-          (-p0.y + p2.y) * u +
-          (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * u2 +
-          (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * u3);
-      return { x, y };
-    };
-
-    let accum = 0;
-    let prev = evalCatmullRom(0);
-    rawPts.push({ x: prev.x, y: prev.y, cumDist: 0 });
-
-    for (let i = 1; i <= rawCount; i++) {
-      const pt = evalCatmullRom(i / rawCount);
-      accum += Math.hypot(pt.x - prev.x, pt.y - prev.y);
-      rawPts.push({ x: pt.x, y: pt.y, cumDist: accum });
-      prev = pt;
+    let deltaAngle = 0;
+    if (pieceKey === 'track-curve-left') {
+      deltaAngle = -Math.PI / 4; // -45 deg left turn
+    } else if (pieceKey === 'track-curve-right') {
+      deltaAngle = Math.PI / 4; // +45 deg right turn
     }
 
-    this.totalTrackLength = Math.max(100, accum);
+    // If a piece would exit the felt table bounds, auto-curve inward toward the table center
+    if (testX < marginLeft || testX > marginRight || testY < marginTop || testY > marginBottom) {
+      const toCenterAngle = Math.atan2(315 - startY, 640 - startX);
+      const angleDiff = Phaser.Math.Angle.Wrap(toCenterAngle - startAngle);
+      if (deltaAngle === 0) {
+        startAngle = Phaser.Math.Angle.Wrap(startAngle + Phaser.Math.Clamp(angleDiff, -0.55, 0.55));
+      } else if (angleDiff * deltaAngle < 0) {
+        deltaAngle = Phaser.Math.Clamp(angleDiff, -Math.PI / 3, Math.PI / 3);
+      }
+    }
+
+    const segLength =
+      pieceKey === 'mod-royal-bridge' || pieceKey === 'mod-stone-tunnel' ? 128 : 114;
+    const steps = 14;
+    const points: Array<{ x: number; y: number }> = [];
+
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const a = startAngle + deltaAngle * 0.5 * t;
+      const dist = segLength * t;
+      const px = Phaser.Math.Clamp(startX + Math.cos(a) * dist, 130, 1135);
+      const py = Phaser.Math.Clamp(startY + Math.sin(a) * dist, 128, 495);
+      points.push({ x: px, y: py });
+    }
+
+    const endPt = points[points.length - 1];
+    const midPt = points[Math.floor(points.length / 2)];
+    const endAngle = Phaser.Math.Angle.Wrap(startAngle + deltaAngle);
+    const midAngle = Phaser.Math.Angle.Wrap(startAngle + deltaAngle * 0.5);
+
+    const piece: PlacedTrackPiece = {
+      id: `piece-${this.placedTrackPieces.length}-${Date.now()}`,
+      pieceKey,
+      startX,
+      startY,
+      startAngle,
+      endX: endPt.x,
+      endY: endPt.y,
+      endAngle,
+      midX: midPt.x,
+      midY: midPt.y,
+      midAngle,
+      points,
+      lastTriggeredAt: 0
+    };
+
+    this.placedTrackPieces.push(piece);
+    return piece;
+  }
+
+  /**
+   * Snaps a Track Piece (`Straight`, `Curve Left/Right`, `Xylophone`, `Bridge`, `Tunnel`,
+   * `Crossing Gate`) onto the Active Track Connector with auto-rotation!
+   */
+  private snapTrackPieceToActiveConnector(
+    pieceKey: TrackPieceKey,
+    speakConfirmation = true
+  ): void {
+    // If the loop was previously auto-closed and the user already has a full blueprint,
+    // snapping a new piece opens the active builder head (or trims if > 16 pieces) so they
+    // can visibly see each piece extend the Active Track Connector!
+    if (this.isLoopClosed && this.placedTrackPieces.length >= 13) {
+      this.placedTrackPieces.splice(8);
+    }
+
+    const newPiece = this.appendTrackPieceInternal(pieceKey);
+
+    // Check if the new piece naturally reached Grandpa's Station origin
+    const origin = this.placedTrackPieces[0];
+    const distToStart = Math.hypot(newPiece.endX - origin.startX, newPiece.endY - origin.startY);
+    this.isLoopClosed = this.placedTrackPieces.length >= 5 && distToStart < 105;
+
+    this.rebuildTrackSplineAndVisuals();
+
+    // Audio & Starburst feedback at the newly snapped piece
+    this.audio.playWoodTrackSnap();
+    Juice.burstStars(this, newPiece.midX, newPiece.midY, 16, [0xfef08a, 0xfbbf24, 0x34d399]);
+
+    const label =
+      TOY_DRAWER_ITEMS.find((d) => d.toyKey === pieceKey)?.shortLabel ?? 'Track';
+    Juice.popFloatingLabel(
+      this,
+      newPiece.midX,
+      newPiece.midY - 26,
+      `✨ ${label.toUpperCase()} SNAPPED!`,
+      '#fef08a'
+    );
+
+    const drawerSpec = TOY_DRAWER_ITEMS.find((d) => d.toyKey === pieceKey);
+    if (speakConfirmation && drawerSpec?.promptId) {
+      this.audio.speakPrompt(drawerSpec.promptId);
+    }
+  }
+
+  /**
+   * `[ ↩ Undo ]` Button Handler:
+   * Removes the last placed track piece (or opens a magic-finished loop) and moves the
+   * glowing Active Track Connector back to the previous piece's end.
+   */
+  private undoLastTrackPiece(): void {
+    if (this.isLoopClosed && this.placedTrackPieces.length > 2) {
+      this.isLoopClosed = false;
+      this.placedTrackPieces.pop();
+    } else if (this.placedTrackPieces.length > 1) {
+      this.placedTrackPieces.pop();
+      this.isLoopClosed = false;
+    } else {
+      // Always keep at least the starter Station platform piece
+      this.isLoopClosed = false;
+    }
+
+    this.rebuildTrackSplineAndVisuals();
+    const conn = this.getActiveTrackConnector();
+    this.audio.playWoodTrackSnap();
+    Juice.burstStars(this, conn.x, conn.y, 10, [0xfef08a, 0xf87171]);
+    Juice.popFloatingLabel(this, conn.x, conn.y - 26, '↩ UNDO TRACK', '#fef08a');
+  }
+
+  /**
+   * `[ ✨ Magic Finish Loop ]` Button Handler:
+   * Smoothly completes the track loop from the Active Track Connector back to Grandpa's
+   * Station Depot so the train can chug continuously around the circuit!
+   */
+  private magicFinishTrackLoop(): void {
+    // Ensure there are enough pieces to form a roomy loop before closing
+    while (this.placedTrackPieces.length < 6) {
+      this.appendTrackPieceInternal('track-curve-right');
+    }
+
+    this.isLoopClosed = true;
+    this.rebuildTrackSplineAndVisuals();
+
+    this.audio.playWoodTrackSnap();
+    this.audio.playSteamWhistle(false);
+    this.spawnLocomotiveSteamPuff(true);
+    Juice.burstStars(this, 640, 310, 24, [0xfef08a, 0xfbbf24, 0x34d399, 0x38bdf8]);
+    Juice.popFloatingLabel(this, 640, 290, '✨ MAGIC LOOP COMPLETE!', '#fef08a');
+
+    if (this.throttleNotch === 0) {
+      this.setThrottleNotch(2, false);
+    }
+  }
+
+  /**
+   * Rebuilds the uniform arc-length lookup table (`this.splineSamples`), redraws the carved
+   * beechwood Brio track, renders all snapped special track modules with auto-rotation, and
+   * updates the glowing Active Track Connector.
+   */
+  private rebuildTrackSplineAndVisuals(): void {
+    const rawChain: Array<{ x: number; y: number }> = [];
+    for (let pIdx = 0; pIdx < this.placedTrackPieces.length; pIdx++) {
+      const piece = this.placedTrackPieces[pIdx];
+      for (let i = 0; i < piece.points.length; i++) {
+        if (pIdx > 0 && i === 0) continue;
+        rawChain.push(piece.points[i]);
+      }
+    }
+
+    this.magicClosingPoints = [];
+    if (this.isLoopClosed && this.placedTrackPieces.length > 0) {
+      const first = this.placedTrackPieces[0];
+      const last = this.placedTrackPieces[this.placedTrackPieces.length - 1];
+      const distGap = Math.hypot(first.startX - last.endX, first.startY - last.endY);
+
+      if (distGap > 18) {
+        // Build a smooth cubic Hermite bridge from Active Connector back to Station start
+        const tangentScale = Math.max(120, distGap * 0.65);
+        const p0x = last.endX;
+        const p0y = last.endY;
+        const m0x = Math.cos(last.endAngle) * tangentScale;
+        const m0y = Math.sin(last.endAngle) * tangentScale;
+
+        const p1x = first.startX;
+        const p1y = first.startY;
+        const m1x = Math.cos(first.startAngle) * tangentScale;
+        const m1y = Math.sin(first.startAngle) * tangentScale;
+
+        const bridgeSteps = Math.max(16, Math.ceil(distGap / 18));
+        for (let s = 1; s <= bridgeSteps; s++) {
+          const t = s / bridgeSteps;
+          const t2 = t * t;
+          const t3 = t2 * t;
+          const h00 = 2 * t3 - 3 * t2 + 1;
+          const h10 = t3 - 2 * t2 + t;
+          const h01 = -2 * t3 + 3 * t2;
+          const h11 = t3 - t2;
+
+          const bx = Phaser.Math.Clamp(
+            h00 * p0x + h10 * m0x + h01 * p1x + h11 * m1x,
+            125,
+            1140
+          );
+          const by = Phaser.Math.Clamp(
+            h00 * p0y + h10 * m0y + h01 * p1y + h11 * m1y,
+            125,
+            495
+          );
+          this.magicClosingPoints.push({ x: bx, y: by });
+          rawChain.push({ x: bx, y: by });
+        }
+      }
+    }
+
+    this.computeUniformPolylineTable(rawChain, 1000, this.isLoopClosed);
+    this.renderCarvedBeechwoodTrack();
+    this.renderPlacedTrackModules();
+    this.renderActiveTrackConnector();
+  }
+
+  private computeUniformPolylineTable(
+    pts: Array<{ x: number; y: number }>,
+    numUniformSamples: number,
+    closed: boolean
+  ): void {
+    if (pts.length < 2) return;
+    const rawPts: Array<{ x: number; y: number; cumDist: number }> = [];
+    let accum = 0;
+    rawPts.push({ x: pts[0].x, y: pts[0].y, cumDist: 0 });
+
+    for (let i = 1; i < pts.length; i++) {
+      const d = Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+      if (d < 0.5) continue;
+      accum += d;
+      rawPts.push({ x: pts[i].x, y: pts[i].y, cumDist: accum });
+    }
+
+    if (closed && rawPts.length > 2) {
+      const first = rawPts[0];
+      const last = rawPts[rawPts.length - 1];
+      const closeD = Math.hypot(first.x - last.x, first.y - last.y);
+      if (closeD > 1) {
+        accum += closeD;
+        rawPts.push({ x: first.x, y: first.y, cumDist: accum });
+      }
+    }
+
+    this.totalTrackLength = Math.max(120, accum);
     this.splineSamples = [];
 
     let rawIdx = 0;
@@ -893,19 +1045,21 @@ export class TrainTableScene extends Phaser.Scene {
         rawIdx++;
       }
       const a = rawPts[rawIdx];
-      const b = rawPts[rawIdx + 1];
+      const b = rawPts[rawIdx + 1] ?? a;
       const span = Math.max(0.0001, b.cumDist - a.cumDist);
       const frac = Phaser.Math.Clamp((targetD - a.cumDist) / span, 0, 1);
       const x = Phaser.Math.Linear(a.x, b.x, frac);
       const y = Phaser.Math.Linear(a.y, b.y, frac);
-      this.splineSamples.push({ x, y, dx: 1, dy: 0, dist: targetD });
+      this.splineSamples.push({ x, y, dx: -1, dy: 0, dist: targetD });
     }
 
     // Compute smooth unit tangent vectors `(dx, dy)`
     const m = this.splineSamples.length;
     for (let k = 0; k < m; k++) {
-      const prevS = this.splineSamples[(k - 3 + m) % m];
-      const nextS = this.splineSamples[(k + 3) % m];
+      const prevIdx = closed ? (k - 4 + m) % m : Math.max(0, k - 4);
+      const nextIdx = closed ? (k + 4) % m : Math.min(m - 1, k + 4);
+      const prevS = this.splineSamples[prevIdx];
+      const nextS = this.splineSamples[nextIdx];
       const vx = nextS.x - prevS.x;
       const vy = nextS.y - prevS.y;
       const len = Math.max(0.0001, Math.hypot(vx, vy));
@@ -916,11 +1070,15 @@ export class TrainTableScene extends Phaser.Scene {
 
   private sampleSplineAtDist(dist: number): SplineSample {
     const m = this.splineSamples.length;
-    if (m === 0) return { x: 640, y: 360, dx: -1, dy: 0, dist: 0 };
-    const wrapped = ((dist % this.totalTrackLength) + this.totalTrackLength) % this.totalTrackLength;
-    const fIdx = (wrapped / this.totalTrackLength) * m;
+    if (m === 0) return { x: 560, y: 474, dx: -1, dy: 0, dist: 0 };
+
+    const wrapped = this.isLoopClosed
+      ? ((dist % this.totalTrackLength) + this.totalTrackLength) % this.totalTrackLength
+      : Phaser.Math.Clamp(dist, 0, this.totalTrackLength);
+
+    const fIdx = (wrapped / this.totalTrackLength) * (m - 1);
     const i0 = Math.floor(fIdx) % m;
-    const i1 = (i0 + 1) % m;
+    const i1 = this.isLoopClosed ? (i0 + 1) % m : Math.min(m - 1, i0 + 1);
     const frac = fIdx - Math.floor(fIdx);
     const s0 = this.splineSamples[i0];
     const s1 = this.splineSamples[i1];
@@ -938,7 +1096,7 @@ export class TrainTableScene extends Phaser.Scene {
    * - Soft tabletop drop shadow
    * - Beveled mahogany edge & sanded golden beechwood deck
    * - Carved cross-ties & recessed dual wheel grooves
-   * - Classic Brio rounded jigsaw puzzle connectors every 120px
+   * - Classic Brio rounded jigsaw puzzle connectors at every piece joint
    */
   private renderCarvedBeechwoodTrack(): void {
     const g = this.trackGraphics;
@@ -955,7 +1113,7 @@ export class TrainTableScene extends Phaser.Scene {
       if (i === 0) g.moveTo(s.x + 3, s.y + 6);
       else g.lineTo(s.x + 3, s.y + 6);
     }
-    g.closePath();
+    if (this.isLoopClosed) g.closePath();
     g.strokePath();
 
     // 2. Dark walnut beveled roadbed rim
@@ -966,7 +1124,7 @@ export class TrainTableScene extends Phaser.Scene {
       if (i === 0) g.moveTo(s.x, s.y + 2);
       else g.lineTo(s.x, s.y + 2);
     }
-    g.closePath();
+    if (this.isLoopClosed) g.closePath();
     g.strokePath();
 
     // 3. Warm sanded beechwood top plank
@@ -977,7 +1135,7 @@ export class TrainTableScene extends Phaser.Scene {
       if (i === 0) g.moveTo(s.x, s.y);
       else g.lineTo(s.x, s.y);
     }
-    g.closePath();
+    if (this.isLoopClosed) g.closePath();
     g.strokePath();
 
     // 4. Carved wooden cross-ties every 20px
@@ -1004,7 +1162,7 @@ export class TrainTableScene extends Phaser.Scene {
         if (i === 0) g.moveTo(rx, ry);
         else g.lineTo(rx, ry);
       }
-      g.closePath();
+      if (this.isLoopClosed) g.closePath();
       g.strokePath();
 
       // Specular rail highlight
@@ -1017,29 +1175,306 @@ export class TrainTableScene extends Phaser.Scene {
         if (i === 0) g.moveTo(rx, ry);
         else g.lineTo(rx, ry);
       }
-      g.closePath();
+      if (this.isLoopClosed) g.closePath();
       g.strokePath();
     }
 
-    // 6. Classic Brio rounded jigsaw joint lines & pegs every 115px
-    const jointStep = Math.max(1, Math.floor((115 / this.totalTrackLength) * m));
-    for (let i = 0; i < m; i += jointStep) {
-      const s = this.splineSamples[i];
-      const nx = -s.dy;
-      const ny = s.dx;
-      g.lineStyle(2, 0x6b3a12, 0.85);
+    // 6. Classic Brio rounded jigsaw joint lines & pegs at every placed piece boundary
+    for (const piece of this.placedTrackPieces) {
+      const nx = -Math.sin(piece.endAngle);
+      const ny = Math.cos(piece.endAngle);
+      g.lineStyle(2.2, 0x6b3a12, 0.9);
       g.beginPath();
-      g.moveTo(s.x - nx * 15, s.y - ny * 15);
-      g.lineTo(s.x + nx * 15, s.y + ny * 15);
+      g.moveTo(piece.endX - nx * 15, piece.endY - ny * 15);
+      g.lineTo(piece.endX + nx * 15, piece.endY + ny * 15);
       g.strokePath();
 
-      const pegX = s.x + s.dx * 7;
-      const pegY = s.y + s.dy * 7;
+      const pegX = piece.endX + Math.cos(piece.endAngle) * 7;
+      const pegY = piece.endY + Math.sin(piece.endAngle) * 7;
       g.fillStyle(0xd29c60, 1);
-      g.fillCircle(pegX, pegY, 4.5);
-      g.lineStyle(1.8, 0x6b3a12, 0.9);
-      g.strokeCircle(pegX, pegY, 4.5);
+      g.fillCircle(pegX, pegY, 4.8);
+      g.lineStyle(1.8, 0x6b3a12, 0.95);
+      g.strokeCircle(pegX, pegY, 4.8);
     }
+  }
+
+  /**
+   * Renders any special track modules (`Xylophone`, `Bridge`, `Tunnel`, `Crossing Gate`)
+   * snapped into `this.placedTrackPieces` with automatic tangent rotation.
+   */
+  private renderPlacedTrackModules(): void {
+    this.trackModulesContainer.removeAll(true);
+    this.tunnelHoodContainer.removeAll(true);
+    this.trackModuleSprites.clear();
+
+    for (const piece of this.placedTrackPieces) {
+      if (
+        piece.pieceKey === 'track-straight' ||
+        piece.pieceKey === 'track-curve-left' ||
+        piece.pieceKey === 'track-curve-right'
+      ) {
+        continue;
+      }
+
+      if (!this.textures.exists(piece.pieceKey)) continue;
+      this.textures.get(piece.pieceKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
+
+      const cont = this.add.container(piece.midX, piece.midY);
+      const sh = this.add.graphics();
+      sh.fillStyle(0x041b11, 0.45);
+      sh.fillEllipse(0, 10, 115, 34);
+      cont.add(sh);
+
+      // Compute auto-rotation angle aligned with the piece's track tangent
+      const dx = Math.cos(piece.midAngle);
+      const dy = Math.sin(piece.midAngle);
+      const slopeDeg = Phaser.Math.Clamp(
+        Phaser.Math.RadToDeg(Math.atan2(dy, Math.max(0.2, Math.abs(dx)))),
+        -28,
+        28
+      );
+
+      let scale = 0.58;
+      let autoRotDeg = slopeDeg * (dx >= 0 ? 1 : -1);
+      if (piece.pieceKey === 'mod-xylophone-track') {
+        scale = 0.56;
+        // Compensate for the xylophone sprite's isometric diagonal so it sits flush on the rails
+        autoRotDeg = -24 + slopeDeg * 0.7;
+      } else if (piece.pieceKey === 'mod-royal-bridge') {
+        scale = 0.62;
+        autoRotDeg = 22 + slopeDeg * 0.55;
+      } else if (piece.pieceKey === 'mod-stone-tunnel') {
+        scale = 0.68;
+        autoRotDeg = Phaser.Math.Clamp(slopeDeg * 0.35, -12, 12);
+      } else if (piece.pieceKey === 'mod-crossing-gate') {
+        scale = 0.58;
+        autoRotDeg = Phaser.Math.Clamp(slopeDeg * 0.35, -12, 12);
+      }
+
+      const spr = this.add
+        .image(0, 0, piece.pieceKey)
+        .setOrigin(0.5, 0.58)
+        .setScale(scale)
+        .setAngle(autoRotDeg);
+      cont.add(spr);
+
+      let hoodSprite: Phaser.GameObjects.Image | undefined;
+      if (piece.pieceKey === 'mod-stone-tunnel') {
+        hoodSprite = this.add
+          .image(piece.midX, piece.midY - 6, 'mod-stone-tunnel')
+          .setOrigin(0.5, 0.58)
+          .setScale(scale * 1.02)
+          .setAngle(autoRotDeg)
+          .setAlpha(0.92);
+        this.tunnelHoodContainer.add(hoodSprite);
+      }
+
+      const hit = this.add
+        .zone(0, 0, 88, 88)
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+      hit.on('pointerdown', () => {
+        this.triggerTrackModuleGag(piece, true);
+      });
+      cont.add(hit);
+
+      this.trackModulesContainer.add(cont);
+      this.trackModuleSprites.set(piece.id, { sprite: spr, hoodSprite });
+    }
+  }
+
+  /**
+   * Renders the glowing Golden Brio Jigsaw Connector at the end of the last placed track piece
+   * so kids can see exactly where the next track piece will snap and auto-rotate!
+   */
+  private renderActiveTrackConnector(): void {
+    this.activeConnectorContainer.removeAll(true);
+    const conn = this.getActiveTrackConnector();
+
+    const badgeCont = this.add.container(conn.x, conn.y);
+    const ringG = this.add.graphics();
+
+    const ringColor = this.isLoopClosed ? 0xfbbf24 : 0x34d399;
+    ringG.fillStyle(0x064e3b, 0.65);
+    ringG.fillCircle(0, 0, 30);
+
+    const segments = 10;
+    ringG.lineStyle(3.5, ringColor, 0.98);
+    for (let i = 0; i < segments; i++) {
+      const a0 = (i / segments) * Math.PI * 2;
+      const a1 = a0 + (Math.PI * 2) / (segments * 1.7);
+      ringG.beginPath();
+      ringG.arc(0, 0, 30, a0, a1, false);
+      ringG.strokePath();
+    }
+
+    // Directional arrow showing the auto-rotation tangent direction
+    const arrowX = Math.cos(conn.angle) * 16;
+    const arrowY = Math.sin(conn.angle) * 16;
+    ringG.fillStyle(0xfef08a, 1);
+    ringG.fillCircle(arrowX, arrowY, 6);
+
+    const lbl = this.add
+      .text(0, -38, this.isLoopClosed ? '✨ SNAP TRACK' : '✨ NEXT TRACK', {
+        fontFamily: '"Fredoka", Georgia, serif',
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#fef08a',
+        stroke: '#1e1b4b',
+        strokeThickness: 3
+      })
+      .setOrigin(0.5);
+
+    badgeCont.add([ringG, lbl]);
+
+    // Tapping the Active Track Connector directly snaps a Straight/Curve track piece!
+    const hit = this.add
+      .zone(0, 0, 76, 76)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    hit.on('pointerdown', () => {
+      this.snapTrackPieceToActiveConnector('track-curve-right', true);
+    });
+    badgeCont.add(hit);
+
+    this.tweens.add({
+      targets: badgeCont,
+      scaleX: 1.08,
+      scaleY: 1.08,
+      duration: 750,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    this.activeConnectorContainer.add(badgeCont);
+  }
+
+  // ===========================================================================
+  // FREE-PLACEMENT SCENERY TOYS ON THE GREEN FELT TABLE
+  // ===========================================================================
+
+  private clearAllSceneryToys(): void {
+    this.sceneryContainer.removeAll(true);
+    this.placedSceneryToys = [];
+  }
+
+  /**
+   * Places a Scenery Toy (`T-Rex`, `Pasture`, `Tower`, `Windmill`, `Forest`) freely at any
+   * `(worldX, worldY)` coordinate on the green felt table, and makes it draggable so kids
+   * can reposition it anywhere on the felt at any time!
+   */
+  private placeSceneryToyOnFelt(
+    toyKey: SceneryToyKey,
+    worldX: number,
+    worldY: number,
+    celebrate = true
+  ): PlacedSceneryToy | null {
+    if (!this.textures.exists(toyKey)) return null;
+    this.textures.get(toyKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
+
+    const clampedX = Phaser.Math.Clamp(worldX, 95, 1185);
+    const clampedY = Phaser.Math.Clamp(worldY, 95, 525);
+    const baseScale = 0.58;
+
+    const cont = this.add.container(clampedX, clampedY);
+
+    const sh = this.add.graphics();
+    sh.fillStyle(0x041b11, 0.45);
+    sh.fillEllipse(0, 12, 110, 32);
+    cont.add(sh);
+
+    const spr = this.add
+      .image(0, 0, toyKey)
+      .setOrigin(0.5, 0.58)
+      .setScale(baseScale);
+    cont.add(spr);
+
+    const placedRecord: PlacedSceneryToy = {
+      id: `scenery-${toyKey}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      toyKey,
+      x: clampedX,
+      y: clampedY,
+      scale: baseScale,
+      container: cont,
+      sprite: spr,
+      lastTriggeredAt: 0
+    };
+
+    // Hit zone is both tappable (triggers gag) AND freely draggable anywhere on the green felt table!
+    const hit = this.add
+      .zone(0, 0, 92, 92)
+      .setOrigin(0.5)
+      .setInteractive({ draggable: true, useHandCursor: true });
+    cont.add(hit);
+
+    let dragDist = 0;
+    hit.on('dragstart', () => {
+      dragDist = 0;
+      cont.setDepth(50);
+      spr.setScale(baseScale * 1.12);
+    });
+
+    hit.on('drag', (pointer: Phaser.Input.Pointer) => {
+      dragDist += Math.hypot(pointer.velocity.x, pointer.velocity.y) + 3;
+      const pt = this.screenToWorld(pointer.x, pointer.y);
+      const nx = Phaser.Math.Clamp(pt.x, 90, 1190);
+      const ny = Phaser.Math.Clamp(pt.y, 90, 560);
+      cont.setPosition(nx, ny);
+      placedRecord.x = nx;
+      placedRecord.y = ny;
+    });
+
+    hit.on('dragend', (pointer: Phaser.Input.Pointer) => {
+      cont.setDepth(1);
+      spr.setScale(baseScale);
+
+      // If dragged down into the bottom mahogany drawer (`pointer.y > 578`), remove from table
+      if (pointer.y > 578 && dragDist > 24) {
+        const idx = this.placedSceneryToys.indexOf(placedRecord);
+        if (idx >= 0) this.placedSceneryToys.splice(idx, 1);
+        cont.destroy(true);
+        this.audio.playWoodTrackSnap();
+        return;
+      }
+
+      if (dragDist < 18) {
+        this.triggerSceneryToyGag(placedRecord, true);
+      } else {
+        this.audio.playWoodTrackSnap();
+        Juice.burstStars(this, placedRecord.x, placedRecord.y - 10, 10, [
+          0xfef08a,
+          0x34d399
+        ]);
+        this.triggerSceneryToyGag(placedRecord, true);
+      }
+    });
+
+    this.sceneryContainer.add(cont);
+    this.placedSceneryToys.push(placedRecord);
+
+    if (celebrate) {
+      this.audio.playWoodTrackSnap();
+      Juice.burstStars(this, clampedX, clampedY - 12, 16, [0xfef08a, 0xfbbf24, 0x34d399]);
+      spr.setScale(baseScale * 1.24, baseScale * 0.82);
+      this.tweens.add({
+        targets: spr,
+        scaleX: baseScale,
+        scaleY: baseScale,
+        duration: 260,
+        ease: 'Elastic.easeOut'
+      });
+      this.triggerSceneryToyGag(placedRecord, true);
+    }
+
+    return placedRecord;
+  }
+
+  private screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
+    const scale = this.worldRoot ? this.worldRoot.scaleX || 1 : 1;
+    const wx = (screenX - (this.worldRoot?.x ?? 0)) / scale;
+    const wy = (screenY - (this.worldRoot?.y ?? 0)) / scale;
+    return { x: wx, y: wy };
   }
 
   // ===========================================================================
@@ -1099,7 +1534,6 @@ export class TrainTableScene extends Phaser.Scene {
 
     bellBadge.add([badgeG, bellTxt]);
     this.stationContainer.add(bellBadge);
-    this.stationBellSprite = bellBadge;
 
     this.tweens.add({
       targets: bellBadge,
@@ -1126,7 +1560,6 @@ export class TrainTableScene extends Phaser.Scene {
     if (!this.stationCraneArm) return;
     const g = this.stationCraneArm;
     g.clear();
-    // Wooden crane boom
     g.lineStyle(6, 0x92400e, 1);
     g.beginPath();
     g.moveTo(baseX, baseY);
@@ -1139,7 +1572,6 @@ export class TrainTableScene extends Phaser.Scene {
     g.lineTo(hookX, hookY - 22);
     g.strokePath();
 
-    // Braided hoist cable + brass hook
     g.lineStyle(2.5, 0xfef08a, 0.95);
     g.beginPath();
     g.moveTo(hookX, hookY - 22);
@@ -1151,258 +1583,41 @@ export class TrainTableScene extends Phaser.Scene {
   }
 
   // ===========================================================================
-  // ACT 1: SNAP-AND-PLAY TRACK MODULES & LIVING DIORAMA SOCKETS
+  // TRACK MODULE & SCENERY TOY INTERACTIVE GAGS
   // ===========================================================================
 
-  private renderSocketsAndPlacedToys(bp: BlueprintConfig): void {
-    this.socketUnderlayContainer.removeAll(true);
-    this.tunnelHoodContainer.removeAll(true);
-    this.socketVisuals.clear();
-    this.tunnelHoodSprite = null;
-
-    for (const spec of bp.sockets) {
-      let sx = spec.x;
-      let sy = spec.y;
-      if (spec.kind === 'track' && typeof spec.trackT === 'number') {
-        const sample = this.sampleSplineAtDist(spec.trackT * this.totalTrackLength);
-        sx = sample.x;
-        sy = sample.y;
-      }
-
-      const container = this.add.container(sx, sy);
-      const ringG = this.add.graphics();
-      container.add(ringG);
-
-      const placedKey = this.placedToysBySocket.get(spec.id);
-      this.drawSocketRing(ringG, spec.kind, Boolean(placedKey));
-
-      let toySprite: Phaser.GameObjects.Image | undefined;
-      if (placedKey && this.textures.exists(placedKey)) {
-        this.textures.get(placedKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
-
-        // Soft contact shadow
-        const sh = this.add.graphics();
-        sh.fillStyle(0x041b11, 0.45);
-        sh.fillEllipse(0, 10, 115, 34);
-        container.add(sh);
-
-        toySprite = this.add
-          .image(0, 0, placedKey)
-          .setOrigin(0.5, 0.58)
-          .setScale(spec.scale);
-        container.add(toySprite);
-
-        // If this is the Echo Mountain Stone Tunnel, also mount a raised 2.5D portal hood
-        // above the train layer so the locomotive visibly drives inside the mountain arch!
-        if (placedKey === 'mod-stone-tunnel') {
-          this.tunnelHoodSprite = this.add
-            .image(sx, sy - 6, 'mod-stone-tunnel')
-            .setOrigin(0.5, 0.58)
-            .setScale(spec.scale * 1.02)
-            .setAlpha(0.92);
-          this.tunnelHoodContainer.add(this.tunnelHoodSprite);
-        }
-      } else {
-        // Inviting golden socket icon + label for empty sockets
-        const badge = this.add
-          .text(0, 0, spec.kind === 'track' ? '✨ RAIL' : '🌲 TOY', {
-            fontFamily: '"Fredoka", Georgia, serif',
-            fontSize: '13px',
-            fontStyle: 'bold',
-            color: '#fef08a',
-            stroke: '#1e1b4b',
-            strokeThickness: 3
-          })
-          .setOrigin(0.5);
-        container.add(badge);
-      }
-
-      // Interactive >=76x76px hit zone:
-      // - If empty: tapping auto-places the matching toy from the drawer with a magnetic arc!
-      // - If filled: tapping triggers the toy's interactive animation & sound gag!
-      const hitZone = this.add
-        .zone(0, 0, 86, 86)
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true });
-      container.add(hitZone);
-
-      hitZone.on('pointerdown', () => {
-        const currentPlaced = this.placedToysBySocket.get(spec.id);
-        if (currentPlaced) {
-          this.triggerPlacedToyGag(spec.id, true);
-        } else {
-          this.autoArcToyFromDrawerToSocket(spec.toyKey, spec);
-        }
-      });
-
-      this.socketUnderlayContainer.add(container);
-      this.socketVisuals.set(spec.id, {
-        container,
-        ringG,
-        toySprite,
-        spec: { ...spec, x: sx, y: sy },
-        lastTriggeredAt: 0
-      });
-    }
-
-    this.refreshToyDrawerHighlights();
-  }
-
-  private drawSocketRing(
-    g: Phaser.GameObjects.Graphics,
-    kind: 'track' | 'scenery',
-    isFilled: boolean
-  ): void {
-    g.clear();
-    if (isFilled) {
-      g.lineStyle(2, 0xfef08a, 0.32);
-      g.strokeCircle(0, 4, 42);
-      return;
-    }
-
-    const color = kind === 'track' ? 0xfbbf24 : 0x34d399;
-    g.fillStyle(0x064e3b, 0.55);
-    g.fillCircle(0, 0, 38);
-
-    // Dotted golden/emerald socket ring
-    const segments = 12;
-    g.lineStyle(3.5, color, 0.95);
-    for (let i = 0; i < segments; i++) {
-      const a0 = (i / segments) * Math.PI * 2;
-      const a1 = a0 + (Math.PI * 2) / (segments * 1.8);
-      g.beginPath();
-      g.arc(0, 0, 38, a0, a1, false);
-      g.strokePath();
-    }
-  }
-
-  /**
-   * Launches a wooden toy from the bottom mahogany drawer in a high bouncy arc into its
-   * matching socket on the train table!
-   */
-  private autoArcToyFromDrawerToSocket(toyKey: string, targetSocket?: ToySocketSpec): void {
-    const bp = TRACK_BLUEPRINTS[this.currentBlueprintId];
-    const spec =
-      targetSocket ??
-      bp.sockets.find((s) => s.toyKey === toyKey) ??
-      bp.sockets[0];
-    if (!spec) return;
-
-    const visual = this.socketVisuals.get(spec.id);
-    const destX = visual ? visual.spec.x : spec.x;
-    const destY = visual ? visual.spec.y : spec.y;
-
-    const drawerCard = this.drawerCardMap.get(toyKey);
-    const startX = drawerCard ? drawerCard.x : 540;
-    const startY = drawerCard ? drawerCard.y : 655;
-
-    if (this.textures.exists(toyKey)) {
-      const flyer = this.add
-        .image(startX, startY, toyKey)
-        .setDepth(450)
-        .setScale(0.38);
-
-      this.tweens.add({
-        targets: flyer,
-        x: destX,
-        y: destY,
-        scaleX: spec.scale,
-        scaleY: spec.scale,
-        angle: 360,
-        duration: 420,
-        ease: 'Back.easeOut',
-        onComplete: () => {
-          flyer.destroy();
-          this.snapToyIntoSocket(spec.id, toyKey, true);
-        }
-      });
-    } else {
-      this.snapToyIntoSocket(spec.id, toyKey, true);
-    }
-  }
-
-  private snapToyIntoSocket(socketId: string, toyKey: string, speakConfirmation = true): void {
-    this.placedToysBySocket.set(socketId, toyKey);
-    const bp = TRACK_BLUEPRINTS[this.currentBlueprintId];
-    this.renderSocketsAndPlacedToys(bp);
-
-    const visual = this.socketVisuals.get(socketId);
-    if (visual) {
-      this.audio.playWoodTrackSnap();
-      Juice.burstStars(this, visual.spec.x, visual.spec.y - 12, 16, [0xfef08a, 0xfbbf24, 0x34d399]);
-      if (visual.toySprite) {
-        const baseScale = visual.spec.scale;
-        visual.toySprite.setScale(baseScale * 1.24, baseScale * 0.82);
-        this.tweens.add({
-          targets: visual.toySprite,
-          scaleX: baseScale,
-          scaleY: baseScale,
-          duration: 280,
-          ease: 'Elastic.easeOut'
-        });
-      }
-    }
-
-    const drawerSpec = TOY_DRAWER_ITEMS.find((d) => d.toyKey === toyKey);
-    if (speakConfirmation && drawerSpec?.promptId) {
-      this.audio.speakPrompt(drawerSpec.promptId);
-    } else if (speakConfirmation) {
-      this.triggerPlacedToyGag(socketId, true);
-    }
-  }
-
-  /**
-   * Triggers the joyful visual & audio gag of any placed Track Module or Scenery Toy
-   * (either when tapped directly by the child OR when the train chugs past!).
-   */
-  private triggerPlacedToyGag(socketId: string, isDirectTap = false): void {
-    const visual = this.socketVisuals.get(socketId);
-    if (!visual || !visual.toySprite) return;
-
+  private triggerTrackModuleGag(piece: PlacedTrackPiece, isDirectTap = false): void {
     const now = this.time.now;
-    if (!isDirectTap && now - visual.lastTriggeredAt < 2600) return;
-    visual.lastTriggeredAt = now;
+    if (!isDirectTap && now - piece.lastTriggeredAt < 2600) return;
+    piece.lastTriggeredAt = now;
 
-    const toyKey = this.placedToysBySocket.get(socketId);
-    const spr = visual.toySprite;
-    const baseScale = visual.spec.scale;
-    const wx = visual.spec.x;
-    const wy = visual.spec.y;
+    const entry = this.trackModuleSprites.get(piece.id);
+    if (!entry) return;
+    const spr = entry.sprite;
+    const baseScale = spr.scaleX;
+    const wx = piece.midX;
+    const wy = piece.midY;
 
-    this.tweens.killTweensOf(spr);
-    spr.setScale(baseScale);
-    spr.setAngle(0);
-
-    switch (toyKey) {
+    switch (piece.pieceKey) {
       case 'mod-royal-bridge': {
-        // Suspension bridge cables shimmer & sway gently
         this.tweens.add({
           targets: spr,
           scaleX: baseScale * 1.07,
           scaleY: baseScale * 0.94,
-          angle: { from: -2.5, to: 2.5 },
           duration: 130,
           yoyo: true,
-          repeat: 2,
-          onComplete: () => {
-            spr.setScale(baseScale);
-            spr.setAngle(0);
-          }
+          repeat: 1
         });
         Juice.burstStars(this, wx, wy - 18, 10, [0xfef08a, 0x38bdf8, 0xffffff]);
-        if (isDirectTap) {
-          this.audio.playWoodTrackSnap();
-        }
+        if (isDirectTap) this.audio.playWoodTrackSnap();
         break;
       }
-
       case 'mod-stone-tunnel': {
-        // Echo Mountain Stone Tunnel: headlight glow + echoing cavern whistle!
         this.audio.playSteamWhistle(true);
         Juice.popFloatingLabel(this, wx, wy - 44, '🔊 WHOO-WHOO!', '#fef08a');
-        if (this.tunnelHoodSprite) {
+        if (entry.hoodSprite) {
           this.tweens.add({
-            targets: this.tunnelHoodSprite,
+            targets: entry.hoodSprite,
             scaleX: baseScale * 1.08,
             scaleY: baseScale * 0.96,
             duration: 160,
@@ -1411,9 +1626,7 @@ export class TrainTableScene extends Phaser.Scene {
         }
         break;
       }
-
       case 'mod-xylophone-track': {
-        // Play ascending 6-bar rainbow marimba glissando!
         for (let b = 0; b < 6; b++) {
           this.time.delayedCall(b * 65, () => {
             this.audio.playXylophoneBar(b);
@@ -1430,24 +1643,38 @@ export class TrainTableScene extends Phaser.Scene {
         Juice.burstStars(this, wx, wy, 12, [0xef4444, 0xfbbf24, 0x34d399, 0x38bdf8, 0xa855f7]);
         break;
       }
-
       case 'mod-crossing-gate': {
-        // Clanging railroad crossing gate & flashing red lanterns!
         this.audio.playCrossingBell(true);
         this.tweens.add({
           targets: spr,
-          angle: { from: -12, to: 8 },
+          angle: spr.angle - 10,
           duration: 140,
           yoyo: true,
-          repeat: 3,
-          onComplete: () => spr.setAngle(0)
+          repeat: 2
         });
         Juice.popFloatingLabel(this, wx, wy - 42, '🔔 DING-DING!', '#f87171');
         break;
       }
+    }
+  }
 
+  private triggerSceneryToyGag(toy: PlacedSceneryToy, isDirectTap = false): void {
+    const now = this.time.now;
+    if (!isDirectTap && now - toy.lastTriggeredAt < 2600) return;
+    toy.lastTriggeredAt = now;
+
+    const spr = toy.sprite;
+    const baseScale = toy.scale;
+    const wx = toy.x;
+    const wy = toy.y;
+
+    this.tweens.killTweensOf(spr);
+    spr.setScale(baseScale);
+    spr.setAngle(0);
+    spr.setY(0);
+
+    switch (toy.toyKey) {
       case 'prop-trex': {
-        // Chomping Friendly T-Rex roars & hops!
         this.audio.playTRexRoar();
         this.tweens.add({
           targets: spr,
@@ -1467,9 +1694,7 @@ export class TrainTableScene extends Phaser.Scene {
         Juice.popFloatingLabel(this, wx, wy - 45, '🦖 RAWR-CHOMP!', '#4ade80');
         break;
       }
-
       case 'prop-unicorn-pasture': {
-        // Unicorn rears up with rainbow sparkles!
         this.audio.playUnicornSparkle();
         this.tweens.add({
           targets: spr,
@@ -1489,9 +1714,7 @@ export class TrainTableScene extends Phaser.Scene {
         Juice.popFloatingLabel(this, wx, wy - 44, '🦄✨ NEIGH!', '#f472b6');
         break;
       }
-
       case 'prop-water-tower': {
-        // Water tower tips spout & dumps a splash of water into the locomotive tender!
         this.audio.playWaterTowerSplash();
         this.tweens.add({
           targets: spr,
@@ -1509,9 +1732,7 @@ export class TrainTableScene extends Phaser.Scene {
         Juice.popFloatingLabel(this, wx, wy - 42, '💦 SPLASH!', '#38bdf8');
         break;
       }
-
       case 'prop-windmill': {
-        // Windmill rocks & gusts breeze stars!
         this.audio.playWoodTrackSnap();
         this.tweens.add({
           targets: spr,
@@ -1530,9 +1751,7 @@ export class TrainTableScene extends Phaser.Scene {
         Juice.popFloatingLabel(this, wx, wy - 42, '🌬️ WHOOSH!', '#fef08a');
         break;
       }
-
       case 'prop-pine-forest': {
-        // Pine trees sway with chirping birds!
         this.audio.playXylophoneBar(4);
         this.time.delayedCall(90, () => this.audio.playXylophoneBar(5));
         this.tweens.add({
@@ -1551,7 +1770,7 @@ export class TrainTableScene extends Phaser.Scene {
   }
 
   // ===========================================================================
-  // TRAIN CONSIST (LOCOMOTIVE + RED, BLUE & GOLD CARS + CAB PORTRAITS)
+  // TRAIN CONSIST (UNOBSTRUCTED LOCOMOTIVE + TANGENT-ALIGNED RED, BLUE & GOLD CARS)
   // ===========================================================================
 
   private createTrainConsist(): void {
@@ -1569,7 +1788,7 @@ export class TrainTableScene extends Phaser.Scene {
 
       const shadow = this.add.graphics();
       shadow.fillStyle(0x03140c, 0.52);
-      shadow.fillEllipse(0, 16, 78, 22);
+      shadow.fillEllipse(0, 14, 76, 22);
       carCont.add(shadow);
 
       if (this.textures.exists(key)) {
@@ -1577,26 +1796,15 @@ export class TrainTableScene extends Phaser.Scene {
       }
       const carSpr = this.add
         .image(0, 0, key)
-        .setOrigin(0.5, 0.62)
+        .setOrigin(0.5, 0.58)
         .setScale(0.44);
       carCont.add(carSpr);
 
       // Cargo stack container mounted inside the open hopper/gondola bed of each car
-      const cargoStack = this.add.container(0, -14);
+      const cargoStack = this.add.container(0, -12);
       carCont.add(cargoStack);
 
-      // On the Gold Passenger/Treasure Car (index 2), also mount a circular Passenger Portrait badge!
-      if (i === 2) {
-        const passSpec =
-          ENGINEER_SPECS.find((e) => e.id === this.activePassenger) ?? ENGINEER_SPECS[2];
-        this.coachPassengerBadge = this.add
-          .image(0, -18, passSpec.spriteKey)
-          .setOrigin(0.5, 0.5)
-          .setScale(0.22);
-        carCont.add(this.coachPassengerBadge);
-      }
-
-      // Interactive tap on any train car: bounces suspension & blows whistle/chime!
+      // Interactive tap on any train car: bounces suspension & plays cargo chime!
       const hit = this.add
         .zone(0, -6, 82, 68)
         .setOrigin(0.5)
@@ -1613,12 +1821,12 @@ export class TrainTableScene extends Phaser.Scene {
       this.carCargoContainers[i] = cargoStack;
     }
 
-    // Create the Crimson & Brass Steam Locomotive (`train-locomotive`)
+    // Create the Crimson & Brass Steam Locomotive (`train-locomotive`) — 100% unobstructed!
     this.locoContainer = this.add.container(0, 0);
 
     const locoShadow = this.add.graphics();
     locoShadow.fillStyle(0x03140c, 0.56);
-    locoShadow.fillEllipse(0, 18, 96, 26);
+    locoShadow.fillEllipse(0, 16, 94, 24);
     this.locoContainer.add(locoShadow);
 
     // Golden headlight beam cone (illuminates when entering Echo Mountain Stone Tunnel!)
@@ -1634,18 +1842,9 @@ export class TrainTableScene extends Phaser.Scene {
     }
     this.locoSprite = this.add
       .image(0, 0, 'train-locomotive')
-      .setOrigin(0.5, 0.64)
+      .setOrigin(0.5, 0.58)
       .setScale(0.48);
     this.locoContainer.add(this.locoSprite);
-
-    // Engineer Portrait Badge seated proudly above the locomotive cab window!
-    const engSpec =
-      ENGINEER_SPECS.find((e) => e.id === this.activeEngineer) ?? ENGINEER_SPECS[1];
-    this.locoEngineerBadge = this.add
-      .image(16, -26, engSpec.spriteKey)
-      .setOrigin(0.5, 0.5)
-      .setScale(0.26);
-    this.locoContainer.add(this.locoEngineerBadge);
 
     // Tapping the locomotive directly blows the steam whistle and puffs starlight steam!
     const locoHit = this.add
@@ -1658,34 +1857,44 @@ export class TrainTableScene extends Phaser.Scene {
     this.locoContainer.add(locoHit);
 
     this.trainConsistContainer.add(this.locoContainer);
-    this.updateTrainConsistPositions();
   }
 
   /**
-   * Updates the 2.5D tabletop position and orientation of the Locomotive and its 3 trailing cars.
-   * Ensures sprites NEVER flip upside down on the bottom half of the loop by flipping `flipX`
-   * based on horizontal travel direction (`dx >= 0`) and keeping the roof/smokestack upright!
+   * Computes the tangent-aligned rotation for our 3/4-isometric locomotive and wooden cars
+   * so their wheelbases sit flush along the track tangent `(dx, dy)` while staying upright.
+   */
+  private computeTangentCarAngle(dx: number, dy: number): { facingRight: boolean; angleDeg: number } {
+    const facingRight = dx >= 0;
+    const tangentDeg = Phaser.Math.Clamp(
+      Phaser.Math.RadToDeg(Math.atan2(dy, Math.max(0.18, Math.abs(dx)))),
+      -52,
+      52
+    );
+    // Built-in isometric chassis baseline compensation (`-22deg` when flipped right, `+22deg` when left)
+    const isoBaseDeg = facingRight ? -22 : 22;
+    const angleDeg = facingRight ? isoBaseDeg + tangentDeg : isoBaseDeg - tangentDeg;
+    return { facingRight, angleDeg };
+  }
+
+  /**
+   * Updates the 2.5D tabletop position and tangent alignment of the Locomotive and its 3 trailing cars.
    */
   private updateTrainConsistPositions(): void {
+    if (!this.locoContainer || this.splineSamples.length === 0) return;
+
     const locoSample = this.sampleSplineAtDist(this.locoDist);
     this.locoContainer.setPosition(locoSample.x, locoSample.y);
 
-    const facingRight = locoSample.dx >= 0;
-    this.locoSprite.setFlipX(facingRight);
+    const locoPose = this.computeTangentCarAngle(locoSample.dx, locoSample.dy);
+    this.locoSprite.setFlipX(locoPose.facingRight);
+    this.locoContainer.setAngle(locoPose.angleDeg);
 
-    // Gentle 2.5D tabletop pitch angle so the locomotive follows slopes naturally while staying upright
-    const locoTilt = facingRight
-      ? Phaser.Math.Clamp(locoSample.dy * 24, -22, 22)
-      : Phaser.Math.Clamp(-locoSample.dy * 24, -22, 22);
-    this.locoContainer.setAngle(locoTilt);
+    // Aim the headlight cone forward along the locomotive's travel direction
+    this.locoHeadlightCone.setScale(locoPose.facingRight ? -1 : 1, 1);
+    this.locoHeadlightCone.setX(locoPose.facingRight ? 28 : -28);
 
-    // Position the engineer portrait over the cab side and aim the headlight cone forward
-    this.locoEngineerBadge.setX(facingRight ? -18 : 18);
-    this.locoHeadlightCone.setScale(facingRight ? -1 : 1, 1);
-    this.locoHeadlightCone.setX(facingRight ? 28 : -28);
-
-    // Position the 3 trailing wooden cars at constant 82px arc-length intervals behind the locomotive
-    const carSpacing = 82;
+    // Position the 3 trailing wooden cars at constant 80px arc-length intervals behind the locomotive
+    const carSpacing = 80;
     for (let i = 0; i < 3; i++) {
       const carDist = this.locoDist - (i + 1) * carSpacing;
       const carSample = this.sampleSplineAtDist(carDist);
@@ -1694,12 +1903,9 @@ export class TrainTableScene extends Phaser.Scene {
       if (!carCont || !carSpr) continue;
 
       carCont.setPosition(carSample.x, carSample.y);
-      const carRight = carSample.dx >= 0;
-      carSpr.setFlipX(carRight);
-      const carTilt = carRight
-        ? Phaser.Math.Clamp(carSample.dy * 22, -20, 20)
-        : Phaser.Math.Clamp(-carSample.dy * 22, -20, 20);
-      carCont.setAngle(carTilt);
+      const carPose = this.computeTangentCarAngle(carSample.dx, carSample.dy);
+      carSpr.setFlipX(carPose.facingRight);
+      carCont.setAngle(carPose.angleDeg);
     }
   }
 
@@ -1709,8 +1915,8 @@ export class TrainTableScene extends Phaser.Scene {
   private spawnLocomotiveSteamPuff(isBigWhistleBlast = false): void {
     if (!this.locoContainer) return;
     const facingRight = this.locoSprite.flipX;
-    const stackX = this.locoContainer.x + (facingRight ? 18 : -18);
-    const stackY = this.locoContainer.y - 38;
+    const stackX = this.locoContainer.x + (facingRight ? 16 : -16);
+    const stackY = this.locoContainer.y - 34;
 
     const count = isBigWhistleBlast ? 7 : 2;
     for (let i = 0; i < count; i++) {
@@ -1749,21 +1955,19 @@ export class TrainTableScene extends Phaser.Scene {
     if (this.isAtStationModalOpen) return;
     this.audio.speakPrompt('pulling_into_station');
 
-    // Smoothly glide the train to Grandpa's Wooden Train Depot and open the Cargo Loader!
-    const bp = TRACK_BLUEPRINTS[this.currentBlueprintId];
-    const targetDist = bp.stationT * this.totalTrackLength;
+    const targetDist = 60;
     this.isStoppingForStation = true;
     this.setThrottleNotch(0, false);
 
     this.tweens.addCounter({
       from: this.locoDist,
-      to: targetDist + this.totalTrackLength,
-      duration: 620,
+      to: targetDist,
+      duration: 520,
       ease: 'Cubic.easeOut',
       onUpdate: (tw) => {
         const val = tw.getValue();
         if (typeof val === 'number') {
-          this.locoDist = val % this.totalTrackLength;
+          this.locoDist = val;
           this.updateTrainConsistPositions();
         }
       },
@@ -1785,12 +1989,10 @@ export class TrainTableScene extends Phaser.Scene {
     this.isAtStationModalOpen = true;
     this.currentLoadedCount = 0;
 
-    // Clear previous cargo sprites from the cars for a fresh loading round
     this.carCargoContainers.forEach((c) => c.removeAll(true));
 
     const order = CARGO_ORDERS[this.stationOrderIndex % CARGO_ORDERS.length];
 
-    // Speak the station cargo order aloud ("Load three golden logs onto the train.")
     this.time.delayedCall(120, () => {
       this.audio.speakPrompt(order.orderPromptId);
     });
@@ -1802,10 +2004,8 @@ export class TrainTableScene extends Phaser.Scene {
     const cardW = 650;
     const cardH = 290;
     const bg = this.add.graphics();
-    // Drop shadow
     bg.fillStyle(0x04120b, 0.72);
     bg.fillRoundedRect(-cardW / 2 + 6, -cardH / 2 + 8, cardW, cardH, 24);
-    // Warm mahogany & parchment station order board
     bg.fillStyle(0x271308, 0.97);
     bg.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 24);
     bg.lineStyle(4, 0xfbbf24, 1);
@@ -1813,14 +2013,12 @@ export class TrainTableScene extends Phaser.Scene {
     bg.lineStyle(1.5, 0xfef08a, 0.75);
     bg.strokeRoundedRect(-cardW / 2 + 6, -cardH / 2 + 6, cardW - 12, cardH - 12, 18);
 
-    // Recessed platform tray for the 5 tactile cargo items
     bg.fillStyle(0x160a04, 0.94);
     bg.fillRoundedRect(-cardW / 2 + 24, -18, cardW - 48, 108, 16);
     bg.lineStyle(2, 0xb45309, 0.9);
     bg.strokeRoundedRect(-cardW / 2 + 24, -18, cardW - 48, 108, 16);
     modal.add(bg);
 
-    // Header Title + Big Target Number Badge
     const titleTxt = this.add
       .text(0, -112, `GRAND CENTRAL STATION — LOAD ${order.carColorLabel}`, {
         fontFamily: '"Fredoka", Georgia, serif',
@@ -1857,7 +2055,6 @@ export class TrainTableScene extends Phaser.Scene {
 
     modal.add([titleTxt, promptTxt, progressTxt]);
 
-    // Render 5 big tactile cargo items on the station platform
     const itemSpacing = 112;
     const startX = -((5 - 1) * itemSpacing) / 2;
 
@@ -1902,7 +2099,6 @@ export class TrainTableScene extends Phaser.Scene {
         progressTxt.setText(`LOADED: ${stepCount} / ${order.targetCount}`);
         Juice.squashAndStretch(this, progressTxt, 0.22, 130);
 
-        // Animate cargo flying from platform via Grandpa's Crane into the target train car!
         cargoSpr.setAlpha(0.25);
         slotCircle.clear();
         slotCircle.fillStyle(0x064e3b, 0.85);
@@ -1922,19 +2118,12 @@ export class TrainTableScene extends Phaser.Scene {
           .setOrigin(0.5);
         itemSlot.add(checkLabel);
 
-        this.animateCraneCargoDrop(
-          modal.x + ix,
-          modal.y + iy,
-          order,
-          stepCount
-        );
+        this.animateCraneCargoDrop(modal.x + ix, modal.y + iy, order, stepCount);
       });
 
       modal.add(itemSlot);
     }
 
-    // Bottom Row inside Modal: Choose Engineer Portraits (`Grandpa`, `Wyatt`, `Emma`, `Doggie`, `Sparky`)
-    // + `[ 🚂 ALL ABOARD! GO! ]` launch button!
     const engLabel = this.add
       .text(-235, 116, 'ENGINEER:', {
         fontFamily: '"Fredoka", Georgia, serif',
@@ -1976,7 +2165,6 @@ export class TrainTableScene extends Phaser.Scene {
       modal.add(eBtn);
     });
 
-    // Big Green `[ 🚂 ALL ABOARD! ]` Button
     const goBtn = this.add.container(215, 116);
     const goG = this.add.graphics();
     goG.fillStyle(0x059669, 1);
@@ -2015,10 +2203,6 @@ export class TrainTableScene extends Phaser.Scene {
     });
   }
 
-  /**
-   * Swings Grandpa's wooden crane arm, drops the cargo piece into the target train car with
-   * a springy *THUNK-BOING!*, squashes the car suspension, and counts aloud (`1..5`)!
-   */
   private animateCraneCargoDrop(
     startX: number,
     startY: number,
@@ -2051,12 +2235,16 @@ export class TrainTableScene extends Phaser.Scene {
       },
       onComplete: () => {
         flyingCargo.destroy();
-        this.drawStationCraneArm(craneBaseX, craneBaseY, bp.stationPos.x + 88, bp.stationPos.y + 28);
+        this.drawStationCraneArm(
+          craneBaseX,
+          craneBaseY,
+          bp.stationPos.x + 88,
+          bp.stationPos.y + 28
+        );
 
-        // Add stacked cargo inside the target train car's open bed!
         const cargoStack = this.carCargoContainers[order.targetCarIndex];
         if (cargoStack) {
-          const offsetX = ((stepCount - 1) % 3 - 1) * 14;
+          const offsetX = (((stepCount - 1) % 3) - 1) * 14;
           const offsetY = -Math.floor((stepCount - 1) / 3) * 10;
           const loadedImg = this.add
             .image(offsetX, offsetY, order.spriteKey)
@@ -2064,7 +2252,6 @@ export class TrainTableScene extends Phaser.Scene {
           cargoStack.add(loadedImg);
         }
 
-        // Squash & rebound the train car suspension!
         if (targetCar) {
           Juice.squashAndStretch(this, targetCar, 0.26, 150);
           Juice.burstStars(this, destX, destY - 10, 12, [0xfef08a, 0xfbbf24, 0x34d399]);
@@ -2114,40 +2301,56 @@ export class TrainTableScene extends Phaser.Scene {
   private selectEngineer(engineerId: EngineerId): void {
     this.activeEngineer = engineerId;
     const spec = ENGINEER_SPECS.find((e) => e.id === engineerId) ?? ENGINEER_SPECS[0];
-    if (this.locoEngineerBadge && this.textures.exists(spec.spriteKey)) {
-      this.locoEngineerBadge.setTexture(spec.spriteKey);
-      Juice.squashAndStretch(this, this.locoEngineerBadge, 0.25, 140);
+
+    // Update the Top HUD Cab Cameo Portrait & Name (keeping the locomotive 100% uncovered!)
+    if (this.hudCabCameoSprite && this.textures.exists(spec.spriteKey)) {
+      this.hudCabCameoSprite.setTexture(spec.spriteKey);
+      Juice.squashAndStretch(this, this.hudCabCameoSprite, 0.24, 140);
     }
+    if (this.hudCabCameoNameText) {
+      this.hudCabCameoNameText.setText(`CAB: ${spec.name.toUpperCase()}`);
+    }
+
+    this.hudEngineerRingMap.forEach((ring, id) => {
+      const s = ENGINEER_SPECS.find((e) => e.id === id) ?? ENGINEER_SPECS[0];
+      const active = id === this.activeEngineer;
+      ring.clear();
+      ring.fillStyle(0x140904, 1);
+      ring.fillCircle(0, 0, 17);
+      ring.lineStyle(active ? 3 : 1.5, active ? 0xfef08a : s.accentColor, 1);
+      ring.strokeCircle(0, 0, 17);
+    });
+
     this.audio.speakPrompt(spec.promptId);
   }
 
   // ===========================================================================
-  // ACT 3: FIXED HUD, MAHOGANY TOY DRAWER, BRASS THROTTLE & WHISTLE PULL-CORD
+  // ACT 3: FIXED HUD (WITH CAB CAMEO), TRACK BUILDER BAR, TOY DRAWER & SLIDING THROTTLE
   // ===========================================================================
 
   private createFixedUILayer(): void {
     this.uiRoot = this.add.container(0, 0).setDepth(200);
-    // Pin UI root to screen coordinates so Camera Follow zoom (`1.55x`) only zooms the train table!
     this.uiRoot.setScrollFactor(0);
 
     this.createTopBarHUD();
     this.createHangingWhistlePullCord();
+    this.createTrackBuilderToolbar();
     this.createBottomMahoganyToyDrawer();
     this.createBrassThrottleControlPanel();
   }
 
   private createTopBarHUD(): void {
-    // 1. Top-Left Home `[ 🏠 ARCADE SHELF ]` Button (`x: 96, y: 38`, `>=64px` hit area)
-    const homeBtn = this.add.container(98, 38);
+    // 1. Top-Left Home `[ ⬅ ARCADE ]` Button (`x: 92, y: 38`, `>=64px` hit area)
+    const homeBtn = this.add.container(92, 38);
     const homeG = this.add.graphics();
     homeG.fillStyle(0x271206, 0.95);
-    homeG.fillRoundedRect(-82, -24, 164, 48, 16);
+    homeG.fillRoundedRect(-76, -24, 152, 48, 16);
     homeG.lineStyle(2.5, 0xfbbf24, 1);
-    homeG.strokeRoundedRect(-82, -24, 164, 48, 16);
+    homeG.strokeRoundedRect(-76, -24, 152, 48, 16);
     const homeTxt = this.add
       .text(0, 0, '⬅ ARCADE', {
         fontFamily: '"Fredoka", Georgia, serif',
-        fontSize: '17px',
+        fontSize: '16px',
         fontStyle: 'bold',
         color: '#fef08a'
       })
@@ -2157,7 +2360,7 @@ export class TrainTableScene extends Phaser.Scene {
     Juice.makeTactileButton(
       this,
       homeBtn,
-      170,
+      160,
       64,
       () => {
         this.audio.shutdown();
@@ -2167,38 +2370,69 @@ export class TrainTableScene extends Phaser.Scene {
     );
     this.uiRoot.add(homeBtn);
 
-    // 2. Quick Engineer Selector Pill (`x: 345, y: 38`)
-    const engBar = this.add.container(355, 38);
+    // 2. Top HUD Cab Cameo & Engineer Selector Pill (`x: 382, y: 38`)
+    // Houses the active Cab Cameo Portrait so no giant circle blocks the locomotive on the rails!
+    const engBar = this.add.container(382, 38);
     const engBg = this.add.graphics();
-    engBg.fillStyle(0x271206, 0.94);
-    engBg.fillRoundedRect(-155, -24, 310, 48, 16);
-    engBg.lineStyle(2, 0xd97706, 0.95);
-    engBg.strokeRoundedRect(-155, -24, 310, 48, 16);
+    engBg.fillStyle(0x271206, 0.95);
+    engBg.fillRoundedRect(-198, -26, 396, 52, 16);
+    engBg.lineStyle(2.5, 0xd97706, 0.95);
+    engBg.strokeRoundedRect(-198, -26, 396, 52, 16);
     engBar.add(engBg);
 
+    const activeSpec =
+      ENGINEER_SPECS.find((e) => e.id === this.activeEngineer) ?? ENGINEER_SPECS[1];
+
+    // Brass Cab Cameo Porthole on the left side of the HUD pill
+    const cameoRing = this.add.graphics();
+    cameoRing.fillStyle(0x090402, 1);
+    cameoRing.fillCircle(-164, 0, 22);
+    cameoRing.lineStyle(3, 0xfbbf24, 1);
+    cameoRing.strokeCircle(-164, 0, 22);
+    engBar.add(cameoRing);
+
+    this.hudCabCameoSprite = this.add
+      .image(-164, 0, activeSpec.spriteKey)
+      .setOrigin(0.5)
+      .setScale(0.24);
+    engBar.add(this.hudCabCameoSprite);
+
+    this.hudCabCameoNameText = this.add
+      .text(-96, 0, `CAB: ${activeSpec.name.toUpperCase()}`, {
+        fontFamily: '"Fredoka", Georgia, serif',
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#fef08a'
+      })
+      .setOrigin(0.5);
+    engBar.add(this.hudCabCameoNameText);
+
+    this.hudEngineerRingMap.clear();
     ENGINEER_SPECS.forEach((spec, idx) => {
-      const bx = -116 + idx * 58;
+      const bx = -14 + idx * 46;
       const bCont = this.add.container(bx, 0);
       const bCircle = this.add.graphics();
+      const isSelected = spec.id === this.activeEngineer;
       bCircle.fillStyle(0x140904, 1);
-      bCircle.fillCircle(0, 0, 19);
-      bCircle.lineStyle(2, spec.accentColor, 0.95);
-      bCircle.strokeCircle(0, 0, 19);
+      bCircle.fillCircle(0, 0, 17);
+      bCircle.lineStyle(isSelected ? 3 : 1.5, isSelected ? 0xfef08a : spec.accentColor, 1);
+      bCircle.strokeCircle(0, 0, 17);
+      this.hudEngineerRingMap.set(spec.id, bCircle);
 
       const bImg = this.add
         .image(0, 0, spec.spriteKey)
         .setOrigin(0.5)
-        .setScale(0.23);
+        .setScale(0.2);
       bCont.add([bCircle, bImg]);
 
       Juice.makeTactileButton(
         this,
         bCont,
-        54,
+        46,
         64,
         () => {
           this.selectEngineer(spec.id);
-          Juice.burstStars(this, 355 + bx, 38, 8, [spec.accentColor, 0xfef08a]);
+          Juice.burstStars(this, 382 + bx, 38, 8, [spec.accentColor, 0xfef08a]);
         },
         'pop'
       );
@@ -2206,18 +2440,18 @@ export class TrainTableScene extends Phaser.Scene {
     });
     this.uiRoot.add(engBar);
 
-    // 3. Track Blueprint Switcher Button (`x: 640, y: 38`)
-    const bpBtn = this.add.container(645, 38);
+    // 3. Track Blueprint Switcher Button (`x: 696, y: 38`)
+    const bpBtn = this.add.container(696, 38);
     const bpG = this.add.graphics();
     bpG.fillStyle(0x271206, 0.95);
-    bpG.fillRoundedRect(-115, -24, 230, 48, 16);
+    bpG.fillRoundedRect(-105, -24, 210, 48, 16);
     bpG.lineStyle(2.5, 0xfbbf24, 1);
-    bpG.strokeRoundedRect(-115, -24, 230, 48, 16);
+    bpG.strokeRoundedRect(-105, -24, 210, 48, 16);
 
     this.blueprintBtnText = this.add
       .text(0, 0, '🗺️ 1. Meadow Oval', {
         fontFamily: '"Fredoka", Georgia, serif',
-        fontSize: '16px',
+        fontSize: '15px',
         fontStyle: 'bold',
         color: '#fef08a'
       })
@@ -2227,7 +2461,7 @@ export class TrainTableScene extends Phaser.Scene {
     Juice.makeTactileButton(
       this,
       bpBtn,
-      234,
+      214,
       64,
       () => {
         const order: TrackBlueprintId[] = ['meadow', 'gorge', 'canyon'];
@@ -2238,13 +2472,13 @@ export class TrainTableScene extends Phaser.Scene {
     );
     this.uiRoot.add(bpBtn);
 
-    // 4. Camera Follow / Bird's-Eye Zoom Toggle Button (`🔍 FOLLOW TRAIN`, `x: 890, y: 38`)
-    const camBtn = this.add.container(895, 38);
+    // 4. Camera Follow / Bird's-Eye Zoom Toggle Button (`x: 912, y: 38`)
+    const camBtn = this.add.container(912, 38);
     this.cameraFollowBtnBg = this.add.graphics();
     this.cameraFollowBtnText = this.add
-      .text(0, 0, '🔍 FOLLOW TRAIN', {
+      .text(0, 0, '🔍 FOLLOW CAB', {
         fontFamily: '"Fredoka", Georgia, serif',
-        fontSize: '15px',
+        fontSize: '14px',
         fontStyle: 'bold',
         color: '#fef08a'
       })
@@ -2255,7 +2489,7 @@ export class TrainTableScene extends Phaser.Scene {
     Juice.makeTactileButton(
       this,
       camBtn,
-      196,
+      184,
       64,
       () => {
         this.toggleCameraFollowMode();
@@ -2264,13 +2498,13 @@ export class TrainTableScene extends Phaser.Scene {
     );
     this.uiRoot.add(camBtn);
 
-    // 5. Star Counter Pill (`x: 1055, y: 38`)
-    const starPill = this.add.container(1058, 38);
+    // 5. Star Counter Pill (`x: 1064, y: 38`)
+    const starPill = this.add.container(1064, 38);
     const starG = this.add.graphics();
     starG.fillStyle(0x271206, 0.94);
-    starG.fillRoundedRect(-48, -22, 96, 44, 14);
+    starG.fillRoundedRect(-46, -22, 92, 44, 14);
     starG.lineStyle(2, 0xfbbf24, 1);
-    starG.strokeRoundedRect(-48, -22, 96, 44, 14);
+    starG.strokeRoundedRect(-46, -22, 92, 44, 14);
     this.starScoreLabel = this.add
       .text(0, 0, '★ 0', {
         fontFamily: '"Fredoka", Georgia, serif',
@@ -2287,9 +2521,9 @@ export class TrainTableScene extends Phaser.Scene {
     if (!this.cameraFollowBtnBg) return;
     this.cameraFollowBtnBg.clear();
     this.cameraFollowBtnBg.fillStyle(this.isCameraFollow ? 0x065f46 : 0x271206, 0.95);
-    this.cameraFollowBtnBg.fillRoundedRect(-96, -24, 192, 48, 16);
+    this.cameraFollowBtnBg.fillRoundedRect(-90, -24, 180, 48, 16);
     this.cameraFollowBtnBg.lineStyle(2.5, this.isCameraFollow ? 0x34d399 : 0xfbbf24, 1);
-    this.cameraFollowBtnBg.strokeRoundedRect(-96, -24, 192, 48, 16);
+    this.cameraFollowBtnBg.strokeRoundedRect(-90, -24, 180, 48, 16);
     this.cameraFollowBtnText.setText(this.isCameraFollow ? '🔍 TABLE VIEW' : '🔍 FOLLOW CAB');
   }
 
@@ -2308,6 +2542,71 @@ export class TrainTableScene extends Phaser.Scene {
         ease: 'Cubic.easeOut'
       });
     }
+  }
+
+  /**
+   * Track Builder Action Toolbar above the bottom-left Mahogany Toy Drawer:
+   * - `[ ↩ Undo ]`: removes the last snapped track piece
+   * - `[ ✨ Magic Finish Loop ]`: auto-completes any open track back to Grandpa's Train Depot
+   */
+  private createTrackBuilderToolbar(): void {
+    // 1. `[ ↩ Undo ]` Button (`x: 88, y: 556`)
+    const undoBtn = this.add.container(88, 556);
+    const undoG = this.add.graphics();
+    undoG.fillStyle(0x271206, 0.96);
+    undoG.fillRoundedRect(-64, -20, 128, 40, 13);
+    undoG.lineStyle(2.5, 0xf87171, 1);
+    undoG.strokeRoundedRect(-64, -20, 128, 40, 13);
+    const undoTxt = this.add
+      .text(0, 0, '↩ Undo', {
+        fontFamily: '"Fredoka", Georgia, serif',
+        fontSize: '15px',
+        fontStyle: 'bold',
+        color: '#fef08a'
+      })
+      .setOrigin(0.5);
+    undoBtn.add([undoG, undoTxt]);
+
+    Juice.makeTactileButton(
+      this,
+      undoBtn,
+      134,
+      64,
+      () => {
+        this.undoLastTrackPiece();
+      },
+      'pop'
+    );
+    this.uiRoot.add(undoBtn);
+
+    // 2. `[ ✨ Magic Finish Loop ]` Button (`x: 268, y: 556`)
+    const magicBtn = this.add.container(268, 556);
+    const magicG = this.add.graphics();
+    magicG.fillStyle(0x065f46, 0.96);
+    magicG.fillRoundedRect(-104, -20, 208, 40, 13);
+    magicG.lineStyle(2.5, 0x34d399, 1);
+    magicG.strokeRoundedRect(-104, -20, 208, 40, 13);
+    const magicTxt = this.add
+      .text(0, 0, '✨ Magic Finish Loop', {
+        fontFamily: '"Fredoka", Georgia, serif',
+        fontSize: '15px',
+        fontStyle: 'bold',
+        color: '#fef08a'
+      })
+      .setOrigin(0.5);
+    magicBtn.add([magicG, magicTxt]);
+
+    Juice.makeTactileButton(
+      this,
+      magicBtn,
+      214,
+      64,
+      () => {
+        this.magicFinishTrackLoop();
+      },
+      'chime'
+    );
+    this.uiRoot.add(magicBtn);
   }
 
   /**
@@ -2352,8 +2651,8 @@ export class TrainTableScene extends Phaser.Scene {
       this.pullBrassWhistleCord();
     });
 
-    hit.on('drag', (_pointer: Phaser.Input.Pointer, _dragX: number, dragY: number) => {
-      const pull = Phaser.Math.Clamp(dragY - 108, 0, 58);
+    hit.on('drag', (pointer: Phaser.Input.Pointer) => {
+      const pull = Phaser.Math.Clamp(pointer.y - 108, 0, 58);
       this.redrawWhistleCord(pull);
     });
 
@@ -2369,7 +2668,6 @@ export class TrainTableScene extends Phaser.Scene {
     const g = this.whistleRopeGraphics;
     g.clear();
 
-    // Braided golden rope from top bezel down to whistle tassel
     const endY = 92 + pullOffset;
     g.lineStyle(8, 0x92400e, 1);
     g.beginPath();
@@ -2383,7 +2681,6 @@ export class TrainTableScene extends Phaser.Scene {
     g.lineTo(0, endY);
     g.strokePath();
 
-    // Braided knots along the cord
     g.fillStyle(0xfef08a, 1);
     for (let y = 14; y < endY; y += 14) {
       g.fillCircle(0, y, 3);
@@ -2421,9 +2718,11 @@ export class TrainTableScene extends Phaser.Scene {
   }
 
   /**
-   * Bottom Mahogany Toy Drawer (`x: 24..855, y: 584..708`):
-   * Houses the 9 chunky 32-bit wooden toys (4 Special Track Modules + 5 Scenery Toys)
-   * with both Drag-and-Drop and 1-Tap Auto-Arc Magnetic Placement!
+   * Bottom Mahogany Toy Drawer (`x: 20..866, y: 586..708`):
+   * Houses all 7 Track Pieces (`Straight`, `Curve L`, `Curve R`, `Xylophone`, `Bridge`, `Tunnel`, `Gate`)
+   * and all 5 Scenery Toys (`T-Rex`, `Pasture`, `Tower`, `Windmill`, `Forest`).
+   * - Track pieces snap onto the Active Track Connector with auto-rotation!
+   * - Scenery toys can be dragged and placed freely anywhere on the green felt table!
    */
   private createBottomMahoganyToyDrawer(): void {
     this.drawerContainer = this.add.container(0, 0);
@@ -2431,16 +2730,16 @@ export class TrainTableScene extends Phaser.Scene {
 
     const drawerBg = this.add.graphics();
     drawerBg.fillStyle(0x1f0f06, 0.95);
-    drawerBg.fillRoundedRect(22, 586, 842, 122, 18);
+    drawerBg.fillRoundedRect(20, 586, 846, 122, 18);
     drawerBg.lineStyle(3, 0xd97706, 1);
-    drawerBg.strokeRoundedRect(22, 586, 842, 122, 18);
+    drawerBg.strokeRoundedRect(20, 586, 846, 122, 18);
     drawerBg.lineStyle(1, 0xfef08a, 0.65);
-    drawerBg.strokeRoundedRect(26, 590, 834, 114, 15);
+    drawerBg.strokeRoundedRect(24, 590, 838, 114, 15);
     this.drawerContainer.add(drawerBg);
 
-    const startX = 72;
-    const spacing = 86;
-    const cy = 646;
+    const startX = 58;
+    const spacing = 69;
+    const cy = 647;
 
     TOY_DRAWER_ITEMS.forEach((item, idx) => {
       const cx = startX + idx * spacing;
@@ -2448,24 +2747,25 @@ export class TrainTableScene extends Phaser.Scene {
 
       const cardG = this.add.graphics();
       cardG.fillStyle(0x2e170a, 0.96);
-      cardG.fillRoundedRect(-38, -48, 76, 96, 12);
+      cardG.fillRoundedRect(-31, -48, 62, 96, 11);
       cardG.lineStyle(2, item.badgeColor, 0.95);
-      cardG.strokeRoundedRect(-38, -48, 76, 96, 12);
+      cardG.strokeRoundedRect(-31, -48, 62, 96, 11);
       card.add(cardG);
 
       if (this.textures.exists(item.toyKey)) {
         this.textures.get(item.toyKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
+        const iconScale = item.toyKey.startsWith('track-') ? 0.44 : 0.25;
         const icon = this.add
-          .image(0, -8, item.toyKey)
+          .image(0, -9, item.toyKey)
           .setOrigin(0.5)
-          .setScale(0.28);
+          .setScale(iconScale);
         card.add(icon);
       }
 
       const shortLbl = this.add
-        .text(0, 32, item.title.split(' ').slice(-1)[0], {
+        .text(0, 32, item.shortLabel, {
           fontFamily: '"Fredoka", Georgia, serif',
-          fontSize: '11px',
+          fontSize: '10.5px',
           fontStyle: 'bold',
           color: '#fef08a'
         })
@@ -2473,7 +2773,7 @@ export class TrainTableScene extends Phaser.Scene {
       card.add(shortLbl);
 
       const hit = this.add
-        .zone(0, 0, 82, 102)
+        .zone(0, 0, 68, 102)
         .setOrigin(0.5)
         .setInteractive({ draggable: true, useHandCursor: true });
       card.add(hit);
@@ -2483,13 +2783,15 @@ export class TrainTableScene extends Phaser.Scene {
       hit.on('dragstart', (pointer: Phaser.Input.Pointer) => {
         draggedDistance = 0;
         this.activeDragToyKey = item.toyKey;
+        this.activeDragKind = item.kind;
         if (this.activeDragGhost) {
           this.activeDragGhost.destroy();
         }
+        const ghostScale = item.toyKey.startsWith('track-') ? 0.72 : 0.54;
         this.activeDragGhost = this.add
           .image(pointer.x, pointer.y, item.toyKey)
           .setDepth(500)
-          .setScale(0.54)
+          .setScale(ghostScale)
           .setAlpha(0.92);
       });
 
@@ -2497,6 +2799,11 @@ export class TrainTableScene extends Phaser.Scene {
         draggedDistance += Math.hypot(pointer.velocity.x, pointer.velocity.y) + 4;
         if (this.activeDragGhost) {
           this.activeDragGhost.setPosition(pointer.x, pointer.y);
+          // Auto-rotate track piece preview to match the Active Track Connector's angle!
+          if (this.activeDragKind === 'track') {
+            const conn = this.getActiveTrackConnector();
+            this.activeDragGhost.setRotation(conn.angle);
+          }
         }
       });
 
@@ -2506,22 +2813,33 @@ export class TrainTableScene extends Phaser.Scene {
           this.activeDragGhost = null;
         }
         const draggedKey = this.activeDragToyKey;
+        const draggedKind = this.activeDragKind;
         this.activeDragToyKey = null;
+        this.activeDragKind = null;
 
-        if (!draggedKey) return;
+        if (!draggedKey || !draggedKind) return;
 
-        // If it was a quick tap (or dropped still over the drawer), auto-arc into its matching socket!
-        if (draggedDistance < 24 || pointer.y > 565) {
+        if (draggedKind === 'track') {
+          // Track piece: snap onto the Active Track Connector with auto-rotation!
           Juice.squashAndStretch(this, card, 0.2, 130);
-          this.autoArcToyFromDrawerToSocket(draggedKey);
-          return;
-        }
-
-        // Find nearest compatible socket (or matching socket)
-        const bp = TRACK_BLUEPRINTS[this.currentBlueprintId];
-        const matchingSocket = bp.sockets.find((s) => s.toyKey === draggedKey);
-        if (matchingSocket) {
-          this.snapToyIntoSocket(matchingSocket.id, draggedKey, true);
+          this.snapTrackPieceToActiveConnector(draggedKey as TrackPieceKey, true);
+        } else {
+          // Scenery toy: place freely wherever dropped on the green felt table!
+          Juice.squashAndStretch(this, card, 0.2, 130);
+          if (draggedDistance < 22 || pointer.y > 570) {
+            // Quick-tap in drawer: arc onto a pleasant spot on the green felt table
+            const rx = Phaser.Math.Between(180, 1060);
+            const ry = Phaser.Math.Between(160, 440);
+            this.placeSceneryToyOnFelt(draggedKey as SceneryToyKey, rx, ry, true);
+          } else {
+            const worldPt = this.screenToWorld(pointer.x, pointer.y);
+            this.placeSceneryToyOnFelt(
+              draggedKey as SceneryToyKey,
+              worldPt.x,
+              worldPt.y,
+              true
+            );
+          }
         }
       });
 
@@ -2530,20 +2848,13 @@ export class TrainTableScene extends Phaser.Scene {
     });
 
     this.uiRoot.add(this.drawerContainer);
-    this.refreshToyDrawerHighlights();
-  }
-
-  private refreshToyDrawerHighlights(): void {
-    const placedSet = new Set<string>(this.placedToysBySocket.values());
-    this.drawerCardMap.forEach((card, toyKey) => {
-      card.setAlpha(placedSet.has(toyKey) ? 0.78 : 1.0);
-    });
   }
 
   /**
    * Bottom-Right Brass & Mahogany Engineer Control Panel (`x: 876..1258, y: 586..708`):
-   * Features the 5-Notch Brass Throttle Lever (`STOP`, `1`, `2`, `3`, `4`, `5`) and
-   * Station Stop/Load button!
+   * Features the 5-Notch Brass Throttle Lever (`STOP`, `1`, `2`, `3`, `4`, `5`) whose
+   * T-handle physically slides in screen X coordinates (`924..1204`) when dragged or tapped
+   * and snaps cleanly to the active notch!
    */
   private createBrassThrottleControlPanel(): void {
     const panel = this.add.container(0, 0);
@@ -2556,7 +2867,7 @@ export class TrainTableScene extends Phaser.Scene {
     bg.lineStyle(1, 0xfef08a, 0.65);
     bg.strokeRoundedRect(880, 590, 374, 114, 15);
 
-    // Brass quadrant slot groove (`x: 916..1220, y: 654`)
+    // Brass quadrant slot groove (`x: 910..1226, y: 646..664`)
     bg.fillStyle(0x0c0502, 1);
     bg.fillRoundedRect(910, 646, 316, 18, 9);
     bg.lineStyle(2, 0xd97706, 0.95);
@@ -2578,7 +2889,7 @@ export class TrainTableScene extends Phaser.Scene {
     this.throttleNotchLabels = [];
 
     for (let n = 0; n <= 5; n++) {
-      const nx = 924 + n * 56;
+      const nx = THROTTLE_NOTCH_BASE_X + n * THROTTLE_NOTCH_STEP_X;
       const ny = 655;
 
       // Brass detent tick
@@ -2597,64 +2908,96 @@ export class TrainTableScene extends Phaser.Scene {
         .setOrigin(0.5);
       panel.add(lbl);
       this.throttleNotchLabels.push(lbl);
-
-      // Direct tap zone for each throttle notch (`56x86px`)
-      const nZone = this.add
-        .zone(nx, 658, 56, 86)
-        .setOrigin(0.5)
-        .setInteractive({ useHandCursor: true });
-      nZone.on('pointerdown', () => {
-        this.setThrottleNotch(n, true);
-      });
-      panel.add(nZone);
     }
 
-    // Heavy Crimson & Brass Draggable Throttle Lever Handle
-    this.throttleHandle = this.add.container(924 + this.throttleNotch * 56, 650);
+    // Heavy Crimson & Brass Draggable Throttle T-Handle (`x: 924 + notch * 56, y: 650`)
+    this.throttleHandle = this.add.container(
+      THROTTLE_NOTCH_BASE_X + this.throttleNotch * THROTTLE_NOTCH_STEP_X,
+      650
+    );
     const hG = this.add.graphics();
     // Brass shaft
     hG.fillStyle(0xd97706, 1);
     hG.fillRoundedRect(-7, -24, 14, 38, 5);
     hG.lineStyle(2, 0xfef08a, 1);
     hG.strokeRoundedRect(-7, -24, 14, 38, 5);
-    // Crimson grip knob
+    // Crimson T-handle grip knob
     hG.fillStyle(0xdc2626, 1);
-    hG.fillRoundedRect(-20, -34, 40, 22, 10);
+    hG.fillRoundedRect(-22, -36, 44, 24, 10);
     hG.lineStyle(2.5, 0xfef08a, 1);
-    hG.strokeRoundedRect(-20, -34, 40, 22, 10);
+    hG.strokeRoundedRect(-22, -36, 44, 24, 10);
     this.throttleHandle.add(hG);
+    panel.add(this.throttleHandle);
 
-    const handleHit = this.add
-      .zone(0, -12, 68, 78)
+    // Full-slot interactive & draggable zone (`x: 896..1238, y: 606..702`) in root UI coordinates
+    // so tapping ANY notch OR dragging the T-handle slides in exact screen X (`924..1204`)!
+    const slotInteractZone = this.add
+      .zone(1067, 654, 352, 96)
       .setOrigin(0.5)
       .setInteractive({ draggable: true, useHandCursor: true });
-    this.throttleHandle.add(handleHit);
+    panel.add(slotInteractZone);
 
-    handleHit.on('drag', (_pointer: Phaser.Input.Pointer, dragX: number) => {
-      const clampedX = Phaser.Math.Clamp(dragX, 924, 924 + 5 * 56);
-      this.throttleHandle.setX(clampedX);
-      const nearestNotch = Math.round((clampedX - 924) / 56);
-      if (nearestNotch !== this.throttleNotch) {
+    const slideThrottleToPointerX = (pointerX: number, snapImmediately: boolean) => {
+      const minX = THROTTLE_NOTCH_BASE_X;
+      const maxX = THROTTLE_NOTCH_BASE_X + 5 * THROTTLE_NOTCH_STEP_X;
+      const clampedX = Phaser.Math.Clamp(pointerX, minX, maxX);
+      const nearestNotch = Phaser.Math.Clamp(
+        Math.round((clampedX - minX) / THROTTLE_NOTCH_STEP_X),
+        0,
+        5
+      );
+
+      if (snapImmediately) {
         this.setThrottleNotch(nearestNotch, true);
+      } else {
+        this.tweens.killTweensOf(this.throttleHandle);
+        this.throttleHandle.setX(clampedX);
+        if (nearestNotch !== this.throttleNotch) {
+          this.throttleNotch = nearestNotch;
+          this.refreshThrottleNotchLabelHighlights();
+          this.audio.playThrottleClick(nearestNotch);
+          if (nearestNotch >= 4) {
+            this.spawnLocomotiveSteamPuff(false);
+          }
+        }
       }
+    };
+
+    slotInteractZone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      slideThrottleToPointerX(pointer.x, true);
     });
 
-    handleHit.on('dragend', () => {
-      this.throttleHandle.setX(924 + this.throttleNotch * 56);
+    slotInteractZone.on('drag', (pointer: Phaser.Input.Pointer) => {
+      slideThrottleToPointerX(pointer.x, false);
     });
 
-    panel.add(this.throttleHandle);
+    slotInteractZone.on('dragend', () => {
+      this.setThrottleNotch(this.throttleNotch, false);
+    });
+
+    this.refreshThrottleNotchLabelHighlights();
     this.uiRoot.add(panel);
+  }
+
+  private refreshThrottleNotchLabelHighlights(): void {
+    this.throttleNotchLabels.forEach((lbl, idx) => {
+      const isActive = idx === this.throttleNotch;
+      lbl.setScale(isActive ? 1.22 : 1.0);
+      lbl.setAlpha(isActive ? 1.0 : 0.78);
+    });
   }
 
   private setThrottleNotch(notch: number, playAudioFeedback = true): void {
     const clamped = Phaser.Math.Clamp(notch, 0, 5);
     this.throttleNotch = clamped;
+    this.refreshThrottleNotchLabelHighlights();
 
     if (this.throttleHandle) {
+      const targetX = THROTTLE_NOTCH_BASE_X + clamped * THROTTLE_NOTCH_STEP_X;
+      this.tweens.killTweensOf(this.throttleHandle);
       this.tweens.add({
         targets: this.throttleHandle,
-        x: 924 + clamped * 56,
+        x: targetX,
         duration: 110,
         ease: 'Back.easeOut'
       });
@@ -2691,49 +3034,83 @@ export class TrainTableScene extends Phaser.Scene {
     );
 
     if (this.currentSpeedPxPerSec > 0.5 && !this.isStoppingForStation) {
-      this.locoDist =
-        (this.locoDist + this.currentSpeedPxPerSec * dtSec) % this.totalTrackLength;
+      if (this.isLoopClosed) {
+        this.locoDist =
+          (this.locoDist + this.currentSpeedPxPerSec * dtSec) % this.totalTrackLength;
+      } else {
+        // When track is open (being built), shuttle smoothly along the placed track pieces
+        const minD = Math.min(245, this.totalTrackLength * 0.35);
+        const maxD = Math.max(minD + 20, this.totalTrackLength - 28);
+        this.locoDist += this.currentSpeedPxPerSec * dtSec * this.shuttleDirection;
+        if (this.locoDist >= maxD) {
+          this.locoDist = maxD;
+          this.shuttleDirection = -1;
+        } else if (this.locoDist <= minD) {
+          this.locoDist = minD;
+          this.shuttleDirection = 1;
+        }
+      }
       this.updateTrainConsistPositions();
     }
 
-    // 2. Check proximity to placed Track Modules & Living Scenery Toys
+    // 2. Check proximity to snapped Track Modules (`Bridge`, `Tunnel`, `Xylophone`, `Crossing Gate`)
     let isInsideTunnelNow = false;
-    this.socketVisuals.forEach((visual, socketId) => {
-      const placedKey = this.placedToysBySocket.get(socketId);
-      if (!placedKey || !this.locoContainer) return;
+    if (this.locoContainer) {
+      for (const piece of this.placedTrackPieces) {
+        if (
+          piece.pieceKey === 'track-straight' ||
+          piece.pieceKey === 'track-curve-left' ||
+          piece.pieceKey === 'track-curve-right'
+        ) {
+          continue;
+        }
 
-      const distToLoco = Math.hypot(
-        this.locoContainer.x - visual.spec.x,
-        this.locoContainer.y - visual.spec.y
-      );
+        const distToLoco = Math.hypot(
+          this.locoContainer.x - piece.midX,
+          this.locoContainer.y - piece.midY
+        );
 
-      if (placedKey === 'mod-stone-tunnel' && distToLoco < 86) {
-        isInsideTunnelNow = true;
-      }
+        if (piece.pieceKey === 'mod-stone-tunnel' && distToLoco < 86) {
+          isInsideTunnelNow = true;
+        }
 
-      // Rainbow Xylophone Melodic Track: play each bar as the locomotive rolls over!
-      if (placedKey === 'mod-xylophone-track' && distToLoco < 68 && this.throttleNotch > 0) {
-        const barIdx = Math.floor(((this.locoDist % 72) / 72) * 6);
-        if (barIdx !== this.lastXyloBarPlayed) {
-          this.lastXyloBarPlayed = barIdx;
-          this.audio.playXylophoneBar(barIdx);
-          if (barIdx % 2 === 0) {
-            Juice.burstStars(
-              this,
-              this.locoContainer.x,
-              this.locoContainer.y,
-              4,
-              [0xef4444, 0xfbbf24, 0x34d399, 0x38bdf8]
-            );
+        if (
+          piece.pieceKey === 'mod-xylophone-track' &&
+          distToLoco < 68 &&
+          this.throttleNotch > 0
+        ) {
+          const barIdx = Math.floor(((this.locoDist % 72) / 72) * 6);
+          if (barIdx !== this.lastXyloBarPlayed) {
+            this.lastXyloBarPlayed = barIdx;
+            this.audio.playXylophoneBar(barIdx);
+            if (barIdx % 2 === 0) {
+              Juice.burstStars(
+                this,
+                this.locoContainer.x,
+                this.locoContainer.y,
+                4,
+                [0xef4444, 0xfbbf24, 0x34d399, 0x38bdf8]
+              );
+            }
           }
+        }
+
+        if (this.throttleNotch > 0 && distToLoco < 78) {
+          this.triggerTrackModuleGag(piece, false);
         }
       }
 
-      // Trigger placed toy gag when the locomotive chugs past!
-      if (this.throttleNotch > 0 && distToLoco < 78) {
-        this.triggerPlacedToyGag(socketId, false);
+      // 2b. Check proximity to freely placed Scenery Toys on the green felt table
+      for (const scToy of this.placedSceneryToys) {
+        const distToScenery = Math.hypot(
+          this.locoContainer.x - scToy.x,
+          this.locoContainer.y - scToy.y
+        );
+        if (this.throttleNotch > 0 && distToScenery < 108) {
+          this.triggerSceneryToyGag(scToy, false);
+        }
       }
-    });
+    }
 
     // 3. Headlight illumination inside Echo Mountain Stone Tunnel
     if (this.locoHeadlightCone) {
