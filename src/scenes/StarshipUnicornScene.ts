@@ -808,6 +808,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
     c.add([g, txt]);
     Juice.makeTactileButton(this, c, Math.max(w, 64), Math.max(h, 52), onTap, null);
+    c.on('pointerover', () => {
+      StarshipAudio.playHoverMicroClick();
+    });
     return c;
   }
 
@@ -1013,6 +1016,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       cardContainer.add(hit);
 
+      hit.on('pointerover', () => {
+        StarshipAudio.playHoverMicroClick();
+      });
+
       hit.on('pointerdown', () => {
         const existingIdx = this.selectedAstronautIds.indexOf(spec.id);
         if (existingIdx !== -1) {
@@ -1146,6 +1153,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
       },
       null
     );
+    launchBtn.on('pointerover', () => {
+      StarshipAudio.playHoverMicroClick();
+    });
 
     this.lobbyContainer.add([quickBtn, grandBtn, launchBtn]);
   }
@@ -1189,6 +1199,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
     c.add([g, t1, t2]);
     Juice.makeTactileButton(this, c, w, h, onTap, null);
+    c.on('pointerover', () => {
+      StarshipAudio.playHoverMicroClick();
+    });
     return c;
   }
 
@@ -1645,18 +1658,18 @@ export class StarshipUnicornScene extends Phaser.Scene {
       padNode.add(activeRimG);
       this.padRimGlowMap.set(pad.index, activeRimG);
 
-      // Animated Scrolling `>>>` Directional Chevron Arrows on the Conveyor Belt Surface
+      // Animated Scrolling `» »` Directional Chevron Arrows on the Conveyor Belt Surface
       const dirAngle = csMid.angle;
       const chevronTxt = this.add
-        .text(0, 0, '>>>', {
+        .text(0, 0, '» »', {
           fontFamily: '"Consolas", "Segoe UI", sans-serif',
-          fontSize: totalPads === 25 ? '9.5px' : '7.5px',
+          fontSize: totalPads === 25 ? '11.5px' : '9px',
           fontStyle: 'bold',
           color: cSpec.hex
         })
         .setOrigin(0.5)
         .setRotation(dirAngle)
-        .setAlpha(0.55);
+        .setAlpha(0.68);
       padNode.add(chevronTxt);
 
       const ux = Math.cos(dirAngle) * 5.5;
@@ -2530,6 +2543,12 @@ export class StarshipUnicornScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
       switchRoot.add(hit);
 
+      hit.on('pointerover', () => {
+        if (this.scenePhase === 'TRIVIA') {
+          StarshipAudio.playHoverMicroClick();
+        }
+      });
+
       hit.on('pointerdown', () => {
         if (this.scenePhase !== 'TRIVIA') return;
         this.scenePhase = 'LOCKING_ANSWER';
@@ -2542,7 +2561,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
           ease: 'Quad.easeOut'
         });
 
-        // 2. Fire heavy industrial pneumatic latch clunk + hydraulic hiss + sub-bass thud
+        // 2. Fire heavy industrial breaker-switch slam + 750ms Geiger/radar telemetry lock-in ticks
         StarshipAudio.playPadLockIn(idx);
 
         // 3. Flash sweeping amber scanner bar ("⚡ TELEMETRY LOCKED...") for 750ms of game-show suspense!
@@ -2566,13 +2585,14 @@ export class StarshipUnicornScene extends Phaser.Scene {
       this.dockContainer.add(switchRoot);
     });
 
-    // Guarantee `dockContainer` is at `y = 0` during `TRIVIA` (slides back up from `+240` after `ROLL`/`MOVE`)
+    // Guarantee `dockContainer` is at `y = 0` during `TRIVIA` (slides back up from `+250` after `ROLL`/`MOVE`)
     if (wasRetracted) {
-      this.dockContainer.setPosition(0, 240);
+      StarshipAudio.playDrawerSlide(true);
+      this.dockContainer.setPosition(0, 250);
       this.tweens.add({
         targets: this.dockContainer,
         y: 0,
-        duration: 320,
+        duration: 340,
         ease: 'Cubic.easeOut'
       });
     } else {
@@ -2618,8 +2638,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const hit = this.add
       .rectangle(0, 0, w, h, 0x000000, 0.001)
       .setInteractive({ useHandCursor: true });
+    hit.on('pointerover', () => {
+      StarshipAudio.playHoverMicroClick();
+    });
     hit.on('pointerdown', () => {
-      StarshipAudio.playRockerSwitchClick();
+      StarshipAudio.playRockerSwitchClick(true);
       this.tweens.add({
         targets: cap,
         y: 3,
@@ -2668,15 +2691,15 @@ export class StarshipUnicornScene extends Phaser.Scene {
       StarshipAudio.playVoice('standard_thruster');
     }
 
-    // Automatically retract/slide the heavy Trivia Drawer down off-screen (`y: 0 -> +240`, `360ms`)
-    // with a pneumatic retraction sound so 100% of the 1280x720 isometric board is unobstructed!
+    // Automatically retract/slide the heavy Trivia Drawer down off-screen (`y: 0 -> +250`, `360ms`)
+    // with an electric servo motor whir + hydraulic rail slide + rubber-gasket dock lock clunk!
     this.time.delayedCall(280, () => {
       if (!this.scene.isActive()) return;
-      StarshipAudio.playRockerSwitchClick(false);
+      StarshipAudio.playDrawerSlide(false);
       this.tweens.killTweensOf(this.dockContainer);
       this.tweens.add({
         targets: this.dockContainer,
-        y: 240,
+        y: 250,
         duration: 360,
         ease: 'Cubic.easeIn',
         onComplete: () => {
@@ -2824,6 +2847,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
     plungerRoot.add(hit);
 
     let rolled = false;
+    hit.on('pointerover', () => {
+      if (!rolled) {
+        StarshipAudio.playHoverMicroClick();
+      }
+    });
     hit.on('pointerdown', () => {
       if (rolled) return;
       rolled = true;
@@ -3164,7 +3192,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       return;
     }
 
-    // Play hydraulic jump whoosh + musical ascending pitch chime + landing thud
+    // Play SpaceX RCS cold-gas nitrogen burst + mid-air Doppler plasma hum + magnetic boot clank
     StarshipAudio.playTokenHop(stepPitchIndex);
 
     // Illuminate approached conveyor deck plate rim
@@ -3355,7 +3383,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
     if (pad.special === 'OVERCLOCK') {
       const targetIdx = Math.min(this.boardPads.length - 1, player.padIndex + 3);
-      StarshipAudio.playOverclockFanfare();
+      StarshipAudio.playTurboCoilOverclock();
       StarshipAudio.playVoice('tile_overclock');
       this.playWidescreenCutsceneOverlay(
         '⚡ FICSIT OVERCLOCK PAD!',
@@ -3377,7 +3405,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
     if (pad.special === 'RAINBOW_STARSHIP') {
       const targetIdx = Math.min(this.boardPads.length - 1, player.padIndex + 4);
-      StarshipAudio.playOverclockFanfare();
+      StarshipAudio.playPrismCatapultLaunch();
       StarshipAudio.playVoice('tile_rainbow_starship');
       this.playWidescreenCutsceneOverlay(
         '🦄 RAINBOW STARSHIP ESCORT!',

@@ -1,5 +1,10 @@
 # Wyatt & Emma Arcade v2.0 — Master Architecture & Agent Rules
 
+## 0. Flagship TV Centerpiece Rule (`StarshipUnicornScene.ts` & `StarshipAudioEngine.ts`)
+- **HD 3D Isometric Pre-Rendered World + Additive Holographic Shaders + Space-Industrial Audio:**
+  - `StarshipUnicornScene.ts` renders over a high-definition 16:9 pre-rendered 3D isometric alien factory plateau (`public/assets/starship/board-isometric-factory.png`) with `Phaser.Textures.FilterMode.LINEAR` (strictly NO pixel art), flush 30° isometric conveyor-belt deck segments, additive holographic shaders/particles (`Phaser.BlendModes.ADD` / `SCREEN`), and a motorized sliding telemetry drawer (`y = 0` during `TRIVIA`, `y = +250` off-screen during `ROLL` & `MOVE`).
+  - **Strictly Space-Industrial Acoustics (ZERO 90s Arcade Boops):** Every UI hover, button press, drawer slide, dice tumble, RCS thruster hop, and special-pad trigger in `StarshipUnicornScene.ts` is synthesized in `StarshipAudioEngine.ts` using multi-layered industrial acoustics: **Sub-Bass Mechanical Mass (45–90Hz punch) + Metallic FM Solenoid/Bolt Clatter + Bandpass/Highpass Filtered White-Noise Pneumatic Steam/Hydraulic Hiss**.
+
 ## 1. Mission & Audience
 We are building **Arcade v2.0** (`learn-study.com`), a Nintendo-polished, offline-first 2D landscape tablet app for **Wyatt (age 4)** and **Emma (age 3)**.
 - **Recurring Companions:**
