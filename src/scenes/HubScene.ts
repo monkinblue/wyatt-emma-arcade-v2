@@ -1848,7 +1848,7 @@ export class HubScene extends Phaser.Scene {
         }
 
         // Ornate Brass/Parchment Nameplate on the front wooden shelf lip (`y: 668`)
-        const plateW = 204;
+        const plateW = card.title.length > 26 ? 236 : 204;
         const plateH = 40;
         const nameplate = this.add.container(cx, plaqueY);
         const plateG = this.add.graphics();
@@ -1872,7 +1872,7 @@ export class HubScene extends Phaser.Scene {
         const titleTxt = this.add
           .text(0, -7, card.title, {
             fontFamily: '"Fredoka", Georgia, serif',
-            fontSize: card.title.length > 26 ? '10.6px' : card.title.length > 22 ? '11.5px' : '12.5px',
+            fontSize: card.title.length > 26 ? '10px' : card.title.length > 22 ? '11.5px' : '12.5px',
             fontStyle: 'bold',
             color: '#451a03'
           })

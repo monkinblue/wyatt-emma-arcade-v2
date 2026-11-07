@@ -51,20 +51,65 @@ export interface TriviaQuestionItem {
 
 interface TriviaBankData {
   version: string;
-  counts: {
+  counts?: {
     adult: number;
     wyatt4yo: number;
     emma3yo: number;
     total: number;
   };
-  questions: {
-    ADULT: TriviaQuestionItem[];
-    WYATT_4YO: TriviaQuestionItem[];
-    EMMA_3YO: TriviaQuestionItem[];
-  };
+  questions:
+    | TriviaQuestionItem[]
+    | {
+        ADULT?: TriviaQuestionItem[];
+        WYATT_4YO?: TriviaQuestionItem[];
+        EMMA_3YO?: TriviaQuestionItem[];
+      };
 }
 
 const TRIVIA_BANK = triviaBankRaw as unknown as TriviaBankData;
+
+const FALLBACK_QUESTIONS: Record<TriviaProfileTier, TriviaQuestionItem> = {
+  ADULT: {
+    id: 'fallback_adult',
+    tier: 'ADULT',
+    category: 'Space & Aerospace',
+    prompt: 'What are the giant mechanical catching arms on SpaceX Starbase launch tower nicknamed?',
+    options: ['Cyber Tongs', 'Mechazilla (The Chopsticks)', 'Star Catcher 9000', 'Kraken Claws'],
+    correctIndex: 1
+  },
+  WYATT_4YO: {
+    id: 'fallback_wyatt',
+    tier: 'WYATT_4YO',
+    category: 'Space & Rockets',
+    prompt: 'What counts down "3, 2, 1, BLAST OFF!" and flies up to the Moon?',
+    options: ['🚀 A Rocket Ship', '🚲 A Bicycle', '🛒 A Shopping Cart', '🛋️ A Couch'],
+    correctIndex: 0
+  },
+  EMMA_3YO: {
+    id: 'fallback_emma',
+    tier: 'EMMA_3YO',
+    category: 'Unicorns & Magic',
+    prompt: 'Tap the magical UNICORN with a sparkly horn!',
+    options: ['🦄 Unicorn', '🐸 Frog', '🚜 Tractor', '🥦 Broccoli'],
+    correctIndex: 0
+  }
+};
+
+function getQuestionPoolForTier(tier: TriviaProfileTier): TriviaQuestionItem[] {
+  const rawQ = TRIVIA_BANK?.questions;
+  if (Array.isArray(rawQ)) {
+    const filtered = rawQ.filter(
+      (q) => q && q.tier === tier && Array.isArray(q.options) && q.options.length === 4
+    );
+    if (filtered.length > 0) return filtered;
+  } else if (rawQ && typeof rawQ === 'object') {
+    const tierList = rawQ[tier];
+    if (Array.isArray(tierList) && tierList.length > 0) {
+      return tierList;
+    }
+  }
+  return [FALLBACK_QUESTIONS[tier] ?? FALLBACK_QUESTIONS.ADULT];
+}
 
 export interface AstronautRosterSpec {
   id: AstronautId;
@@ -611,9 +656,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.lobbyContainer.add(frameG);
 
     const lobbyTitle = this.add
-      .text(640, panelY + 34, 'STARSHIP UNICORN: ORBITAL TRIVIA — PRE-FLIGHT MISSION CONTROL', {
+      .text(640, panelY + 33, 'STARSHIP UNICORN: ORBITAL TRIVIA — MISSION CONTROL', {
         fontFamily: '"Segoe UI", "Fredoka", system-ui, sans-serif',
-        fontSize: '21px',
+        fontSize: '17.5px',
         fontStyle: 'bold',
         color: '#f8fafc',
         stroke: '#020617',
@@ -624,11 +669,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const lobbySubtitle = this.add
       .text(
         640,
-        panelY + 60,
+        panelY + 59,
         `TAP ASTRONAUT EXOSUIT CARDS TO ASSIGN LAUNCH BAYS P1–P6 (${this.selectedAstronautIds.length}/6 CREW SELECTED — MIN 2, MAX 6)`,
         {
           fontFamily: '"Segoe UI", "Fredoka", system-ui, sans-serif',
-          fontSize: '13px',
+          fontSize: '12px',
           fontStyle: 'bold',
           color: '#38bdf8'
         }
@@ -636,12 +681,12 @@ export class StarshipUnicornScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.lobbyContainer.add([lobbyTitle, lobbySubtitle]);
 
-    // Quick Family Crew Preset Pill Buttons (Top-Right of Lobby Header)
+    // Quick Family Crew Preset Pill Buttons (Left & Right of Lobby Header, non-overlapping)
     const presetKidsParents = this.createSleekHeaderButton(
-      1095,
+      1128,
       panelY + 47,
-      208,
-      36,
+      180,
+      34,
       '⚡ 4P CORE CREW',
       0x10b981,
       () => {
@@ -651,10 +696,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
       }
     );
     const presetGrandparents = this.createSleekHeaderButton(
-      185,
+      152,
       panelY + 47,
-      212,
-      36,
+      184,
+      34,
       '🌟 6P FAMILY PARTY',
       0xf59e0b,
       () => {
@@ -963,9 +1008,12 @@ export class StarshipUnicornScene extends Phaser.Scene {
    * Launches the mission from the Pre-Flight Lobby onto the 25-pad or 50-pad Orbital Hex Pathway!
    */
   private initiateMissionLaunch(): void {
+    // CRITICAL: Destroy all interactive Lobby & Victory children (`removeAll(true)`) so the
+    // 1280x720 modal scrim rectangle never stays alive as an invisible input blocker!
+    this.lobbyContainer.removeAll(true);
     this.lobbyContainer.setVisible(false);
-    this.victoryContainer.setVisible(false);
     this.victoryContainer.removeAll(true);
+    this.victoryContainer.setVisible(false);
 
     // Build active player roster from `this.selectedAstronautIds`
     this.players = this.selectedAstronautIds.map((id, idx) => {
@@ -981,6 +1029,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     });
 
     this.activePlayerIndex = 0;
+    this.scenePhase = 'TRIVIA';
     this.buildAndRenderOrbitalBoard(this.missionTotalPads);
     this.spawnPlayerBoardTokens();
     this.renderTopMissionHeader();
@@ -988,18 +1037,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
     StarshipAudio.playLaunchIgnition();
     Juice.burstStars(this, 640, 320, 28, [0x38bdf8, 0xf59e0b, 0xf472b6, 0x10b981]);
 
-    StarshipAudio.playVoice('launch_sequence', () => {
-      if (this.scenePhase !== 'LOBBY') {
-        this.startPlayerTurn(0);
-      }
-    });
-
-    // Also start the first player's turn promptly so the UI feels snappy and responsive
-    this.time.delayedCall(650, () => {
-      if (this.scenePhase === 'LOBBY') {
-        this.startPlayerTurn(0);
-      }
-    });
+    // Immediately start Turn 1 and render the Telemetry Trivia Dock + 4 Color Answer Pads
+    // without waiting on any audio callback so the game never hangs or freezes!
+    this.startPlayerTurn(0);
   }
 
   // ===========================================================================
@@ -1388,7 +1428,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
   /**
    * Computes a clean offset when multiple astronaut tokens share the same pad so every
-   * spacesuit face remains visible.
+   * spacesuit face and P1–P6 label remains clearly visible without overlapping in a pile.
    */
   private computeTokenWorldPosition(padIndex: number, playerSlotIdx: number): { x: number; y: number } {
     const clampedIdx = Phaser.Math.Clamp(padIndex, 0, this.boardPads.length - 1);
@@ -1402,12 +1442,59 @@ export class StarshipUnicornScene extends Phaser.Scene {
       return { x: pad.x, y: pad.y - 10 };
     }
 
-    const myOrder = occupants.findIndex((item) => item.idx === playerSlotIdx);
+    const myOrder = Math.max(0, occupants.findIndex((item) => item.idx === playerSlotIdx));
+
+    // Special wide 2-row cluster around STARBASE PAD 1 (or any crowded pad) so all 2–6 faces & labels shine clearly
+    const clusterOffsets: Record<number, Array<[number, number]>> = {
+      2: [
+        [-26, -12],
+        [26, -12]
+      ],
+      3: [
+        [-32, -22],
+        [32, -22],
+        [0, 18]
+      ],
+      4: [
+        [-30, -26],
+        [30, -26],
+        [-30, 18],
+        [30, 18]
+      ],
+      5: [
+        [-44, -26],
+        [0, -30],
+        [44, -26],
+        [-26, 20],
+        [26, 20]
+      ],
+      6: [
+        [-46, -28],
+        [0, -32],
+        [46, -28],
+        [-46, 20],
+        [0, 24],
+        [46, 20]
+      ]
+    };
+
+    const preset = clusterOffsets[occupants.length];
+    if (preset && preset[myOrder]) {
+      const [dx, dy] = preset[myOrder];
+      // Keep Pad 1 cluster safely inside the left screen margin (`x >= 68`)
+      const rawX = pad.x + dx;
+      const safeX = Math.max(68, Math.min(1212, rawX));
+      return {
+        x: Math.round(safeX),
+        y: Math.round(pad.y + dy)
+      };
+    }
+
     const angle = (myOrder / occupants.length) * Math.PI * 2 - Math.PI / 2;
-    const spreadRadius = occupants.length <= 3 ? 15 : 20;
+    const spreadRadius = 32;
     return {
       x: Math.round(pad.x + Math.cos(angle) * spreadRadius),
-      y: Math.round(pad.y - 10 + Math.sin(angle) * (spreadRadius * 0.72))
+      y: Math.round(pad.y - 8 + Math.sin(angle) * (spreadRadius * 0.78))
     };
   }
 
@@ -1455,17 +1542,26 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.refreshAllTokenOffsets();
 
     // Pull a non-repeating question tailored to `activePlayer.roster.tier` (`ADULT`, `WYATT_4YO`, `EMMA_3YO`)
-    this.currentQuestion = this.drawNonRepeatingQuestion(activePlayer.roster.tier);
+    try {
+      this.currentQuestion = this.drawNonRepeatingQuestion(activePlayer.roster.tier);
+    } catch {
+      this.currentQuestion = FALLBACK_QUESTIONS[activePlayer.roster.tier] ?? FALLBACK_QUESTIONS.ADULT;
+    }
 
-    // Announce active player's turn with personalized ElevenLabs voice clip
-    StarshipAudio.playTriviaRevealShimmer();
-    StarshipAudio.playVoice(activePlayer.roster.turnVoice);
-
+    // Render the Telemetry Trivia Dock + 4 Giant Color-Coded Answer Pads FIRST so UI is 100% immediate
     this.renderTelemetryTriviaDock(activePlayer, this.currentQuestion);
+
+    // Announce active player's turn with personalized ElevenLabs voice clip (non-blocking)
+    try {
+      StarshipAudio.playTriviaRevealShimmer();
+      StarshipAudio.playVoice(activePlayer.roster.turnVoice);
+    } catch {
+      // Never allow audio playback issues to interrupt turn progression
+    }
   }
 
   private drawNonRepeatingQuestion(tier: TriviaProfileTier): TriviaQuestionItem {
-    const pool = TRIVIA_BANK.questions[tier] ?? TRIVIA_BANK.questions.ADULT;
+    const pool = getQuestionPoolForTier(tier);
     const unasked = pool.filter((q) => !this.askedQuestionIds.has(q.id));
     const candidatePool = unasked.length > 0 ? unasked : pool;
 
@@ -1474,7 +1570,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
       pool.forEach((q) => this.askedQuestionIds.delete(q.id));
     }
 
-    const picked = Phaser.Utils.Array.GetRandom(candidatePool);
+    const picked =
+      Phaser.Utils.Array.GetRandom(candidatePool) ??
+      FALLBACK_QUESTIONS[tier] ??
+      FALLBACK_QUESTIONS.ADULT;
     this.askedQuestionIds.add(picked.id);
     return picked;
   }
@@ -2397,6 +2496,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       true,
       0x10b981,
       () => {
+        this.victoryContainer.removeAll(true);
         this.victoryContainer.setVisible(false);
         this.openPreFlightLobby(false);
       }
