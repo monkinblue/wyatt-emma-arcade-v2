@@ -194,6 +194,7 @@ export class HubScene extends Phaser.Scene {
     this.ensureRadialGlowTexture();
     this.createFullScreenBookshelf();
     this.createAntiqueBrassMuteButton();
+    this.createHoldToUpdateButton();
     this.createHeirloomPWAInstallButton();
 
     this.upperShelfContainer = this.add.container(0, 0).setDepth(20);
@@ -332,6 +333,175 @@ export class HubScene extends Phaser.Scene {
       },
       'pop'
     );
+  }
+
+  /**
+   * Renders a compact, kid-proof, airplane-safe brass-and-mahogany `[ ⟳ HOLD TO UPDATE ]` pill button
+   * in the top-right header bar (`x: 1110, y: 32`, next to the Mute button).
+   * - Requires a continuous 2000ms `pointerdown` hold with a live progress fill bar so a 3yo/4yo
+   *   never triggers it accidentally.
+   * - Verifies live internet connectivity (`navigator.onLine` + `HEAD` ping with `cache: 'no-store'`)
+   *   BEFORE touching any Service Worker or Cache Storage so Airplane Mode is 100% protected.
+   */
+  private createHoldToUpdateButton(): void {
+    const pillW = 198;
+    const pillH = 36;
+    const btnContainer = this.add.container(1110, 32).setAlpha(0.88).setDepth(100);
+
+    const pillBg = this.add.graphics();
+    const progressFill = this.add.graphics();
+    const pillLabel = this.add
+      .text(0, 0, '⟳ HOLD TO UPDATE', {
+        fontFamily: '"Fredoka", Georgia, serif',
+        fontSize: '12px',
+        fontStyle: 'bold',
+        color: '#fef08a',
+        stroke: '#1e0f06',
+        strokeThickness: 2
+      })
+      .setOrigin(0.5);
+
+    const drawPillBase = (mode: 'idle' | 'holding' | 'offline' | 'updating' = 'idle') => {
+      pillBg.clear();
+      // Drop shadow
+      pillBg.fillStyle(0x090401, 0.55);
+      pillBg.fillRoundedRect(-pillW / 2 + 2, -pillH / 2 + 2, pillW, pillH, 18);
+
+      // Mahogany or status body
+      const fillHex =
+        mode === 'offline' ? 0x064e3b : mode === 'updating' ? 0x1e3a8a : 0x27160c;
+      pillBg.fillStyle(fillHex, 0.94);
+      pillBg.fillRoundedRect(-pillW / 2, -pillH / 2, pillW, pillH, 18);
+
+      // Antique brass rim
+      const strokeHex =
+        mode === 'offline' ? 0x34d399 : mode === 'updating' ? 0x38bdf8 : 0xd97706;
+      pillBg.lineStyle(2, strokeHex, 0.95);
+      pillBg.strokeRoundedRect(-pillW / 2, -pillH / 2, pillW, pillH, 18);
+      pillBg.lineStyle(1, 0xfef08a, 0.5);
+      pillBg.strokeRoundedRect(-pillW / 2 + 3, -pillH / 2 + 3, pillW - 6, pillH - 6, 15);
+    };
+
+    const drawProgress = (ratio: number) => {
+      progressFill.clear();
+      if (ratio <= 0) return;
+      const innerW = pillW - 8;
+      const innerH = pillH - 8;
+      const fillW = Math.max(8, innerW * Phaser.Math.Clamp(ratio, 0, 1));
+      progressFill.fillStyle(0xd97706, 0.85);
+      progressFill.fillRoundedRect(-innerW / 2, -innerH / 2, fillW, innerH, 14);
+    };
+
+    drawPillBase('idle');
+
+    const hitZone = this.add
+      .zone(0, 0, pillW + 12, 58)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+
+    btnContainer.add([pillBg, progressFill, pillLabel, hitZone]);
+
+    let holdTween: Phaser.Tweens.Tween | null = null;
+    let isBusy = false;
+    const holdState = { progress: 0 };
+
+    const cancelHold = () => {
+      if (isBusy) return;
+      if (holdTween) {
+        holdTween.stop();
+        holdTween = null;
+      }
+      holdState.progress = 0;
+      drawProgress(0);
+      drawPillBase('idle');
+      pillLabel.setText('⟳ HOLD TO UPDATE');
+      btnContainer.setScale(1);
+    };
+
+    const executeSafeUpdateCheck = async () => {
+      isBusy = true;
+      drawProgress(1);
+      pillLabel.setText('⟳ CHECKING...');
+
+      let isLiveOnline = false;
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        try {
+          const pingUrl = window.location.pathname + '?ping=' + Date.now();
+          const res = await fetch(pingUrl, { method: 'HEAD', cache: 'no-store' });
+          if (res.ok) {
+            isLiveOnline = true;
+          }
+        } catch {
+          isLiveOnline = false;
+        }
+      }
+
+      if (!isLiveOnline) {
+        // Airplane Mode / Offline: abort without touching any caches!
+        drawProgress(0);
+        drawPillBase('offline');
+        pillLabel.setText('✈️ OFFLINE MODE (SAVED)');
+        AudioBus.playSfx('chime');
+        this.time.delayedCall(2000, () => {
+          if (!btnContainer.scene) return;
+          isBusy = false;
+          cancelHold();
+        });
+        return;
+      }
+
+      // Live server confirmed reachable — safe to clear Service Workers & caches and reload!
+      drawProgress(0);
+      drawPillBase('updating');
+      pillLabel.setText('⟳ UPDATING...');
+      AudioBus.playSfx('fanfare');
+
+      try {
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(registrations.map((r) => r.unregister()));
+        }
+        if ('caches' in window) {
+          const cacheKeys = await caches.keys();
+          await Promise.all(cacheKeys.map((k) => caches.delete(k)));
+        }
+      } catch {
+        // Ignore cleanup errors and proceed with cache-busted reload
+      }
+
+      window.location.replace(window.location.pathname + '?v=' + Date.now());
+    };
+
+    hitZone.on('pointerdown', () => {
+      if (isBusy) return;
+      AudioBus.playSfx('pop');
+      btnContainer.setScale(0.96);
+      drawPillBase('holding');
+      pillLabel.setText('⟳ HOLD TO UPDATE');
+      holdState.progress = 0;
+
+      if (holdTween) {
+        holdTween.stop();
+      }
+      holdTween = this.tweens.add({
+        targets: holdState,
+        progress: 1,
+        duration: 2000,
+        ease: 'Linear',
+        onUpdate: () => {
+          drawProgress(holdState.progress);
+        },
+        onComplete: () => {
+          holdTween = null;
+          btnContainer.setScale(1);
+          void executeSafeUpdateCheck();
+        }
+      });
+    });
+
+    hitZone.on('pointerup', cancelHold);
+    hitZone.on('pointerout', cancelHold);
+    hitZone.on('pointerupoutside', cancelHold);
   }
 
   /**
