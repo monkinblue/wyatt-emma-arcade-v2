@@ -15,6 +15,12 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
     <title>Wyatt &amp; Emma's Heirloom Arcade</title>
     <style>
       * {
@@ -130,8 +136,8 @@
     <script>
       (function () {
         try {
-          if (localStorage.getItem('sw_fix_v3') !== 'done') {
-            localStorage.setItem('sw_fix_v3', 'done');
+          if (localStorage.getItem('sw_fix_v4') !== 'done') {
+            localStorage.setItem('sw_fix_v4', 'done');
             var swPromise =
               'serviceWorker' in navigator
                 ? navigator.serviceWorker.getRegistrations().then(function (regs) {

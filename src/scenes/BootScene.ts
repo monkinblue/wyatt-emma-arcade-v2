@@ -10,6 +10,7 @@
 
 import Phaser from 'phaser';
 import { AudioBus } from '../core/AudioBus';
+import { PA_VOICE_KEYS, StarshipAudio } from '../core/StarshipAudioEngine';
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -51,8 +52,48 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hub-toy-train', '/assets/hub/arcade/hub-toy-train.png?v=tr1');
     this.load.image('hub-toy-starship-unicorn', '/assets/hub/arcade/hub-toy-starship-unicorn.png?v=su1');
 
-    // 0a-1b. Starship Unicorn: Orbital Trivia (`StarshipUnicornScene.ts`) 1080p/4K HD Assets
-    this.load.image('board-isometric-factory', '/assets/starship/board-isometric-factory.png?v=iso2');
+    // 0a-1b. Starship Unicorn: Orbital Trivia (`StarshipUnicornScene.ts`) 1080p/4K HD Assets, ElevenLabs SFX & Emily E. PA Voices
+    StarshipAudio.preloadAllSfx();
+    for (const voKey of PA_VOICE_KEYS) {
+      this.load.audio(voKey, `/assets/sfx/starship/${voKey}.mp3?v=emily2`);
+    }
+    this.load.image(
+      'board-isometric-conveyor-world',
+      '/assets/starship/board-isometric-conveyor-world.png?v=iso4'
+    );
+    this.load.image(
+      'dice-plunger-console',
+      '/assets/starship/dice-plunger-console.png?v=plunger1'
+    );
+    this.load.spritesheet(
+      'challenge-shield-turrets',
+      '/assets/starship/challenge-shield-turrets.png?v=hw1',
+      { frameWidth: 256, frameHeight: 256 }
+    );
+    this.load.spritesheet(
+      'challenge-cargo-crates',
+      '/assets/starship/challenge-cargo-crates.png?v=hw1',
+      { frameWidth: 256, frameHeight: 256 }
+    );
+    this.load.image('challenge-warp-core', '/assets/starship/challenge-warp-core.png?v=hw1');
+    this.load.image(
+      'hud-telemetry-comms-pod',
+      '/assets/starship/hud-telemetry-comms-pod.png?v=hw1'
+    );
+    this.load.image(
+      'ui-startrek-command-deck',
+      '/assets/starship/ui-startrek-command-deck.png?v=lcars1'
+    );
+    this.load.image(
+      'ui-startrek-top-pill',
+      '/assets/starship/ui-startrek-top-pill.png?v=lcars1'
+    );
+    this.load.spritesheet(
+      'sprite-3d-supply-pods',
+      '/assets/starship/sprite-3d-supply-pods.png?v=lcars1',
+      { frameWidth: 256, frameHeight: 256 }
+    );
+    this.load.image('board-isometric-factory', '/assets/starship/board-isometric-factory.png?v=iso4');
     this.load.image('starship-board-bg', '/assets/games/starship-unicorn/starship-board-bg.jpg?v=iso2');
     const starshipAstronautIds = [
       'robert',
@@ -72,7 +113,7 @@ export class BootScene extends Phaser.Scene {
       );
       this.load.image(
         `starship-card-${astroId}`,
-        `/assets/games/starship-unicorn/cards/card_${astroId}.png?v=su1`
+        `/assets/games/starship-unicorn/cards/card_${astroId}.png?v=su2`
       );
       this.load.image(
         `starship-token-${astroId}`,

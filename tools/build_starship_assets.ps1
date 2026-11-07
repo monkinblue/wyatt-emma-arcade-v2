@@ -631,7 +631,7 @@ $roster = @(
     @{ Id = "wyatt";   Name = "WYATT";   Role = "ASTRO-RANGER (4YO)";  R = 16;  G = 185; B = 129 },
     @{ Id = "emma";    Name = "EMMA";    Role = "SPACE PRINCESS (3YO)";R = 244; G = 114; B = 182 },
     @{ Id = "papa";    Name = "PAPA";    Role = "CHIEF ENGINEER";      R = 59;  G = 130; B = 246 },
-    @{ Id = "nana";    Name = "NANA";    Role = "SCIENCE OFFICER";     R = 14;  G = 165; B = 233 },
+    @{ Id = "nana";    Name = "NANA";    Role = "SHIP'S COUNSELOR";    R = 14;  G = 165; B = 233 },
     @{ Id = "grandpa"; Name = "GRANDPA"; Role = "FLEET ADMIRAL";       R = 148; G = 163; B = 184 },
     @{ Id = "babci";   Name = "BABCI";   Role = "ORBITAL NAVIGATOR";   R = 192; G = 132; B = 252 },
     @{ Id = "guest";   Name = "GUEST";   Role = "MISSION SPECIALIST";  R = 250; G = 204; B = 21 }
