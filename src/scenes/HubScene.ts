@@ -41,37 +41,9 @@ interface ShelfActivityCardConfig {
   announceAudio?: string;
 }
 
-const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]> = {
+const SHELF_ACTIVITY_CARDS: Record<'play' | 'create' | 'tv', ShelfActivityCardConfig[]> = {
   play: [
-    // Page 1: 3 Painted Heirloom Arcade Toys standing directly on the oak shelf
-    {
-      id: 'clockwork-train-table',
-      title: 'CLOCKWORK TRAIN TABLE',
-      subtitle: 'Wooden Railway Builder',
-      texKey: 'hub-toy-train',
-      baseScale: 0.72,
-      emoji: '🚂',
-      badgeText: 'WOODEN RAILWAY BUILDER',
-      accentColor: 0xf59e0b,
-      previewSfx: 'horn',
-      unlocked: true,
-      targetScene: 'TrainTableScene',
-      announceAudio: '/assets/audio/train/prompts/welcome_title.mp3'
-    },
-    {
-      id: 'ispy-curio-cabinet',
-      title: 'I SPY CURIO CABINET',
-      subtitle: 'Magnifying Glass Detective',
-      texKey: 'hub-toy-ispy',
-      baseScale: 0.59,
-      emoji: '🔍',
-      badgeText: 'CURIO DETECTIVE',
-      accentColor: 0xfbbf24,
-      previewSfx: 'chime',
-      unlocked: true,
-      targetScene: 'ISpyScene',
-      announceAudio: '/assets/audio/ispy/prompts/welcome_title.mp3'
-    },
+    // Page 1 & 2: 6 Heirloom Arcade Cabinet Games (3 per page)
     {
       id: 'bubble-pop',
       title: 'BALLOON LETTER POP',
@@ -86,19 +58,6 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
       targetScene: 'BalloonPopScene'
     },
     {
-      id: 'animal-match-safari',
-      title: 'ANIMAL MATCH SAFARI',
-      subtitle: 'Clockwork Memory Match',
-      texKey: 'arcade-toy-match',
-      baseScale: 0.34,
-      emoji: '🦁',
-      badgeText: 'PARLOR PUZZLE',
-      accentColor: 0xfbbf24,
-      previewSfx: 'chime',
-      unlocked: true,
-      targetScene: 'MemoryMatchScene'
-    },
-    {
       id: 'great-hall-box-of-ten',
       title: 'GREAT HALL BOX OF TEN',
       subtitle: 'Wizard Dice & 1-10 Math',
@@ -111,21 +70,6 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
       unlocked: true,
       targetScene: 'ShutTheBoxScene',
       announceAudio: '/assets/audio/shutthebox/prompts/welcome_title.mp3'
-    },
-    // Page 2 & 3: Heirloom Arcade Shelf Toys
-    {
-      id: 'unicorn-castle',
-      title: 'UNICORN CASTLE',
-      subtitle: 'Royal Sticker Kingdom',
-      texKey: 'hub-toy-unicorn',
-      baseScale: 0.72,
-      emoji: '🦄',
-      badgeText: 'ROYAL STICKER KINGDOM',
-      accentColor: 0xf472b6,
-      previewSfx: 'chime',
-      unlocked: true,
-      targetScene: 'UnicornCastleScene',
-      announceAudio: '/assets/audio/unicorn/prompts/welcome_title.mp3'
     },
     {
       id: 'cloud-racer',
@@ -154,6 +98,34 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
       unlocked: true,
       targetScene: 'RocketBlastScene',
       announceAudio: '/assets/audio/rocket/prompts/welcome_title.mp3'
+    },
+    {
+      id: 'unicorn-castle',
+      title: "PRINCESS EMMA'S TEA PARTY",
+      subtitle: 'Royal Unicorn Castle',
+      texKey: 'hub-toy-unicorn',
+      baseScale: 0.72,
+      emoji: '🦄',
+      badgeText: 'ROYAL STICKER KINGDOM',
+      accentColor: 0xf472b6,
+      previewSfx: 'chime',
+      unlocked: true,
+      targetScene: 'UnicornCastleScene',
+      announceAudio: '/assets/audio/unicorn/prompts/welcome_title.mp3'
+    },
+    {
+      id: 'ispy-curio-cabinet',
+      title: 'I SPY CURIO CABINET',
+      subtitle: 'Magnifying Glass Detective',
+      texKey: 'hub-toy-ispy',
+      baseScale: 0.59,
+      emoji: '🔍',
+      badgeText: 'CURIO DETECTIVE',
+      accentColor: 0xfbbf24,
+      previewSfx: 'chime',
+      unlocked: true,
+      targetScene: 'ISpyScene',
+      announceAudio: '/assets/audio/ispy/prompts/welcome_title.mp3'
     }
   ],
   create: [
@@ -165,24 +137,35 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create', ShelfActivityCardConfig[]>
       badgeText: 'CREATE STUDIO',
       accentColor: 0xfde047,
       previewSfx: 'chime'
-    },
+    }
+  ],
+  tv: [
     {
-      id: 'critter-band',
-      title: 'Silly Critter Band',
-      subtitle: 'Tap frogs, owls & bongo mushrooms to make music!',
-      emoji: '🥁',
-      badgeText: 'CREATE STUDIO',
-      accentColor: 0xfbbf24,
-      previewSfx: 'fanfare'
-    },
-    {
-      id: 'rainbow-paint',
-      title: 'Magic Finger Paint',
-      subtitle: 'Splash glowing neon colors & glitter trails!',
-      emoji: '🎨',
-      badgeText: 'CREATE STUDIO',
+      id: 'starship-unicorn-trivia',
+      title: 'STARSHIP UNICORN: ORBITAL TRIVIA',
+      subtitle: '2–6 Player Family TV Party',
+      texKey: 'hub-toy-starship-unicorn',
+      baseScale: 0.66,
+      emoji: '🦄',
+      badgeText: '2–6 PLAYER TV PARTY',
       accentColor: 0x38bdf8,
-      previewSfx: 'pop'
+      previewSfx: 'fanfare',
+      unlocked: true,
+      targetScene: 'StarshipUnicornScene',
+      announceAudio: '/assets/audio/starship/voice/welcome_title.mp3'
+    },
+    {
+      id: 'animal-match-safari',
+      title: 'ANIMAL MATCH SAFARI',
+      subtitle: 'Clockwork Memory Match',
+      texKey: 'arcade-toy-match',
+      baseScale: 0.34,
+      emoji: '🦁',
+      badgeText: 'PARLOR PUZZLE',
+      accentColor: 0xfbbf24,
+      previewSfx: 'chime',
+      unlocked: true,
+      targetScene: 'MemoryMatchScene'
     }
   ]
 };
@@ -196,7 +179,8 @@ export class HubScene extends Phaser.Scene {
   private pageIndexByTab: Record<HubTabId, number> = {
     read: 0,
     play: 0,
-    create: 0
+    create: 0,
+    tv: 0
   };
   private slideDirection: number = 0;
 
@@ -611,23 +595,30 @@ export class HubScene extends Phaser.Scene {
       {
         id: 'read',
         texKey: 'mode-read',
-        label: 'READ & EXPLORE',
-        x: 255,
-        baseScale: 0.305
+        label: 'READ STORIES',
+        x: 235,
+        baseScale: 0.295
       },
       {
         id: 'play',
         texKey: 'mode-arcade',
         label: 'PLAY ARCADE',
-        x: 640,
-        baseScale: 0.295
+        x: 505,
+        baseScale: 0.285
       },
       {
         id: 'create',
         texKey: 'mode-create',
         label: 'CREATE',
-        x: 1025,
-        baseScale: 0.31
+        x: 775,
+        baseScale: 0.295
+      },
+      {
+        id: 'tv',
+        texKey: 'mode-tv',
+        label: 'TV GAMES',
+        x: 1045,
+        baseScale: 0.295
       }
     ];
 
@@ -1037,38 +1028,49 @@ export class HubScene extends Phaser.Scene {
     const createSpecs: Array<{
       id: string;
       texKey: string;
-      x: number;
+      baseScale?: number;
       title: string;
       subtitle: string;
       unlocked: boolean;
       targetScene?: string;
+      announceAudio?: string;
     }> = [
       {
         id: 'create-art-studio',
         texKey: 'create-art-studio',
-        x: 420,
-        title: 'Heirloom Art Studio',
+        baseScale: 0.6,
+        title: 'Royal Art Studio',
         subtitle: 'Paint, Color & Stickers',
         unlocked: true,
         targetScene: 'ArtStudioScene'
       },
       {
+        id: 'create-music-box',
+        texKey: 'create-music-box',
+        baseScale: 0.6,
+        title: 'Royal Melody Maker',
+        subtitle: 'Play, Listen & Jam',
+        unlocked: true,
+        targetScene: 'MelodyMakerScene'
+      },
+      {
         id: 'create-tinker-box',
         texKey: 'create-tinker-box',
-        x: 640,
-        title: 'Heirloom Tinker Workshop',
+        baseScale: 0.6,
+        title: 'Tinker Workshop',
         subtitle: 'Build, Gears & Marbles',
         unlocked: true,
         targetScene: 'TinkerWorkshopScene'
       },
       {
-        id: 'create-music-box',
-        texKey: 'create-music-box',
-        x: 860,
-        title: 'Heirloom Melody Maker',
-        subtitle: 'Play, Listen & Jam',
+        id: 'clockwork-train-table',
+        texKey: 'hub-toy-train',
+        baseScale: 0.72,
+        title: 'Clockwork Train Table',
+        subtitle: 'Wooden Railway Builder',
         unlocked: true,
-        targetScene: 'MelodyMakerScene'
+        targetScene: 'TrainTableScene',
+        announceAudio: '/assets/audio/train/prompts/welcome_title.mp3'
       }
     ];
 
@@ -1081,13 +1083,23 @@ export class HubScene extends Phaser.Scene {
       currentPage * itemsPerPage + itemsPerPage
     );
 
-    pageSpecs.forEach((spec) => {
+    const xs =
+      pageSpecs.length === 1
+        ? [640]
+        : pageSpecs.length === 2
+        ? [515, 765]
+        : [420, 640, 860];
+
+    pageSpecs.forEach((spec, idx) => {
+      const specX = xs[idx] ?? 640;
+      const itemScale = spec.baseScale ?? baseItemScale;
+
       // Soft dark-wood drop shadow ellipse underneath the base of each Create object
       const shadow = this.add.graphics();
       shadow.fillStyle(0x0c0502, spec.unlocked ? 0.54 : 0.38);
-      shadow.fillEllipse(spec.x, shelfY - 4, 188, 24);
+      shadow.fillEllipse(specX, shelfY - 4, 188, 24);
       shadow.fillStyle(0x050201, spec.unlocked ? 0.36 : 0.24);
-      shadow.fillEllipse(spec.x, shelfY - 2, 140, 14);
+      shadow.fillEllipse(specX, shelfY - 2, 140, 14);
       this.lowerShelfContentContainer.add(shadow);
 
       // Standing Create Object Sprite (`origin: (0.5, 1.0)` at `y: 636`)
@@ -1095,9 +1107,9 @@ export class HubScene extends Phaser.Scene {
         this.textures.get(spec.texKey).setFilter(Phaser.Textures.FilterMode.NEAREST);
       }
       const itemSprite = this.add
-        .image(spec.x, shelfY, spec.texKey)
+        .image(specX, shelfY, spec.texKey)
         .setOrigin(0.5, 1.0)
-        .setScale(baseItemScale);
+        .setScale(itemScale);
 
       if (!spec.unlocked) {
         itemSprite.setTint(0x6e6a75);
@@ -1116,7 +1128,7 @@ export class HubScene extends Phaser.Scene {
         ];
         shimmerAnchors.forEach((pt, sIdx) => {
           const glint = this.add
-            .image(spec.x + pt.dx, shelfY + pt.dy, 'particle-star')
+            .image(specX + pt.dx, shelfY + pt.dy, 'particle-star')
             .setTint(sIdx % 2 === 0 ? 0xfef08a : 0xfbbf24)
             .setBlendMode(Phaser.BlendModes.ADD)
             .setScale(0.18)
@@ -1141,7 +1153,7 @@ export class HubScene extends Phaser.Scene {
       // Ornate Brass/Parchment Nameplate on the front wooden shelf lip (`y: 668`)
       const plateW = 204;
       const plateH = 40;
-      const nameplate = this.add.container(spec.x, plaqueY);
+      const nameplate = this.add.container(specX, plaqueY);
       const plateG = this.add.graphics();
 
       plateG.fillStyle(0x090401, 0.58);
@@ -1190,7 +1202,7 @@ export class HubScene extends Phaser.Scene {
       this.lowerShelfContentContainer.add(nameplate);
 
       const hitZone = this.add
-        .zone(spec.x, shelfY - 125, 204, 355)
+        .zone(specX, shelfY - 125, 204, 355)
         .setOrigin(0.5, 0.5)
         .setInteractive({ useHandCursor: true });
       this.lowerShelfContentContainer.add(hitZone);
@@ -1202,8 +1214,8 @@ export class HubScene extends Phaser.Scene {
           this.tweens.add({
             targets: itemSprite,
             y: shelfY - 8,
-            scaleX: baseItemScale * 1.04,
-            scaleY: baseItemScale * 1.04,
+            scaleX: itemScale * 1.04,
+            scaleY: itemScale * 1.04,
             duration: 180,
             ease: 'Quad.easeOut'
           });
@@ -1222,8 +1234,8 @@ export class HubScene extends Phaser.Scene {
           this.tweens.add({
             targets: itemSprite,
             y: shelfY,
-            scaleX: baseItemScale,
-            scaleY: baseItemScale,
+            scaleX: itemScale,
+            scaleY: itemScale,
             angle: 0,
             duration: 180,
             ease: 'Quad.easeOut'
@@ -1247,16 +1259,19 @@ export class HubScene extends Phaser.Scene {
             } else {
               AudioBus.playLayerSfx('/assets/hub/audio/sfx-book-select.mp3', 0.9);
             }
+            if (spec.announceAudio) {
+              AudioBus.playLayerSfx(spec.announceAudio, 0.8);
+            }
           }
 
-          Juice.burstStars(this, spec.x, shelfY - 155, 24, [0xfef08a, 0xfbbf24, 0xf59e0b, 0xffffff]);
+          Juice.burstStars(this, specX, shelfY - 155, 24, [0xfef08a, 0xfbbf24, 0xf59e0b, 0xffffff]);
 
           this.tweens.killTweensOf([itemSprite, nameplate]);
           this.tweens.add({
             targets: itemSprite,
             y: shelfY - 28,
-            scaleX: baseItemScale * 1.15,
-            scaleY: baseItemScale * 1.15,
+            scaleX: itemScale * 1.15,
+            scaleY: itemScale * 1.15,
             angle: -3.5,
             duration: 550,
             ease: 'Back.easeOut',
@@ -1281,14 +1296,14 @@ export class HubScene extends Phaser.Scene {
 
           this.tweens.add({
             targets: [itemSprite, nameplate],
-            x: { from: spec.x - 4, to: spec.x + 4 },
+            x: { from: specX - 4, to: specX + 4 },
             duration: 60,
             yoyo: true,
             repeat: 1,
             ease: 'Sine.easeInOut',
             onComplete: () => {
-              itemSprite.x = spec.x;
-              nameplate.x = spec.x;
+              itemSprite.x = specX;
+              nameplate.x = specX;
               isWiggling = false;
             }
           });
@@ -1726,7 +1741,7 @@ export class HubScene extends Phaser.Scene {
    * `arcade-toy-bounce`, `arcade-toy-kart`) or upcoming preview showcase plaques (Page 2),
    * supporting multi-page carousels (3 items per page).
    */
-  private renderShelfActivityCards(tab: 'play' | 'create'): void {
+  private renderShelfActivityCards(tab: 'play' | 'create' | 'tv'): void {
     const allCards = SHELF_ACTIVITY_CARDS[tab];
     const itemsPerPage = 3;
     const totalPages = Math.max(1, Math.ceil(allCards.length / itemsPerPage));
@@ -1777,7 +1792,7 @@ export class HubScene extends Phaser.Scene {
         this.textures
           .get(card.texKey)
           .setFilter(
-            card.texKey === 'hub-toy-ispy'
+            card.texKey === 'hub-toy-ispy' || card.texKey === 'hub-toy-starship-unicorn'
               ? Phaser.Textures.FilterMode.LINEAR
               : Phaser.Textures.FilterMode.NEAREST
           );
@@ -1857,7 +1872,7 @@ export class HubScene extends Phaser.Scene {
         const titleTxt = this.add
           .text(0, -7, card.title, {
             fontFamily: '"Fredoka", Georgia, serif',
-            fontSize: '12.5px',
+            fontSize: card.title.length > 26 ? '10.6px' : card.title.length > 22 ? '11.5px' : '12.5px',
             fontStyle: 'bold',
             color: '#451a03'
           })

@@ -1,0 +1,4702 @@
+{
+  "version": "2.0.0",
+  "generatedAt": "2026-11-07T02:59:19.732Z",
+  "counts": {
+    "total": 335,
+    "adult": 225,
+    "wyatt4yo": 55,
+    "emma3yo": 55
+  },
+  "questions": [
+    {
+      "id": "adult_001",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What did SpaceX launch into solar orbit aboard the maiden Falcon Heavy test flight in 2018?",
+      "options": [
+        "Elon's Midnight Cherry Tesla Roadster",
+        "A solid gold wheel of cheese",
+        "A life-size statue of Buzz Aldrin",
+        "A shipping container of Tang"
+      ],
+      "correctIndex": 0,
+      "funFact": "Starman sat in the driver seat with \"DON'T PANIC!\" on the dashboard screen!"
+    },
+    {
+      "id": "adult_002",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What are the giant mechanical arms on SpaceX's Starbase launch tower nicknamed?",
+      "options": [
+        "Cyber Tongs",
+        "Mechazilla (The Chopsticks)",
+        "Star Catcher 9000",
+        "The Kraken Claws"
+      ],
+      "correctIndex": 1,
+      "funFact": "Mechazilla catches the 232-foot Super Heavy booster right out of mid-air!"
+    },
+    {
+      "id": "adult_003",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which planet in our solar system has a hexagonal storm at its north pole wider than two Earths?",
+      "options": [
+        "Uranus",
+        "Jupiter",
+        "Saturn",
+        "Neptune"
+      ],
+      "correctIndex": 2,
+      "funFact": "Saturn's north polar hexagon has been raging for decades with 200-mph jet streams."
+    },
+    {
+      "id": "adult_004",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What primary rocket propellant combination powers SpaceX's Raptor engines on Starship?",
+      "options": [
+        "Kerosene & Liquid Oxygen (RP-1)",
+        "Liquid Hydrogen & Liquid Oxygen",
+        "Solid Rocket Hydrazine",
+        "Liquid Methane & Liquid Oxygen (Methalox)"
+      ],
+      "correctIndex": 3,
+      "funFact": "Methalox burns super clean and can be manufactured on Mars from CO2 and ice!"
+    },
+    {
+      "id": "adult_005",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "How long does it take a photon of light from the Sun to reach Earth?",
+      "options": [
+        "About 8 minutes and 20 seconds",
+        "About 24 minutes",
+        "Instantaneously",
+        "About 42 seconds"
+      ],
+      "correctIndex": 0,
+      "funFact": "Light travels at 186,282 miles per second across the 93-million-mile gap."
+    },
+    {
+      "id": "adult_006",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which Apollo mission became famous for the phrase \"Houston, we've had a problem\" before safely splashing down?",
+      "options": [
+        "Apollo 17",
+        "Apollo 13",
+        "Apollo 11",
+        "Apollo 8"
+      ],
+      "correctIndex": 1,
+      "funFact": "Engineers used duct tape, cardboard, and plastic bags to rig CO2 scrubbers!"
+    },
+    {
+      "id": "adult_007",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What is the name of the tallest known volcano and mountain in our solar system, located on Mars?",
+      "options": [
+        "Mauna Kea",
+        "Maxwell Montes",
+        "Olympus Mons",
+        "Valles Marineris"
+      ],
+      "correctIndex": 2,
+      "funFact": "Olympus Mons is roughly three times the height of Mount Everest!"
+    },
+    {
+      "id": "adult_008",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which SpaceX autonomous drone ship is named after a spaceship from Iain M. Banks' sci-fi novels?",
+      "options": [
+        "Heart of Gold",
+        "Millennium Falcon",
+        "To Infinity and Beyond",
+        "Of Course I Still Love You"
+      ],
+      "correctIndex": 3,
+      "funFact": "Its sister ship is named \"Just Read the Instructions\"!"
+    },
+    {
+      "id": "adult_009",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which moon of Jupiter is the most volcanically active world in the solar system?",
+      "options": [
+        "Io",
+        "Callisto",
+        "Europa",
+        "Ganymede"
+      ],
+      "correctIndex": 0,
+      "funFact": "Tidal flexing from Jupiter's massive gravity keeps Io's interior molten."
+    },
+    {
+      "id": "adult_010",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What did Astronaut Alan Shepard famously hit on the Moon during the Apollo 14 mission?",
+      "options": [
+        "A baseball with a titanium bat",
+        "Two golf balls with a makeshift 6-iron",
+        "A frisbee into a crater",
+        "A hockey puck"
+      ],
+      "correctIndex": 1,
+      "funFact": "He attached a 6-iron head to a collapsible lunar rock-sampling handle!"
+    },
+    {
+      "id": "adult_011",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What gives Mars its signature rusty red color?",
+      "options": [
+        "Copper-rich ancient seabeds",
+        "Crimson frozen methane snow",
+        "Iron oxide (rust) dust on the surface",
+        "Red volcanic sulfur geysers"
+      ],
+      "correctIndex": 2,
+      "funFact": "Mars is literally covered in fine talcum-like iron rust dust."
+    },
+    {
+      "id": "adult_012",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which spacecraft launched in 1977 is currently the farthest human-made object from Earth in interstellar space?",
+      "options": [
+        "Cassini",
+        "Pioneer 10",
+        "New Horizons",
+        "Voyager 1"
+      ],
+      "correctIndex": 3,
+      "funFact": "Voyager 1 carries the Golden Record with greetings in 55 languages!"
+    },
+    {
+      "id": "adult_013",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "In the game Satisfactory, what is the name of the megacorporation that drops Pioneers onto Massage-2(A-B)b?",
+      "options": [
+        "FICSIT Inc.",
+        "Alterra Corp",
+        "Weyland-Yutani",
+        "Aperture Science"
+      ],
+      "correctIndex": 0,
+      "funFact": "Construct, Automate, Explore & Exploit — FICSIT does not waste!"
+    },
+    {
+      "id": "adult_014",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What is the boundary around a black hole beyond which not even light can escape?",
+      "options": [
+        "The Lagrange Point",
+        "The Event Horizon",
+        "The Kuiper Belt",
+        "The Roche Limit"
+      ],
+      "correctIndex": 1,
+      "funFact": "Right outside it lies the glowing accretion disk of superheated plasma."
+    },
+    {
+      "id": "adult_015",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which planet rotates on its side with an axial tilt of nearly 98 degrees?",
+      "options": [
+        "Neptune",
+        "Venus",
+        "Uranus",
+        "Mercury"
+      ],
+      "correctIndex": 2,
+      "funFact": "Astronomers believe an Earth-sized proto-planet slammed into Uranus billions of years ago."
+    },
+    {
+      "id": "adult_016",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What was the name of the first space shuttle orbiter to launch into space in April 1981?",
+      "options": [
+        "Discovery",
+        "Atlantis",
+        "Endeavour",
+        "Columbia"
+      ],
+      "correctIndex": 3,
+      "funFact": "Enterprise was built first, but only used for atmospheric glide tests!"
+    },
+    {
+      "id": "adult_017",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "At roughly what altitude above sea level is the Kármán line, the internationally recognized edge of space?",
+      "options": [
+        "100 kilometers (62 miles)",
+        "400 kilometers (250 miles)",
+        "1,000 kilometers (620 miles)",
+        "10 kilometers (6.2 miles)"
+      ],
+      "correctIndex": 0,
+      "funFact": "The International Space Station orbits about four times higher at ~400 km."
+    },
+    {
+      "id": "adult_018",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which galaxy is on a collision course to merge with our Milky Way in about 4.5 billion years?",
+      "options": [
+        "The Whirlpool Galaxy",
+        "The Andromeda Galaxy",
+        "The Triangulum Galaxy",
+        "The Sombrero Galaxy"
+      ],
+      "correctIndex": 1,
+      "funFact": "Scientists call the future combined elliptical galaxy \"Milkomeda\"!"
+    },
+    {
+      "id": "adult_019",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What did NASA's Ingenuity mission achieve on Mars in April 2021?",
+      "options": [
+        "First drill core from 100 feet deep",
+        "First return of Martian soil to Earth",
+        "First powered, controlled aircraft flight on another planet",
+        "First laser communication with Jupiter"
+      ],
+      "correctIndex": 2,
+      "funFact": "The 4-pound mini-helicopter completed 72 flights instead of its planned 5!"
+    },
+    {
+      "id": "adult_020",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which element makes up roughly 73% of the visible mass of the Sun?",
+      "options": [
+        "Oxygen",
+        "Carbon",
+        "Helium",
+        "Hydrogen"
+      ],
+      "correctIndex": 3,
+      "funFact": "The Sun fuses about 600 million tons of hydrogen into helium every second!"
+    },
+    {
+      "id": "adult_021",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Why do astronauts in the International Space Station float in microgravity?",
+      "options": [
+        "They are in continuous free-fall around the Earth",
+        "The station spins to cancel gravity",
+        "There is zero gravity at 250 miles altitude",
+        "Magnetic floors repel their boots"
+      ],
+      "correctIndex": 0,
+      "funFact": "Gravity at the ISS altitude is actually still 90% as strong as on Earth!"
+    },
+    {
+      "id": "adult_022",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What is the name of Saturn's largest moon, the only moon in the solar system with a thick nitrogen atmosphere and liquid hydrocarbon lakes?",
+      "options": [
+        "Enceladus",
+        "Titan",
+        "Mimas",
+        "Triton"
+      ],
+      "correctIndex": 1,
+      "funFact": "With low gravity and thick air, a human wearing wings could fly on Titan by flapping!"
+    },
+    {
+      "id": "adult_023",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Where is SpaceX's Starbase launch complex located?",
+      "options": [
+        "Vandenberg, California",
+        "White Sands, New Mexico",
+        "Boca Chica, Texas",
+        "Cape Canaveral, Florida"
+      ],
+      "correctIndex": 2,
+      "funFact": "Right on the Gulf Coast at the southern tip of Texas!"
+    },
+    {
+      "id": "adult_024",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What color is a sunset on the surface of Mars as photographed by NASA rovers?",
+      "options": [
+        "Bright Orange",
+        "Neon Green",
+        "Deep Purple",
+        "Cool Bluish-White"
+      ],
+      "correctIndex": 3,
+      "funFact": "Fine Martian dust scatters blue light forward toward the observer at dusk!"
+    },
+    {
+      "id": "adult_025",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "How many astronauts walked on the Moon during the Apollo program between 1969 and 1972?",
+      "options": [
+        "12",
+        "6",
+        "18",
+        "24"
+      ],
+      "correctIndex": 0,
+      "funFact": "Two astronauts walked on the Moon on each of Apollo 11, 12, 14, 15, 16, and 17."
+    },
+    {
+      "id": "adult_026",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What type of star is a pulsar?",
+      "options": [
+        "A binary brown dwarf",
+        "A rapidly spinning neutron star",
+        "A baby protostar",
+        "A collapsing red supergiant"
+      ],
+      "correctIndex": 1,
+      "funFact": "Some millisecond pulsars spin hundreds of times per second like cosmic lighthouses!"
+    },
+    {
+      "id": "adult_027",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "Which spacecraft delivered the Curiosity and Perseverance rovers to the Martian surface?",
+      "options": [
+        "A collapsible titanium ramp",
+        "Giant inflatable airbags",
+        "A rocket-powered Sky Crane",
+        "A supersonic parachute splashdown"
+      ],
+      "correctIndex": 2,
+      "funFact": "Airbags worked for Spirit and Opportunity, but Curiosity and Perseverance were too heavy!"
+    },
+    {
+      "id": "adult_028",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What is the hottest planet in our solar system, with surface temperatures around 880°F (470°C)?",
+      "options": [
+        "Mercury",
+        "Mars",
+        "Jupiter",
+        "Venus"
+      ],
+      "correctIndex": 3,
+      "funFact": "Venus's dense carbon dioxide atmosphere creates a runaway greenhouse effect hotter than Mercury!"
+    },
+    {
+      "id": "adult_029",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "What are the five orbital spots where the gravitational pull of two large bodies balances the centripetal force of a smaller object?",
+      "options": [
+        "Lagrange Points",
+        "Oort Clouds",
+        "Kepler Zones",
+        "Van Allen Belts"
+      ],
+      "correctIndex": 0,
+      "funFact": "The James Webb Space Telescope orbits at the Sun-Earth L2 Lagrange Point!"
+    },
+    {
+      "id": "adult_030",
+      "tier": "ADULT",
+      "category": "Space & Aerospace",
+      "prompt": "How fast must a rocket travel to break free of Earth's orbit completely (Earth's escape velocity)?",
+      "options": [
+        "About 100,000 mph",
+        "About 25,000 mph (11.2 km/s)",
+        "About 7,500 mph",
+        "About 17,500 mph"
+      ],
+      "correctIndex": 1,
+      "funFact": "17,500 mph keeps you in Low Earth Orbit; 25,000 mph sends you to the Moon and beyond!"
+    },
+    {
+      "id": "adult_031",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Back to the Future (1985), how much electrical power is required to trigger the DeLorean's flux capacitor at 88 mph?",
+      "options": [
+        "88 Megawatts",
+        "4.20 Terawatts",
+        "1.21 Gigawatts",
+        "500 Kilowatts"
+      ],
+      "correctIndex": 2,
+      "funFact": "Doc Brown pronounces it \"one point twenty-one jiggawatts!\""
+    },
+    {
+      "id": "adult_032",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Jurassic Park (1993), what is preserved inside the piece of golden amber on top of John Hammond's cane?",
+      "options": [
+        "A fern leaf",
+        "A trilobite fossil",
+        "A velociraptor claw",
+        "A prehistoric mosquito"
+      ],
+      "correctIndex": 3,
+      "funFact": "Dino DNA!"
+    },
+    {
+      "id": "adult_033",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "What fictional paper company is the workplace setting for the US television series The Office?",
+      "options": [
+        "Dunder Mifflin",
+        "Prestige Worldwide",
+        "Vandelay Industries",
+        "Initech"
+      ],
+      "correctIndex": 0,
+      "funFact": "Located at 1725 Slough Avenue in Scranton, Pennsylvania!"
+    },
+    {
+      "id": "adult_034",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In The Matrix (1999), which color pill does Neo swallow to wake up in the real world?",
+      "options": [
+        "The Blue Pill",
+        "The Red Pill",
+        "The Purple Pill",
+        "The Gold Pill"
+      ],
+      "correctIndex": 1,
+      "funFact": "Morpheus offers the blue pill to forget and the red pill to see how deep the rabbit hole goes."
+    },
+    {
+      "id": "adult_035",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "What was the name of the family dog in the 1993 baseball classic The Sandlot, feared by the kids as \"The Beast\"?",
+      "options": [
+        "Brutus",
+        "Cujo",
+        "Hercules",
+        "Goliath"
+      ],
+      "correctIndex": 2,
+      "funFact": "Hercules was actually a gentle giant English Mastiff owned by Mr. Mertle!"
+    },
+    {
+      "id": "adult_036",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Toy Story (1995), what is the name of the arcade-restaurant with the rocket ship claw machine?",
+      "options": [
+        "Astro Pizza",
+        "Starlight Burger",
+        "Galaxy Arcade",
+        "Pizza Planet"
+      ],
+      "correctIndex": 3,
+      "funFact": "A Pizza Planet delivery truck is hidden as an Easter egg in almost every Pixar movie!"
+    },
+    {
+      "id": "adult_037",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Home Alone (1990), what nickname do burglars Harry and Marv give themselves?",
+      "options": [
+        "The Wet Bandits",
+        "The Sticky Fingers",
+        "The Chicago Creepers",
+        "The Basement Boys"
+      ],
+      "correctIndex": 0,
+      "funFact": "In Home Alone 2 they rename themselves the Sticky Bandits!"
+    },
+    {
+      "id": "adult_038",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "Which 1986 movie features Tom Cruise as naval aviator Pete Mitchell with the callsign \"Maverick\"?",
+      "options": [
+        "Iron Eagle",
+        "Top Gun",
+        "The Right Stuff",
+        "Days of Thunder"
+      ],
+      "correctIndex": 1,
+      "funFact": "Alongside his RIO Nick \"Goose\" Bradshaw!"
+    },
+    {
+      "id": "adult_039",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Ghostbusters (1984), what giant corporate mascot rampages through New York City?",
+      "options": [
+        "Mr. Peanut",
+        "The Pillsbury Doughboy",
+        "The Stay Puft Marshmallow Man",
+        "The Michelin Man"
+      ],
+      "correctIndex": 2,
+      "funFact": "Ray Stantz tried to think of the most harmless thing from his childhood campfires!"
+    },
+    {
+      "id": "adult_040",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In The Princess Bride (1987), what three-word phrase does Westley always say that actually means \"I love you\"?",
+      "options": [
+        "\"Inconceivable!\"",
+        "\"Have fun storming!\"",
+        "\"To the pain\"",
+        "\"As you wish\""
+      ],
+      "correctIndex": 3,
+      "funFact": "Buttercup realizes it when he tumbles down the steep hill!"
+    },
+    {
+      "id": "adult_041",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Seinfeld, what fake job does George Costanza frequently claim to have?",
+      "options": [
+        "Architect (Art Vandelay)",
+        "Airline Pilot",
+        "Wall Street Broker",
+        "Brain Surgeon"
+      ],
+      "correctIndex": 0,
+      "funFact": "Or sometimes a Marine Biologist!"
+    },
+    {
+      "id": "adult_042",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "What is the name of the island where the survivors crash-land in the 2004 TV series Lost... wait—what airline flight were they on?",
+      "options": [
+        " Dharma Express 108",
+        "Oceanic Flight 815",
+        "Pan Am Flight 103",
+        "Ajira Flight 316"
+      ],
+      "correctIndex": 1,
+      "funFact": "Bound from Sydney, Australia to Los Angeles!"
+    },
+    {
+      "id": "adult_043",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Shrek (2001), what vegetable does Shrek compare ogres to because they both have layers?",
+      "options": [
+        "Cabbages",
+        "Artichokes",
+        "Onions",
+        "Potatoes"
+      ],
+      "correctIndex": 2,
+      "funFact": "Donkey suggests parfaits because everybody loves parfaits!"
+    },
+    {
+      "id": "adult_044",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Apollo 13 (1995), who played NASA Flight Director Gene Kranz wearing his famous white vest?",
+      "options": [
+        "Kevin Bacon",
+        "Gary Sinise",
+        "Tom Hanks",
+        "Ed Harris"
+      ],
+      "correctIndex": 3,
+      "funFact": "\"Failure is not an option!\""
+    },
+    {
+      "id": "adult_045",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "What is the name of the fictional town in Indiana where Stranger Things takes place?",
+      "options": [
+        "Hawkins",
+        "Shermer",
+        "Pawnee",
+        "Eerie"
+      ],
+      "correctIndex": 0,
+      "funFact": "While Parks and Recreation is set in Pawnee, Indiana!"
+    },
+    {
+      "id": "adult_046",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Raiders of the Lost Ark (1981), what kind of animal is Indiana Jones terrified of?",
+      "options": [
+        "Spiders",
+        "Snakes",
+        "Rats",
+        "Bats"
+      ],
+      "correctIndex": 1,
+      "funFact": "\"Snakes. Why'd it have to be snakes?\""
+    },
+    {
+      "id": "adult_047",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Finding Nemo (2003), what street address in Sydney is written on the diver's goggles that Dory memorizes?",
+      "options": [
+        "88 Harbour Bridge Road, Sydney",
+        "10 Boomerang Bay, Sydney",
+        "P. Sherman, 42 Wallaby Way, Sydney",
+        "123 Coral Reef Lane, Sydney"
+      ],
+      "correctIndex": 2,
+      "funFact": "P. Sherman was an inside joke by Pixar animators!"
+    },
+    {
+      "id": "adult_048",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In The Lion King (1994), what does \"Hakuna Matata\" mean in Swahili?",
+      "options": [
+        "Best friends forever",
+        "Long live the King",
+        "Circle of life",
+        "No worries"
+      ],
+      "correctIndex": 3,
+      "funFact": "A problem-free philosophy!"
+    },
+    {
+      "id": "adult_049",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Ferris Bueller's Day Off (1986), what rare classic sports car do Ferris, Cameron, and Sloane \"borrow\" from Cameron's dad?",
+      "options": [
+        "1961 Ferrari 250 GT California Spyder",
+        "1965 Shelby Cobra 427",
+        "1963 Corvette Stingray",
+        "1964 Aston Martin DB5"
+      ],
+      "correctIndex": 0,
+      "funFact": "It is So Choice. If you have the means, I highly recommend picking one up."
+    },
+    {
+      "id": "adult_050",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Friends, what is the name of the New York coffee shop where the gang hangs out on the orange velvet couch?",
+      "options": [
+        "Café Nervosa",
+        "Central Perk",
+        "MacLaren's Pub",
+        "Monk's Café"
+      ],
+      "correctIndex": 1,
+      "funFact": "Served by Gunther!"
+    },
+    {
+      "id": "adult_051",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Elf (2003), what are the four main food groups according to Buddy the Elf?",
+      "options": [
+        "Ice cream, sprinkles, hot cocoa, and pie",
+        "Cookies, milk, gingerbread, and fudge",
+        "Candy, candy canes, candy corn, and syrup",
+        "Waffles, pancakes, marshmallows, and chocolate"
+      ],
+      "correctIndex": 2,
+      "funFact": "He even puts maple syrup on spaghetti!"
+    },
+    {
+      "id": "adult_052",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Star Wars: The Empire Strikes Back, what icy planet is home to the Rebel Alliance's Echo Base?",
+      "options": [
+        "Endor",
+        "Tatooine",
+        "Dagobah",
+        "Hoth"
+      ],
+      "correctIndex": 3,
+      "funFact": "Filmed on the Hardangerjøkulen glacier in Finse, Norway!"
+    },
+    {
+      "id": "adult_053",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In The Goonies (1985), whose legendary pirate treasure are the kids searching for to save their homes?",
+      "options": [
+        "One-Eyed Willy",
+        "Captain Hook",
+        "Long John Silver",
+        "Blackbeard"
+      ],
+      "correctIndex": 0,
+      "funFact": "Aboard his hidden ship, the Inferno!"
+    },
+    {
+      "id": "adult_054",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Monsters, Inc. (2001), what do the monsters discover is ten times more powerful than children's screams?",
+      "options": [
+        "Bedtime lullabies",
+        "Children's laughter",
+        "Chocolate chip cookies",
+        "Static electricity"
+      ],
+      "correctIndex": 1,
+      "funFact": "Mike Wazowski's comedy routine fills the energy canisters to the brim!"
+    },
+    {
+      "id": "adult_055",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In A League of Their Own (1992), what famous line does manager Jimmy Dugan (Tom Hanks) yell in the dugout?",
+      "options": [
+        "\"Play ball, Rockford Peaches!\"",
+        "\"Swing for the fences!\"",
+        "\"There's no crying in baseball!\"",
+        "\"Keep your eye on the seams!\""
+      ],
+      "correctIndex": 2,
+      "funFact": "Inspired by the real All-American Girls Professional Baseball League."
+    },
+    {
+      "id": "adult_056",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Men in Black (1997), what do the agents call the flashy silver pen-shaped device that erases memories?",
+      "options": [
+        "The Flash-O-Matic",
+        "The De-Braininator",
+        "The Mind-Wiper",
+        "The Neuralyzer"
+      ],
+      "correctIndex": 3,
+      "funFact": "Just put on your Ray-Ban sunglasses first!"
+    },
+    {
+      "id": "adult_057",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Groundhog Day (1993), what song plays on Bill Murray's alarm clock radio every single morning at 6:00 AM?",
+      "options": [
+        "\"I Got You Babe\" by Sonny & Cher",
+        "\"Mr. Blue Sky\"",
+        "\"Wake Me Up Before You Go-Go\"",
+        "\"Good Vibrations\""
+      ],
+      "correctIndex": 0,
+      "funFact": "Okay, campers, rise and shine, and don't forget your booties 'cause it's cooooold out there!"
+    },
+    {
+      "id": "adult_058",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In The Incredibles (2004), what does superhero fashion designer Edna Mode strictly refuse to put on any supersuit?",
+      "options": [
+        "Spandex",
+        "Capes (\"No capes!\")",
+        "Masks",
+        "Utility belts"
+      ],
+      "correctIndex": 1,
+      "funFact": "They get snagged on missiles and jet turbines!"
+    },
+    {
+      "id": "adult_059",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In Interstellar (2014), what is the name of the gargantuan spinning black hole orbited by Miller's water planet?",
+      "options": [
+        "Pantagruel",
+        "Cygnus X-1",
+        "Gargantua",
+        "Leviathan"
+      ],
+      "correctIndex": 2,
+      "funFact": "Physicist Kip Thorne's real relativistic equations were used to render Gargantua!"
+    },
+    {
+      "id": "adult_060",
+      "tier": "ADULT",
+      "category": "Movies & TV",
+      "prompt": "In The Martian (2015), what crop does astronaut Mark Watney grow inside the Mars Hab to survive?",
+      "options": [
+        "Soybeans",
+        "Tomatoes",
+        "Corn",
+        "Potatoes"
+      ],
+      "correctIndex": 3,
+      "funFact": "He has to \"science the heck out of this\"!"
+    },
+    {
+      "id": "adult_061",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which 1982 Michael Jackson album remains the best-selling album of all time worldwide?",
+      "options": [
+        "Thriller",
+        "Bad",
+        "Off the Wall",
+        "Dangerous"
+      ],
+      "correctIndex": 0,
+      "funFact": "Produced by Quincy Jones, it spawned 7 Top-10 singles!"
+    },
+    {
+      "id": "adult_062",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "What was the very first music video ever broadcast on MTV when the channel launched on August 1, 1981?",
+      "options": [
+        "\"Money for Nothing\" by Dire Straits",
+        "\"Video Killed the Radio Star\" by The Buggles",
+        "\"Billie Jean\" by Michael Jackson",
+        "\"Take On Me\" by a-ha"
+      ],
+      "correctIndex": 1,
+      "funFact": "Followed immediately by Pat Benatar's \"You Better Run\"!"
+    },
+    {
+      "id": "adult_063",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which British rock band fronted by Freddie Mercury performed a legendary 21-minute set at Live Aid in 1985?",
+      "options": [
+        "The Who",
+        "Led Zeppelin",
+        "Queen",
+        "The Rolling Stones"
+      ],
+      "correctIndex": 2,
+      "funFact": "Over 72,000 fans at Wembley Stadium clapped in unison to \"Radio Ga Ga\"."
+    },
+    {
+      "id": "adult_064",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "What street in London is featured on the iconic zebra-crossing cover of The Beatles' 1969 album?",
+      "options": [
+        "Penny Lane",
+        "Baker Street",
+        "Carnaby Street",
+        "Abbey Road"
+      ],
+      "correctIndex": 3,
+      "funFact": "Right outside EMI's Abbey Road Studios!"
+    },
+    {
+      "id": "adult_065",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which instrument is Yo-Yo Ma world-famous for playing?",
+      "options": [
+        "The Cello",
+        "The Grand Piano",
+        "The Clarinet",
+        "The Violin"
+      ],
+      "correctIndex": 0,
+      "funFact": "He has won 19 Grammy Awards performing classical and crossover cello works."
+    },
+    {
+      "id": "adult_066",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which French electronic duo wore gleaming robot helmets and released \"Around the World\" and \"Get Lucky\"?",
+      "options": [
+        "Disclosure",
+        "Daft Punk",
+        "Justice",
+        "Air"
+      ],
+      "correctIndex": 1,
+      "funFact": "Thomas Bangalter and Guy-Manuel de Homem-Christo!"
+    },
+    {
+      "id": "adult_067",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "What city is universally celebrated as the birthplace of Jazz?",
+      "options": [
+        "Chicago, Illinois",
+        "Memphis, Tennessee",
+        "New Orleans, Louisiana",
+        "Nashville, Tennessee"
+      ],
+      "correctIndex": 2,
+      "funFact": "And Detroit is home to Motown!"
+    },
+    {
+      "id": "adult_068",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "In 1969, on whose dairy farm in Bethel, New York was the original Woodstock music festival held?",
+      "options": [
+        "Michael Lang",
+        "Levon Helm",
+        "Old MacDonald",
+        "Max Yasgur"
+      ],
+      "correctIndex": 3,
+      "funFact": "Over 400,000 people gathered for \"3 Days of Peace & Music\"."
+    },
+    {
+      "id": "adult_069",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which David Bowie alter-ego was an extraterrestrial rock star backed by the Spiders from Mars?",
+      "options": [
+        "Ziggy Stardust",
+        "The Thin White Duke",
+        "Major Tom",
+        "Aladdin Sane"
+      ],
+      "correctIndex": 0,
+      "funFact": "Bowie's \"Space Oddity\" was also played aboard the ISS by Commander Chris Hadfield!"
+    },
+    {
+      "id": "adult_070",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "What four-letter Swedish pop group won the 1974 Eurovision Song Contest with \"Waterloo\"?",
+      "options": [
+        "Roxette",
+        "ABBA",
+        "Ace of Base",
+        "Aha"
+      ],
+      "correctIndex": 1,
+      "funFact": "Agnetha, Björn, Benny, and Anni-Frid — their initials spell ABBA!"
+    },
+    {
+      "id": "adult_071",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which legendary guitarist set his Fender Stratocaster on fire at the 1967 Monterey Pop Festival?",
+      "options": [
+        "Jimmy Page",
+        "Eddie Van Halen",
+        "Jimi Hendrix",
+        "Eric Clapton"
+      ],
+      "correctIndex": 2,
+      "funFact": "He also played an unforgettable electric rendition of the Star-Spangled Banner at Woodstock."
+    },
+    {
+      "id": "adult_072",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "What is the real first and last name of pop superstar Lady Gaga?",
+      "options": [
+        "Alecia Moore",
+        "Robyn Fenty",
+        "Katheryn Hudson",
+        "Stefani Germanotta"
+      ],
+      "correctIndex": 3,
+      "funFact": "Her stage name was inspired by Queen's song \"Radio Ga Ga\"!"
+    },
+    {
+      "id": "adult_073",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which 1991 Nirvana song kicked off the 90s grunge revolution with the lyric \"Load up on guns, bring your friends\"?",
+      "options": [
+        "\"Smells Like Teen Spirit\"",
+        "\"Come As You Are\"",
+        "\"Lithium\"",
+        "\"In Bloom\""
+      ],
+      "correctIndex": 0,
+      "funFact": "The title came from a brand of deodorant called Teen Spirit!"
+    },
+    {
+      "id": "adult_074",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "How many keys are on a standard full-size modern acoustic grand piano?",
+      "options": [
+        "100 keys",
+        "88 keys (52 white, 36 black)",
+        "64 keys",
+        "76 keys"
+      ],
+      "correctIndex": 1,
+      "funFact": "Spanning 7¼ octaves from A0 to C8!"
+    },
+    {
+      "id": "adult_075",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which Elton John song was originally written about an astronaut isolated in deep space and inspired by Ray Bradbury's story?",
+      "options": [
+        "\"Bennie and the Jets\"",
+        "\"Starman\"",
+        "\"Rocket Man\"",
+        "\"Space Oddity\""
+      ],
+      "correctIndex": 2,
+      "funFact": "Co-written with lyricist Bernie Taupin in 1972!"
+    },
+    {
+      "id": "adult_076",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which country music legend wrote both \"Jolene\" and \"I Will Always Love You\" on the exact same day in 1973?",
+      "options": [
+        "Loretta Lynn",
+        "Shania Twain",
+        "Reba McEntire",
+        "Dolly Parton"
+      ],
+      "correctIndex": 3,
+      "funFact": "Whitney Houston's 1992 cover of \"I Will Always Love You\" became one of the biggest hits in history!"
+    },
+    {
+      "id": "adult_077",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "What is the name of Elvis Presley's famous Memphis, Tennessee mansion?",
+      "options": [
+        "Graceland",
+        "Dollywood",
+        "Sun Studio",
+        "Neverland"
+      ],
+      "correctIndex": 0,
+      "funFact": "It is the second most-visited private home in the US after the White House!"
+    },
+    {
+      "id": "adult_078",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which band released the 1973 concept album The Dark Side of the Moon, featuring a prism on the cover?",
+      "options": [
+        "Yes",
+        "Pink Floyd",
+        "Genesis",
+        "Rush"
+      ],
+      "correctIndex": 1,
+      "funFact": "It stayed on the Billboard 200 album chart for an astonishing 990+ weeks!"
+    },
+    {
+      "id": "adult_079",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "In Johnny Cash's famous live albums from the late 1960s, what kind of venues did he record in?",
+      "options": [
+        "NASA Mission Control Centers",
+        "Mississippi River Steamboats",
+        "California State Prisons (Folsom & San Quentin)",
+        "Route 66 Truck Stops"
+      ],
+      "correctIndex": 2,
+      "funFact": "Folsom Prison Blues!"
+    },
+    {
+      "id": "adult_080",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which 1985 charity single written by Michael Jackson and Lionel Richie raised over $60 million for African famine relief?",
+      "options": [
+        "\"Heal the World\"",
+        "\"Hands Across America\"",
+        "\"Do They Know It's Christmas?\"",
+        "\"We Are the World\""
+      ],
+      "correctIndex": 3,
+      "funFact": "Recorded in a single all-night session right after the American Music Awards!"
+    },
+    {
+      "id": "adult_081",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "What wood is traditionally used to carve the top soundboard of a Stradivarius violin?",
+      "options": [
+        "Spruce (with Maple back and sides)",
+        "Teak",
+        "Mahogany",
+        "Balsa wood"
+      ],
+      "correctIndex": 0,
+      "funFact": "Antonio Stradivari crafted around 1,100 instruments in Cremona, Italy."
+    },
+    {
+      "id": "adult_082",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which band's 1977 album Rumours produced hits like \"Go Your Own Way\", \"Dreams\", and \"The Chain\"?",
+      "options": [
+        "The Eagles",
+        "Fleetwood Mac",
+        "Creedence Clearwater Revival",
+        "Heart"
+      ],
+      "correctIndex": 1,
+      "funFact": "One of the greatest rock albums of the 1970s!"
+    },
+    {
+      "id": "adult_083",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "What did Beethoven famously continue to do even after losing his sense of hearing?",
+      "options": [
+        "Build pipe organs",
+        "Tune harpsichords by ear",
+        "Compose and conduct symphonies (including the 9th)",
+        "Sing opera solos in Vienna"
+      ],
+      "correctIndex": 2,
+      "funFact": "He sawed the legs off his piano to feel the vibrations through the wooden floor!"
+    },
+    {
+      "id": "adult_084",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which 1981 Journey anthem begins with the line \"Just a small town girl, livin' in a lonely world\"?",
+      "options": [
+        "\"Any Way You Want It\"",
+        "\"Wheel in the Sky\"",
+        "\"Separate Ways\"",
+        "\"Don't Stop Believin'\""
+      ],
+      "correctIndex": 3,
+      "funFact": "Wait—the lyric says \"South Detroit\", which geographically is actually Windsor, Canada!"
+    },
+    {
+      "id": "adult_085",
+      "tier": "ADULT",
+      "category": "Music & Pop History",
+      "prompt": "Which instrument does Lizzo famously play during her concerts?",
+      "options": [
+        "The Flute (named Sasha Flute)",
+        "The Saxophone",
+        "The Electric Harp",
+        "The Trombone"
+      ],
+      "correctIndex": 0,
+      "funFact": "She even played President James Madison's 200-year-old crystal flute at the Library of Congress!"
+    },
+    {
+      "id": "adult_086",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which US state has more miles of freshwater coastline than any other state, bordering four of the five Great Lakes?",
+      "options": [
+        "Wisconsin",
+        "Michigan",
+        "New York",
+        "Minnesota"
+      ],
+      "correctIndex": 1,
+      "funFact": "Over 3,288 miles of Great Lakes shoreline — where Nana & Papa live!"
+    },
+    {
+      "id": "adult_087",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What famous red sandstone rock formation in Colorado Springs is home to the \"Kissing Camels\"?",
+      "options": [
+        "Arches National Park",
+        "Red Rocks Amphitheatre",
+        "Garden of the Gods",
+        "Monument Valley"
+      ],
+      "correctIndex": 2,
+      "funFact": "Right near Pikes Peak in Colorado — featured in Book 2!"
+    },
+    {
+      "id": "adult_088",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which suspension bridge in Colorado hangs nearly 1,000 feet above the Arkansas River?",
+      "options": [
+        "The Golden Gate Bridge",
+        "The Mackinac Bridge",
+        "The Brooklyn Bridge",
+        "The Royal Gorge Bridge"
+      ],
+      "correctIndex": 3,
+      "funFact": "It held the record as the highest bridge in the world from 1929 until 2001!"
+    },
+    {
+      "id": "adult_089",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which country has the most natural lakes in the world (over 60% of all the lakes on Earth)?",
+      "options": [
+        "Canada",
+        "Russia",
+        "Brazil",
+        "Finland"
+      ],
+      "correctIndex": 0,
+      "funFact": "Canada has nearly 900,000 lakes larger than 10 hectares!"
+    },
+    {
+      "id": "adult_090",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What is the only continent on Earth that sits in all four hemispheres (Northern, Southern, Eastern, and Western)?",
+      "options": [
+        "Australia",
+        "Africa",
+        "Asia",
+        "South America"
+      ],
+      "correctIndex": 1,
+      "funFact": "Both the Equator and the Prime Meridian cross right through Africa!"
+    },
+    {
+      "id": "adult_091",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which European city is built across 118 small islands connected by over 400 bridges and canals instead of roads?",
+      "options": [
+        "Amsterdam, Netherlands",
+        "Bruges, Belgium",
+        "Venice, Italy",
+        "Stockholm, Sweden"
+      ],
+      "correctIndex": 2,
+      "funFact": "There are zero cars in the historic center of Venice — only boats and gondolas!"
+    },
+    {
+      "id": "adult_092",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What is the smallest independent country in the world by both area and population?",
+      "options": [
+        "San Marino",
+        "Liechtenstein",
+        "Monaco",
+        "Vatican City"
+      ],
+      "correctIndex": 3,
+      "funFact": "At just 121 acres, it fits entirely inside the city of Rome!"
+    },
+    {
+      "id": "adult_093",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "If you fly directly south from Detroit, Michigan, which foreign country is the very first one you enter?",
+      "options": [
+        "Canada (Windsor, Ontario)",
+        "The Bahamas",
+        "Mexico",
+        "Cuba"
+      ],
+      "correctIndex": 0,
+      "funFact": "Windsor, Ontario wraps southward underneath Detroit across the Detroit River!"
+    },
+    {
+      "id": "adult_094",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What ancient Nabataean city in Jordan is famous for having its temples carved directly into rose-red sandstone cliffs?",
+      "options": [
+        "Machu Picchu",
+        "Petra",
+        "Chichen Itza",
+        "Angkor Wat"
+      ],
+      "correctIndex": 1,
+      "funFact": "Its iconic Treasury (Al-Khazneh) was featured in Indiana Jones and the Last Crusade!"
+    },
+    {
+      "id": "adult_095",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which river carries more water by volume than the next seven largest rivers in the world combined?",
+      "options": [
+        "The Mississippi River",
+        "The Yangtze River",
+        "The Amazon River",
+        "The Nile River"
+      ],
+      "correctIndex": 2,
+      "funFact": "It discharges 20% of all river freshwater entering Earth's oceans!"
+    },
+    {
+      "id": "adult_096",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "In which US state is the geographic center of the 48 contiguous United States located?",
+      "options": [
+        "Iowa",
+        "Nebraska",
+        "Missouri",
+        "Kansas (near Lebanon, KS)"
+      ],
+      "correctIndex": 3,
+      "funFact": "While Including Alaska and Hawaii moves the center up to Belle Fourche, South Dakota!"
+    },
+    {
+      "id": "adult_097",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What is the capital city of Australia?",
+      "options": [
+        "Canberra",
+        "Sydney",
+        "Melbourne",
+        "Brisbane"
+      ],
+      "correctIndex": 0,
+      "funFact": "Canberra was purpose-built in 1913 as a compromise between rivals Sydney and Melbourne!"
+    },
+    {
+      "id": "adult_098",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which mountain range forms the natural border between Europe and Asia across Russia?",
+      "options": [
+        "The Pyrenees",
+        "The Ural Mountains",
+        "The Carpathians",
+        "The Alps"
+      ],
+      "correctIndex": 1,
+      "funFact": "Stretching 1,550 miles from the Arctic Ocean to Kazakhstan."
+    },
+    {
+      "id": "adult_099",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What is the deepest known point in Earth's oceans, plunging nearly 36,000 feet (11,000 meters) deep?",
+      "options": [
+        "The Tonga Trench",
+        "The Puerto Rico Trench",
+        "The Challenger Deep in the Mariana Trench",
+        "The Java Trench"
+      ],
+      "correctIndex": 2,
+      "funFact": "If you dropped Mount Everest into the Mariana Trench, its peak would still be a mile underwater!"
+    },
+    {
+      "id": "adult_100",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which country gifted the Statue of Liberty to the United States in 1886?",
+      "options": [
+        "United Kingdom",
+        "Italy",
+        "Spain",
+        "France"
+      ],
+      "correctIndex": 3,
+      "funFact": "Its internal iron framework was engineered by Gustave Eiffel before he built the Eiffel Tower!"
+    },
+    {
+      "id": "adult_101",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which US state is the only one that grows coffee commercially on a large scale AND consists entirely of islands?",
+      "options": [
+        "Hawaii",
+        "California",
+        "Puerto Rico",
+        "Florida"
+      ],
+      "correctIndex": 0,
+      "funFact": "Kona coffee grows on the volcanic slopes of the Big Island!"
+    },
+    {
+      "id": "adult_102",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What is the longest continental mountain range on Earth, stretching 4,300 miles along South America?",
+      "options": [
+        "The Great Dividing Range",
+        "The Andes",
+        "The Himalayas",
+        "The Rocky Mountains"
+      ],
+      "correctIndex": 1,
+      "funFact": "Spanning seven countries from Venezuela down to Patagonia!"
+    },
+    {
+      "id": "adult_103",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which desert is the largest hot desert in the world, roughly the same size as the entire United States?",
+      "options": [
+        "The Arabian Desert",
+        "The Gobi Desert",
+        "The Sahara Desert",
+        "The Kalahari Desert"
+      ],
+      "correctIndex": 2,
+      "funFact": "Antarctica and the Arctic are larger polar deserts, making the Sahara #3 overall!"
+    },
+    {
+      "id": "adult_104",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What famous five-mile-long suspension bridge connects Michigan's Upper and Lower Peninsulas?",
+      "options": [
+        "The Sunshine Skyway",
+        "The Chesapeake Bay Bridge",
+        "The Ambassador Bridge",
+        "The Mackinac Bridge (\"Mighty Mac\")"
+      ],
+      "correctIndex": 3,
+      "funFact": "Opened in 1957 where Lake Michigan and Lake Huron meet!"
+    },
+    {
+      "id": "adult_105",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which country is known as the \"Land of Fire and Ice\" due to its active volcanoes and massive glaciers?",
+      "options": [
+        "Iceland",
+        "New Zealand",
+        "Greenland",
+        "Norway"
+      ],
+      "correctIndex": 0,
+      "funFact": "Nearly 90% of homes in Iceland are heated by natural geothermal energy!"
+    },
+    {
+      "id": "adult_106",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What is the only sea on Earth that has no land boundaries—bordered entirely by four ocean currents?",
+      "options": [
+        "The Red Sea",
+        "The Sargasso Sea",
+        "The Caspian Sea",
+        "The Dead Sea"
+      ],
+      "correctIndex": 1,
+      "funFact": "Located in the middle of the North Atlantic Gyre!"
+    },
+    {
+      "id": "adult_107",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which US National Park is the oldest national park in the world, established in 1872 and famous for Old Faithful?",
+      "options": [
+        "Grand Canyon National Park",
+        "Zion National Park",
+        "Yellowstone National Park",
+        "Yosemite National Park"
+      ],
+      "correctIndex": 2,
+      "funFact": "Yellowstone sits atop a massive geothermal supervolcano hotspot."
+    },
+    {
+      "id": "adult_108",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What two oceans does the Panama Canal connect?",
+      "options": [
+        "The Mediterranean and the Red Sea",
+        "The Indian Ocean and the Pacific Ocean",
+        "The Atlantic Ocean and the Arctic Ocean",
+        "The Atlantic Ocean and the Pacific Ocean"
+      ],
+      "correctIndex": 3,
+      "funFact": "Locks lift ships 85 feet up to Gatun Lake and back down the other side!"
+    },
+    {
+      "id": "adult_109",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "Which African country is famous for the ancient pyramids of Giza and the Great Sphinx?",
+      "options": [
+        "Egypt",
+        "Sudan",
+        "Morocco",
+        "Kenya"
+      ],
+      "correctIndex": 0,
+      "funFact": "Wait—Sudan actually has more total pyramids (over 200 Nubian pyramids), while Egypt has the largest!"
+    },
+    {
+      "id": "adult_110",
+      "tier": "ADULT",
+      "category": "Geography & Landmarks",
+      "prompt": "What is the highest mountain peak in North America, standing at 20,310 feet in Alaska?",
+      "options": [
+        "Mount Elbert",
+        "Denali (Mount McKinley)",
+        "Mount Rainier",
+        "Mount Whitney"
+      ],
+      "correctIndex": 1,
+      "funFact": "Mount Elbert in Colorado is the highest peak in the Rocky Mountains at 14,440 feet!"
+    },
+    {
+      "id": "adult_111",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What traditional Polish comfort food consists of tender unleavened dough dumplings stuffed with potato, cheese, and caramelized onions?",
+      "options": [
+        "Samosas",
+        "Gnocchi",
+        "Pierogi",
+        "Empanadas"
+      ],
+      "correctIndex": 2,
+      "funFact": "Just like Babci makes in her kitchen in Book 2!"
+    },
+    {
+      "id": "adult_112",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "In Texas-style low-and-slow barbecue, what cut of beef comes from the lower chest of the steer and takes 12+ hours to smoke?",
+      "options": [
+        "Filet Mignon",
+        "Flank Steak",
+        "Prime Ribeye",
+        "Beef Brisket"
+      ],
+      "correctIndex": 3,
+      "funFact": "Seasoned with coarse black pepper and kosher salt over post oak wood!"
+    },
+    {
+      "id": "adult_113",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "Which spice is the most expensive in the world by weight because it must be hand-harvested from crocus flower stigmas?",
+      "options": [
+        "Saffron",
+        "Cardamom",
+        "Cinnamon",
+        "Vanilla Bean"
+      ],
+      "correctIndex": 0,
+      "funFact": "It takes about 75,000 crocus blossoms to produce a single pound of saffron!"
+    },
+    {
+      "id": "adult_114",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What is the only food found in ancient Egyptian tombs over 3,000 years old that is still 100% edible today without spoiling?",
+      "options": [
+        "Salted Beef Jerky",
+        "Pure Honey",
+        "Dried Figs",
+        "Olive Oil"
+      ],
+      "correctIndex": 1,
+      "funFact": "Honey's ultra-low moisture and natural acidity prevent bacteria from growing!"
+    },
+    {
+      "id": "adult_115",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What gives sourdough bread its characteristic tangy flavor and airy rise?",
+      "options": [
+        "Lemon juice and baking soda",
+        "Buttermilk and vinegar",
+        "Wild lactobacilli bacteria and wild yeast in the starter",
+        "Cream of tartar"
+      ],
+      "correctIndex": 2,
+      "funFact": "Some San Francisco sourdough starters have been kept alive for over 150 years!"
+    },
+    {
+      "id": "adult_116",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What unit of measurement is used to rate the spicy heat (capsaicin concentration) of chili peppers?",
+      "options": [
+        "Kelvin Degrees",
+        "Brix Scale",
+        "Richter Units",
+        "Scoville Heat Units (SHU)"
+      ],
+      "correctIndex": 3,
+      "funFact": "A Jalapeño is ~5,000 SHU, while a Carolina Reaper tops 2,000,000 SHU!"
+    },
+    {
+      "id": "adult_117",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "Which fruit floats in water because 25% of its internal volume is actually air?",
+      "options": [
+        "An Apple (and Cranberries!)",
+        "A Peach",
+        "A Mango",
+        "A Banana"
+      ],
+      "correctIndex": 0,
+      "funFact": "That is why bobbing for apples works!"
+    },
+    {
+      "id": "adult_118",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What Italian cheese is traditionally used to make authentic Tiramisu?",
+      "options": [
+        "Ricotta",
+        "Mascarpone",
+        "Mozzarella",
+        "Gorgonzola"
+      ],
+      "correctIndex": 1,
+      "funFact": "Layered with espresso-soaked ladyfingers and cocoa powder!"
+    },
+    {
+      "id": "adult_119",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "Where were Hawaiian pizzas (topped with ham and pineapple) actually invented in 1962?",
+      "options": [
+        "Naples, Italy",
+        "Los Angeles, California",
+        "Chatham, Ontario, Canada",
+        "Honolulu, Hawaii"
+      ],
+      "correctIndex": 2,
+      "funFact": "Created by Greek-Canadian restaurateur Sam Panopoulos, named after the brand of canned pineapple he used!"
+    },
+    {
+      "id": "adult_120",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What nut is the main ingredient used to make the French pastry macaron and marzipan?",
+      "options": [
+        "Pecans",
+        "Hazelnuts",
+        "Pistachios",
+        "Almonds (Almond Flour)"
+      ],
+      "correctIndex": 3,
+      "funFact": "While Nutella is made from roasted hazelnuts and cocoa!"
+    },
+    {
+      "id": "adult_121",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "In BBQ smoking, what causes the prized pink \"smoke ring\" just beneath the bark of smoked meat?",
+      "options": [
+        "Nitric oxide and carbon monoxide from burning wood reacting with myoglobin",
+        "Undercooked rare meat fibers",
+        "Paprika and brown sugar rub penetrating the fat",
+        "Basting with apple cider vinegar"
+      ],
+      "correctIndex": 0,
+      "funFact": "The smoke ring locks in before the meat reaches 140°F!"
+    },
+    {
+      "id": "adult_122",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What popular American condiment was sold in the 1830s as a medicinal cure for indigestion?",
+      "options": [
+        "Ranch Dressing",
+        "Tomato Ketchup",
+        "Mayonnaise",
+        "Yellow Mustard"
+      ],
+      "correctIndex": 1,
+      "funFact": "Dr. John Cook Bennett even sold concentrated tomato pills!"
+    },
+    {
+      "id": "adult_123",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "Which country is the world's largest producer of coffee beans, growing roughly a third of the global supply?",
+      "options": [
+        "Ethiopia",
+        "Colombia",
+        "Brazil",
+        "Vietnam"
+      ],
+      "correctIndex": 2,
+      "funFact": "Brazil has held the #1 spot for over 150 years!"
+    },
+    {
+      "id": "adult_124",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What is the primary botanical difference between a fruit and a vegetable?",
+      "options": [
+        "Fruits always contain more sugar than vegetables",
+        "Vegetables only grow underground",
+        "Fruits grow on trees while vegetables grow on vines",
+        "Fruits develop from the flower of a plant and contain seeds"
+      ],
+      "correctIndex": 3,
+      "funFact": "Which means tomatoes, avocados, pumpkins, and cucumbers are botanically berries/fruits!"
+    },
+    {
+      "id": "adult_125",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What Japanese dish translates literally to \"sour rice\" rather than \"raw fish\"?",
+      "options": [
+        "Sushi",
+        "Tempura",
+        "Ramen",
+        "Sashimi"
+      ],
+      "correctIndex": 0,
+      "funFact": "Sashimi refers specifically to sliced raw fish, while sushi refers to the seasoned vinegared rice!"
+    },
+    {
+      "id": "adult_126",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What chemical reaction between amino acids and reducing sugars gives seared steak, toasted bread, and roasted coffee their brown crust and rich flavor?",
+      "options": [
+        "Fermentation",
+        "The Maillard Reaction",
+        "Caramelization",
+        "Pasteurization"
+      ],
+      "correctIndex": 1,
+      "funFact": "Named after French chemist Louis-Camille Maillard in 1912!"
+    },
+    {
+      "id": "adult_127",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What type of pastry dough is used to make croissants and palmiers by folding cold butter into dough dozens of times?",
+      "options": [
+        "Choux Pastry",
+        "Phyllo Dough",
+        "Laminated Dough (Puff Pastry)",
+        "Brioche Dough"
+      ],
+      "correctIndex": 2,
+      "funFact": "Creating 27 to 81 alternating flaky layers of butter and dough!"
+    },
+    {
+      "id": "adult_128",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "Which berry is the only fruit that wears its seeds (~200 of them) on the outside?",
+      "options": [
+        "The Blackberry",
+        "The Blueberry",
+        "The Raspberry",
+        "The Strawberry"
+      ],
+      "correctIndex": 3,
+      "funFact": "Each tiny \"seed\" (achene) on the outside of a strawberry is technically a miniature fruit!"
+    },
+    {
+      "id": "adult_129",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What does the word \"Espresso\" literally mean in Italian?",
+      "options": [
+        "\"Pressed out\" (or made on the spur of the moment)",
+        "\"Morning lightning\"",
+        "\"Extra fast\"",
+        "\"Dark roast\""
+      ],
+      "correctIndex": 0,
+      "funFact": "Brewed by forcing near-boiling water under 9 bars of pressure through finely ground beans!"
+    },
+    {
+      "id": "adult_130",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "Which US city is famous for its \"Deep Dish\" pizza baked in a high-sided pan with the cheese on the bottom and chunky tomato sauce on top?",
+      "options": [
+        "New York City",
+        "Chicago, Illinois",
+        "Detroit, Michigan",
+        "New Haven, Connecticut"
+      ],
+      "correctIndex": 1,
+      "funFact": "While Detroit-style pizza is rectangular with caramelized Wisconsin brick cheese edges!"
+    },
+    {
+      "id": "adult_131",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What plant do vanilla beans actually grow on?",
+      "options": [
+        "An evergreen bush",
+        "A palm tree",
+        "A climbing tropical Orchid vine",
+        "A desert cactus"
+      ],
+      "correctIndex": 2,
+      "funFact": "Vanilla is the only edible fruit of the orchid family!"
+    },
+    {
+      "id": "adult_132",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "Why does cutting a raw onion make your eyes water?",
+      "options": [
+        "Static electricity on the knife blade",
+        "Citric acid spray from the skin",
+        "High potassium vapor",
+        "Broken cells release syn-propanethial-S-oxide gas that forms mild sulfuric acid on tears"
+      ],
+      "correctIndex": 3,
+      "funFact": "Chilling the onion first or using a razor-sharp knife reduces the vapor!"
+    },
+    {
+      "id": "adult_133",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What was freeze-dried \"Astronaut Ice Cream\" originally developed for?",
+      "options": [
+        "Apollo space missions (by Whirlpool Corp under NASA contract)",
+        "Arctic submarine crews",
+        "Mount Everest climbers",
+        "World War II paratroopers"
+      ],
+      "correctIndex": 0,
+      "funFact": "Though ironically it was too crumbly for zero-G and rarely flew on actual missions!"
+    },
+    {
+      "id": "adult_134",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "Which cheese is famously made in big wheels in Parma, Italy, aged for 12 to 36 months, and tapped with a tiny silver hammer to test for air pockets?",
+      "options": [
+        "Asiago",
+        "Parmigiano-Reggiano",
+        "Fontina",
+        "Pecorino Romano"
+      ],
+      "correctIndex": 1,
+      "funFact": "Known around the world as the \"King of Cheeses\"!"
+    },
+    {
+      "id": "adult_135",
+      "tier": "ADULT",
+      "category": "Food, Drinks & BBQ",
+      "prompt": "What tree produces the nuts known as \"Pecans\", the state tree of Texas?",
+      "options": [
+        "The Maple family",
+        "The Oak family",
+        "The Hickory family (Carya illinoinensis)",
+        "The Pine family"
+      ],
+      "correctIndex": 2,
+      "funFact": "Pecan pie is a Thanksgiving and Southern BBQ classic!"
+    },
+    {
+      "id": "adult_136",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What was the original name of Nintendo's Mario when he debuted in the 1981 arcade game Donkey Kong?",
+      "options": [
+        "Mr. Video",
+        "Plumber Pete",
+        "Red Cap",
+        "Jumpman"
+      ],
+      "correctIndex": 3,
+      "funFact": "And originally he was a carpenter, not a plumber!"
+    },
+    {
+      "id": "adult_137",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In the factory-building hit Satisfactory, what adorable lizard-like alien pet brings the Pioneer random items (including nuclear waste!)?",
+      "options": [
+        "The Lizard Doggo",
+        "The Hog",
+        "The Stinger",
+        "The Space Giraffe-Tick-Penguin"
+      ],
+      "correctIndex": 0,
+      "funFact": "Just remember to check what it found before petting it!"
+    },
+    {
+      "id": "adult_138",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What is the best-selling video game of all time with over 300 million copies sold across all platforms?",
+      "options": [
+        "Super Mario Bros.",
+        "Minecraft (followed closely by Tetris)",
+        "Grand Theft Auto V",
+        "Wii Sports"
+      ],
+      "correctIndex": 1,
+      "funFact": "Created originally by Markus \"Notch\" Persson in 2009!"
+    },
+    {
+      "id": "adult_139",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In Pac-Man (1980), what are the English nicknames of the four ghosts?",
+      "options": [
+        "Shadow, Speedy, Bashful, and Pokey",
+        "Winky, Blinky, Nod, and Casper",
+        "Blinky, Pinky, Inky, and Clyde",
+        "Reddy, Bluey, Goldie, and Spooky"
+      ],
+      "correctIndex": 2,
+      "funFact": "Blinky chases you directly, Pinky ambushes ahead of you, Inky flanks, and Clyde wanders!"
+    },
+    {
+      "id": "adult_140",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What famous 10-button cheat code popularized by Contra (1986) grants 30 extra lives?",
+      "options": [
+        "Left, Right, Up, Down, Start, Select",
+        "I, D, D, Q, D",
+        "A, B, A, C, A, B, B",
+        "Up, Up, Down, Down, Left, Right, Left, Right, B, A"
+      ],
+      "correctIndex": 3,
+      "funFact": "Known worldwide as the Konami Code!"
+    },
+    {
+      "id": "adult_141",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What did Nintendo originally manufacture when the company was founded in Kyoto, Japan in 1889?",
+      "options": [
+        "Hand-painted Hanafuda playing cards",
+        "Silk kites",
+        "Wooden abacus calculators",
+        "Clockwork tin trains"
+      ],
+      "correctIndex": 0,
+      "funFact": "Nintendo existed for 94 years before releasing the Famicom / NES in 1983!"
+    },
+    {
+      "id": "adult_142",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In The Legend of Zelda series, what is the name of the green-tunic-wearing hero AND who is the princess?",
+      "options": [
+        "Zelda is the hero; Peach is the princess",
+        "Link is the hero; Zelda is the princess",
+        "Ganon is the hero; Zelda is the fairy",
+        "Sheik is the hero; Midna is the princess"
+      ],
+      "correctIndex": 1,
+      "funFact": "One of gaming's funniest mix-ups since 1986!"
+    },
+    {
+      "id": "adult_143",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "Why was the very first computer \"bug\" called a bug in 1947 by Grace Hopper's team at Harvard?",
+      "options": [
+        "The punch cards had beetle holes in them",
+        "It was an acronym for Binary Unit Glitch",
+        "A real moth got trapped inside a relay of the Harvard Mark II computer",
+        "The vacuum tubes made a buzzing cricket sound"
+      ],
+      "correctIndex": 2,
+      "funFact": "They taped the actual moth into the logbook with the note \"First actual case of bug being found\"!"
+    },
+    {
+      "id": "adult_144",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In Mario Kart, which notorious item hunts down the 1st-place racer and explodes in a massive blue blast?",
+      "options": [
+        "The Lightning Bolt",
+        "The Golden Mushroom",
+        "The Red Koopa Shell",
+        "The Spiny Blue Shell"
+      ],
+      "correctIndex": 3,
+      "funFact": "Guaranteed to test friendships on the final lap!"
+    },
+    {
+      "id": "adult_145",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What does \"HTTP\" stand for at the beginning of a website address?",
+      "options": [
+        "HyperText Transfer Protocol",
+        "High Tech Transmission Pathway",
+        "Host Terminal Tele-Process",
+        "Hybrid Text Tracking Program"
+      ],
+      "correctIndex": 0,
+      "funFact": "Invented by Sir Tim Berners-Lee at CERN in 1989!"
+    },
+    {
+      "id": "adult_146",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In Halo, what is the name of the AI companion paired with Master Chief John-117?",
+      "options": [
+        "SHODAN",
+        "Cortana",
+        "JARVIS",
+        "GLaDOS"
+      ],
+      "correctIndex": 1,
+      "funFact": "While GLaDOS is the sarcastic AI from Portal (\"The cake is a lie\")!"
+    },
+    {
+      "id": "adult_147",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "Which 1997 Nintendo 64 game based on a James Bond movie defined 4-player split-screen living-room multiplayer?",
+      "options": [
+        "Turok: Dinosaur Hunter",
+        "Perfect Dark",
+        "GoldenEye 007",
+        "Star Fox 64"
+      ],
+      "correctIndex": 2,
+      "funFact": "Rule #1 in the living room: No picking Oddjob in Facility with Proximity Mines!"
+    },
+    {
+      "id": "adult_148",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "How many bits are in a single byte, and what is 4 bits (half a byte) officially called?",
+      "options": [
+        "16 bits in a byte; 8 bits is a \"Chomp\"",
+        "10 bits in a byte; 5 bits is a \"Crumb\"",
+        "4 bits in a byte; 2 bits is a \"Tad\"",
+        "8 bits in a byte; 4 bits is a \"Nibble\""
+      ],
+      "correctIndex": 3,
+      "funFact": "Computer scientists have a great sense of humor: Bit, Nibble, Byte!"
+    },
+    {
+      "id": "adult_149",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What animal is Sonic the Hedgehog's two-tailed flying sidekick Miles \"Tails\" Prower?",
+      "options": [
+        "A Fox",
+        "An Echidna",
+        "A Badger",
+        "A Squirrel"
+      ],
+      "correctIndex": 0,
+      "funFact": "And his name \"Miles Prower\" is a pun on \"Miles Per Hour\"!"
+    },
+    {
+      "id": "adult_150",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In Pokémon Red & Blue (1996), which three starter Pokémon does Professor Oak let you choose from?",
+      "options": [
+        "Treecko, Torchic, and Mudkip",
+        "Bulbasaur, Charmander, and Squirtle",
+        "Pikachu, Eevee, and Meowth",
+        "Chikorita, Cyndaquil, and Totodile"
+      ],
+      "correctIndex": 1,
+      "funFact": "While Pikachu was the starter in Pokémon Yellow!"
+    },
+    {
+      "id": "adult_151",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What was the name of the first commercially successful arcade video game, released by Atari in 1972?",
+      "options": [
+        "Space Invaders",
+        "Asteroids",
+        "Pong",
+        "Breakout"
+      ],
+      "correctIndex": 2,
+      "funFact": "The first Pong prototype cabinet in a Sunnyvale bar stopped working only because its coin box overflowed with quarters!"
+    },
+    {
+      "id": "adult_152",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In The Oregon Trail computer game, what river crossing option was famous for tipping your wagon if the water was deeper than 3 feet?",
+      "options": [
+        "Take a ferry across",
+        "Wait to see if conditions improve",
+        "Caulk the wagon and float it",
+        "Attempt to ford the river"
+      ],
+      "correctIndex": 3,
+      "funFact": "You lost 3 oxen, 400 pounds of food, and 2 wagon axles!"
+    },
+    {
+      "id": "adult_153",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What wireless technology is named after a 10th-century Viking king (Harald Blåtand) who united Denmark and Norway?",
+      "options": [
+        "Bluetooth",
+        "Starlink",
+        "Wi-Fi",
+        "AirDrop"
+      ],
+      "correctIndex": 0,
+      "funFact": "The Bluetooth logo is actually a combination of the Nordic runes for H and B!"
+    },
+    {
+      "id": "adult_154",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In Super Smash Bros., how do you knock opponents out of the arena to score a point?",
+      "options": [
+        "Drain their green health bar to zero",
+        "Raise their damage percentage (%) so they fly off the stage",
+        "Capture their flag",
+        "Drop a Tetris block on them"
+      ],
+      "correctIndex": 1,
+      "funFact": "The higher the percentage, the farther they launch!"
+    },
+    {
+      "id": "adult_155",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What year did Apple release the original first-generation iPhone?",
+      "options": [
+        "2009",
+        "2001",
+        "2007",
+        "2004"
+      ],
+      "correctIndex": 2,
+      "funFact": "The original iPod launched in 2001, the iPhone in 2007, and the iPad in 2010!"
+    },
+    {
+      "id": "adult_156",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In the game Portal, what dessert does GLaDOS repeatedly promise you as a reward for completing the test chambers?",
+      "options": [
+        "Cinnamon Rolls",
+        "Strawberry Cheesecake",
+        "Blueberry Pie",
+        "Black Forest Cake (\"The cake is a lie\")"
+      ],
+      "correctIndex": 3,
+      "funFact": "The recipe read aloud at the end even includes fish-shaped crackers and rhubarb!"
+    },
+    {
+      "id": "adult_157",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What color were the ghosts in Pac-Man turn when you eat a flashing Power Pellet?",
+      "options": [
+        "Dark Blue",
+        "Neon Green",
+        "Bright Yellow",
+        "Invisible"
+      ],
+      "correctIndex": 0,
+      "funFact": "Chomp all four in one pellet for 200, 400, 800, and 1,600 points!"
+    },
+    {
+      "id": "adult_158",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "Which 1993 PC game by id Software pioneered fast-paced 3D first-person action on the moons of Mars (Phobos and Deimos)?",
+      "options": [
+        "Duke Nukem 3D",
+        "DOOM",
+        "Half-Life",
+        "Quake"
+      ],
+      "correctIndex": 1,
+      "funFact": "And engineers have famously gotten DOOM to run on everything from calculators to pregnancy tests!"
+    },
+    {
+      "id": "adult_159",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "What does \"GPU\" stand for in modern computers and gaming consoles?",
+      "options": [
+        "Gigabit Pixel Engine",
+        "General Power Utility",
+        "Graphics Processing Unit",
+        "Game Physics Upgrader"
+      ],
+      "correctIndex": 2,
+      "funFact": "Originally built for 3D triangles, now also powering modern AI!"
+    },
+    {
+      "id": "adult_160",
+      "tier": "ADULT",
+      "category": "Video Games & Tech",
+      "prompt": "In Street Fighter II, what famous fireball move does Ryu and Ken shout when pressing Down, Down-Forward, Forward + Punch?",
+      "options": [
+        "\"Shoryuken!\"",
+        "\"Sonic Boom!\"",
+        "\"Yoga Flame!\"",
+        "\"Hadouken!\""
+      ],
+      "correctIndex": 3,
+      "funFact": "Meaning \"Wave Motion Fist\" in Japanese!"
+    },
+    {
+      "id": "adult_161",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What was the Wright Brothers' profession in Dayton, Ohio before they built the first powered airplane in 1903?",
+      "options": [
+        "Bicycle mechanics and manufacturers",
+        "Locomotive engineers",
+        "Hot-air balloonists",
+        "Watchmakers"
+      ],
+      "correctIndex": 0,
+      "funFact": "They used a bicycle chain drive to spin the propellers of the Wright Flyer at Kitty Hawk!"
+    },
+    {
+      "id": "adult_162",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "How did engineer Percy Spencer accidentally discover in 1945 that microwaves could cook food?",
+      "options": [
+        "A bag of popcorn popped inside a submarine sonar room",
+        "A chocolate peanut cluster bar melted in his pocket near a radar magnetron",
+        "He left a cup of tea on top of a radio transmitter",
+        "He tried to dry his wet mittens with an X-ray tube"
+      ],
+      "correctIndex": 1,
+      "funFact": "The very first food he intentionally cooked next was popcorn!"
+    },
+    {
+      "id": "adult_163",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What everyday fastener did Swiss engineer George de Mestral invent in 1941 after examining burdock burrs stuck to his dog's fur under a microscope?",
+      "options": [
+        "The Zipper",
+        "Safety Pins",
+        "Velcro (Hook-and-Loop fastener)",
+        "Snap Buttons"
+      ],
+      "correctIndex": 2,
+      "funFact": "The word Velcro comes from the French words \"Velours\" (velvet) and \"Crochet\" (hook)!"
+    },
+    {
+      "id": "adult_164",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "Which ancient wonder of the world is the only one of the original Seven Wonders still standing largely intact today?",
+      "options": [
+        "The Lighthouse of Alexandria",
+        "The Hanging Gardens of Babylon",
+        "The Colossus of Rhodes",
+        "The Great Pyramid of Giza"
+      ],
+      "correctIndex": 3,
+      "funFact": "Built around 2560 BC, it was the tallest human-made structure on Earth for over 3,800 years!"
+    },
+    {
+      "id": "adult_165",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What beloved toy was accidentally invented during World War II by naval engineer Richard James when a tension spring fell off a desk and \"walked\" down a stack of books?",
+      "options": [
+        "The Slinky",
+        "The Frisbee",
+        "Play-Doh",
+        "Silly Putty"
+      ],
+      "correctIndex": 0,
+      "funFact": "And Play-Doh was originally invented as a non-toxic wallpaper soot cleaner!"
+    },
+    {
+      "id": "adult_166",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "Who invented the movable-type mechanical printing press in Europe around 1440, sparking an information revolution?",
+      "options": [
+        "Leonardo da Vinci",
+        "Johannes Gutenberg",
+        "Galileo Galilei",
+        "Benjamin Franklin"
+      ],
+      "correctIndex": 1,
+      "funFact": "Before Gutenberg, books in Europe had to be copied entirely by hand!"
+    },
+    {
+      "id": "adult_167",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "In 1928, Scottish scientist Alexander Fleming returned from vacation to find mold killing bacteria in a petri dish, discovering what life-saving medicine?",
+      "options": [
+        "Aspirin",
+        "Polio Vaccine",
+        "Penicillin",
+        "Insulin"
+      ],
+      "correctIndex": 2,
+      "funFact": "One of the greatest accidental discoveries in medical history!"
+    },
+    {
+      "id": "adult_168",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What were the names of the two locomotives that met at Promontory Summit, Utah in 1869 for the Golden Spike completion of the Transcontinental Railroad?",
+      "options": [
+        "The General and The Texas",
+        "The Flying Scotsman and The Rocket",
+        "The Big Boy and The Pioneer Zephyr",
+        "The Jupiter and Union Pacific No. 119"
+      ],
+      "correctIndex": 3,
+      "funFact": "They tapped a ceremonial 17.6-karat gold spike into a polished California laurel tie!"
+    },
+    {
+      "id": "adult_169",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What did 11-year-old Frank Epperson accidentally invent in 1905 when he left a cup of fruit soda water with a wooden stirring stick outside on his porch overnight in a freeze?",
+      "options": [
+        "The Popsicle",
+        "Ice Cream Cones",
+        "Slurpees",
+        "Cotton Candy"
+      ],
+      "correctIndex": 0,
+      "funFact": "He originally called it the \"Epsicle\" until his kids called it \"Pop's 'sicle\"!"
+    },
+    {
+      "id": "adult_170",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "Which woman won two Nobel Prizes in two different scientific fields (Physics in 1903 and Chemistry in 1911)?",
+      "options": [
+        "Ada Lovelace",
+        "Marie Curie",
+        "Lise Meitner",
+        "Rosalind Franklin"
+      ],
+      "correctIndex": 1,
+      "funFact": "She discovered the elements Polonium (named after her native Poland) and Radium!"
+    },
+    {
+      "id": "adult_171",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "Why do standard QWERTY typewriter and computer keyboards have the letters arranged in that scrambled order instead of ABCDEF?",
+      "options": [
+        "It matches the frequency of letters in Latin",
+        "To spell the word \"TYPEWRITER\" on the top row as a sales trick",
+        "To prevent neighboring mechanical typebars on early typewriters from jamming together",
+        "To slow down telegraph operators"
+      ],
+      "correctIndex": 2,
+      "funFact": "Wait—you actually CAN spell \"TYPEWRITER\" using only the top row of letters on a QWERTY keyboard too!"
+    },
+    {
+      "id": "adult_172",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What iconic American landmark on Mount Rushmore features the carved 60-foot faces of which four US Presidents?",
+      "options": [
+        "Washington, Adams, Madison, and Lincoln",
+        "Washington, Jefferson, Franklin, and Kennedy",
+        "Washington, Jackson, Grant, and Lincoln",
+        "Washington, Jefferson, Theodore Roosevelt, and Lincoln"
+      ],
+      "correctIndex": 3,
+      "funFact": "Benjamin Franklin is on the $100 bill, though he was never President!"
+    },
+    {
+      "id": "adult_173",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What material did 3M chemist Spencer Silver create in 1968 when he tried to make a super-strong aerospace glue and instead made a weak, repositionable adhesive?",
+      "options": [
+        "Post-it Notes adhesive",
+        "Super Glue",
+        "Command Strips",
+        "Scotch Tape"
+      ],
+      "correctIndex": 0,
+      "funFact": "His colleague Art Fry used it to keep his paper bookmarks from falling out of his choir hymnal!"
+    },
+    {
+      "id": "adult_174",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "In what year did the Titanic sink on its maiden voyage across the North Atlantic, AND in what year did the Wright Brothers first fly?",
+      "options": [
+        "Titanic sank in 1898; Wright Brothers flew in 1908",
+        "Titanic sank in 1912; Wright Brothers flew in 1903",
+        "Titanic sank in 1905; Wright Brothers flew in 1914",
+        "Titanic sank in 1920; Wright Brothers flew in 1899"
+      ],
+      "correctIndex": 1,
+      "funFact": "Only 66 years separated the Wright Brothers' first 12-second hop in 1903 and Apollo 11 landing on the Moon in 1969!"
+    },
+    {
+      "id": "adult_175",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What ancient stone slab discovered in 1799 with the same decree inscribed in three scripts (Hieroglyphs, Demotic, and Ancient Greek) unlocked the translation of Egyptian hieroglyphs?",
+      "options": [
+        "The Code of Hammurabi",
+        "The Dead Sea Scrolls",
+        "The Rosetta Stone",
+        "The Emerald Tablet"
+      ],
+      "correctIndex": 2,
+      "funFact": "Deciphered by French scholar Jean-François Champollion in 1822!"
+    },
+    {
+      "id": "adult_176",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What did Nikola Tesla champion in the late-1800s \"War of the Currents\" against Thomas Edison's Direct Current (DC)?",
+      "options": [
+        "Nuclear Fission",
+        "Cold Fusion",
+        "Solar Photovoltaic Power",
+        "Alternating Current (AC)"
+      ],
+      "correctIndex": 3,
+      "funFact": "Tesla and George Westinghouse lit up the 1893 Chicago World's Fair with AC power!"
+    },
+    {
+      "id": "adult_177",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What was Bubble Wrap originally invented to be in 1957 by engineers Alfred Fielding and Marc Chavannes?",
+      "options": [
+        "Textured 3D plastic wallpaper",
+        "Pool floats",
+        "Astronaut helmet padding",
+        "Greenhouse roof insulation"
+      ],
+      "correctIndex": 0,
+      "funFact": "When textured plastic wallpaper didn't catch on, IBM used it to ship fragile 1401 computers!"
+    },
+    {
+      "id": "adult_178",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "Which famous Renaissance artist painted the ceiling of the Sistine Chapel AND sculpted the marble statue of David?",
+      "options": [
+        "Leonardo da Vinci",
+        "Michelangelo",
+        " Raphael",
+        "Donatello"
+      ],
+      "correctIndex": 1,
+      "funFact": "Wait—that's all four Teenage Mutant Ninja Turtles in the options!"
+    },
+    {
+      "id": "adult_179",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "What navigation instrument used by sailors for centuries always points toward Earth's magnetic north pole and was first invented in Han Dynasty China?",
+      "options": [
+        "The Sextant",
+        "The Chronometer",
+        "The Magnetic Compass",
+        "The Astrolabe"
+      ],
+      "correctIndex": 2,
+      "funFact": "Originally made from a spoon-shaped lodestone (magnetite) on a bronze plate!"
+    },
+    {
+      "id": "adult_180",
+      "tier": "ADULT",
+      "category": "History & Inventions",
+      "prompt": "Who is credited as the world's first computer programmer for writing an algorithm for Charles Babbage's Analytical Engine in 1843?",
+      "options": [
+        "Katherine Johnson",
+        "Alan Turing",
+        "Margaret Hamilton",
+        "Ada Lovelace"
+      ],
+      "correctIndex": 3,
+      "funFact": "And Margaret Hamilton led the MIT software team that coded the Apollo Moon landing guidance computer!"
+    },
+    {
+      "id": "adult_181",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "How many dimples are on a typical regulation golf ball, and why are they there?",
+      "options": [
+        "Around 300–400 dimples, to reduce aerodynamic drag and double the flight distance",
+        "Exactly 100 dimples, just for grip on the clubface",
+        "Around 1,000 dimples, to make the ball spin sideways",
+        "54 dimples, matching a deck of cards"
+      ],
+      "correctIndex": 0,
+      "funFact": "A completely smooth golf ball travels only about half as far as a dimpled one!"
+    },
+    {
+      "id": "adult_182",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "In bowling, what is it called when a player bowls three strikes in a row?",
+      "options": [
+        "An Albatross",
+        "A Turkey",
+        "A Grand Slam",
+        "A Hat Trick"
+      ],
+      "correctIndex": 1,
+      "funFact": "Four in a row is a Hambone (or Four-Bagger), and 12 in a row is a perfect 300 game!"
+    },
+    {
+      "id": "adult_183",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "What do the five interlocking colored rings on the Olympic flag represent?",
+      "options": [
+        "The five values of sportsmanship",
+        "The five original sports of Ancient Greece",
+        "The five inhabited continents united by Olympism",
+        "The five oceans of the world"
+      ],
+      "correctIndex": 2,
+      "funFact": "Blue, Yellow, Black, Green, and Red on a white background matched at least one color on every nation's flag in 1913!"
+    },
+    {
+      "id": "adult_184",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "In which sport do players sweep the ice furiously with brooms in front of a sliding 42-pound polished granite stone?",
+      "options": [
+        "Shuffleboard",
+        "Bobsled",
+        "Bandy",
+        "Curling"
+      ],
+      "correctIndex": 3,
+      "funFact": "All Olympic curling stones are quarried from rare granite on Ailsa Craig island in Scotland!"
+    },
+    {
+      "id": "adult_185",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "What is the only NFL team that is publicly owned by over 500,000 fan shareholders rather than a billionaire owner?",
+      "options": [
+        "The Green Bay Packers",
+        "The Pittsburgh Steelers",
+        "The Chicago Bears",
+        "The Dallas Cowboys"
+      ],
+      "correctIndex": 0,
+      "funFact": "And they play at iconic Lambeau Field in Wisconsin!"
+    },
+    {
+      "id": "adult_186",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "At the Masters Golf Tournament in Augusta, Georgia, what iconic piece of clothing is awarded to the champion?",
+      "options": [
+        "The Tartan Vest",
+        "The Green Jacket",
+        "The Golden Cardigan",
+        "The Plaid Tam Cap"
+      ],
+      "correctIndex": 1,
+      "funFact": "Along with a lifetime invitation to return to the Champions Dinner!"
+    },
+    {
+      "id": "adult_187",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "How long is an official Olympic marathon race down to the exact yard?",
+      "options": [
+        "Exactly 25.0 miles",
+        "30 miles even",
+        "26 miles and 385 yards (42.195 km)",
+        "24 miles and 500 yards"
+      ],
+      "correctIndex": 2,
+      "funFact": "The extra 385 yards were added at the 1908 London Olympics so the finish line would sit right in front of the Royal Box!"
+    },
+    {
+      "id": "adult_188",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "Which American swimmer won a record 23 Olympic Gold Medals (28 medals total) across his career?",
+      "options": [
+        "Katie Ledecky",
+        "Caeleb Dressel",
+        "Mark Spitz",
+        "Michael Phelps"
+      ],
+      "correctIndex": 3,
+      "funFact": "Including a historic 8 gold medals at the 2008 Beijing Olympics alone!"
+    },
+    {
+      "id": "adult_189",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "In tennis, what word is used for a score of zero, likely derived from the French word \"l'oeuf\" (the egg)?",
+      "options": [
+        "Love",
+        "Scratch",
+        "Nil",
+        "Duck"
+      ],
+      "correctIndex": 0,
+      "funFact": "15, 30, 40, Deuce!"
+    },
+    {
+      "id": "adult_190",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "What is the maximum number of golf clubs a player is allowed to carry in their bag during an official tournament round?",
+      "options": [
+        "10 clubs",
+        "14 clubs",
+        "18 clubs",
+        "Unlimited clubs"
+      ],
+      "correctIndex": 1,
+      "funFact": "Usually a driver, fairway woods, hybrids, irons, wedges, and a putter!"
+    },
+    {
+      "id": "adult_191",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "Which country won the very first FIFA Men's World Cup in 1930 (and also hosted it)?",
+      "options": [
+        "Argentina",
+        "Italy",
+        "Uruguay",
+        "Brazil"
+      ],
+      "correctIndex": 2,
+      "funFact": "Brazil holds the record with 5 World Cup titles!"
+    },
+    {
+      "id": "adult_192",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "In baseball, how many stitches are hand-sewn onto an official Major League Baseball with red waxed thread?",
+      "options": [
+        "88 stitches",
+        "52 stitches",
+        "200 stitches",
+        "108 double stitches"
+      ],
+      "correctIndex": 3,
+      "funFact": "Every MLB ball is also rubbed with special Lena Blackburne Baseball Rubbing Mud from a secret spot along the Delaware River!"
+    },
+    {
+      "id": "adult_193",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "What trophy is the oldest professional sports trophy in North America, where every winning team's players get their names engraved on silver bands AND get a day with the cup?",
+      "options": [
+        "The NHL's Stanley Cup",
+        "The NFL's Vince Lombardi Trophy",
+        "MLB's Commissioner's Trophy",
+        "The NBA's Larry O'Brien Trophy"
+      ],
+      "correctIndex": 0,
+      "funFact": "Donated by Lord Stanley of Preston in 1892!"
+    },
+    {
+      "id": "adult_194",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "At the 1980 Winter Olympics in Lake Placid, what historic upset became known as the \"Miracle on Ice\"?",
+      "options": [
+        "Eddie the Eagle won the ski jump",
+        "The US college men's hockey team defeated the 4-time defending gold medalist Soviet Union",
+        "A figure skater landed the first quintuple axel",
+        "The Jamaican Bobsled team won gold"
+      ],
+      "correctIndex": 1,
+      "funFact": "\"Do you believe in miracles? YES!\""
+    },
+    {
+      "id": "adult_195",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "In golf, what is it called when you score 3 strokes under par on a single hole (even rarer than an Eagle)?",
+      "options": [
+        "A Pelican",
+        "A Condor",
+        "An Albatross (or Double Eagle)",
+        "A Falcon"
+      ],
+      "correctIndex": 2,
+      "funFact": "And 4 strokes under par (like a hole-in-one on a par 5) is called a Condor!"
+    },
+    {
+      "id": "adult_196",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "How high above the hardwood court is a regulation NBA or NCAA basketball hoop rim?",
+      "options": [
+        "9 feet 6 inches",
+        "11 feet",
+        "10 feet 6 inches",
+        "Exactly 10 feet (3.05 meters)"
+      ],
+      "correctIndex": 3,
+      "funFact": "Because James Naismith nailed the original peach baskets to the 10-foot gymnasium balcony railing in 1891!"
+    },
+    {
+      "id": "adult_197",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "Which race is the first jewel of American horse racing's Triple Crown, held on the first Saturday in May at Churchill Downs?",
+      "options": [
+        "The Kentucky Derby",
+        "The Belmont Stakes",
+        "The Breeders' Cup",
+        "The Preakness Stakes"
+      ],
+      "correctIndex": 0,
+      "funFact": "Known as \"The Most Exciting Two Minutes in Sports\" and the \"Run for the Roses\"!"
+    },
+    {
+      "id": "adult_198",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "In the Tour de France cycling race, what color jersey is worn each day by the overall time leader?",
+      "options": [
+        "The Rainbow Jersey",
+        "The Yellow Jersey (Maillot Jaune)",
+        "The Polka-Dot Jersey",
+        "The Green Jersey"
+      ],
+      "correctIndex": 1,
+      "funFact": "While the Polka-Dot Jersey goes to the \"King of the Mountains\" climber!"
+    },
+    {
+      "id": "adult_199",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "What sport is played at Wimbledon on grass courts where players must wear almost 100% white attire and fans eat strawberries and cream?",
+      "options": [
+        "Croquet",
+        "Cricket",
+        "Lawn Tennis",
+        "Polo"
+      ],
+      "correctIndex": 2,
+      "funFact": "Held at the All England Club in London since 1877!"
+    },
+    {
+      "id": "adult_200",
+      "tier": "ADULT",
+      "category": "Sports & Olympics",
+      "prompt": "Which Jamaican sprinter holds the world records in both the 100-meter dash (9.58s) and 200-meter dash (19.19s)?",
+      "options": [
+        "Jesse Owens",
+        "Noah Lyles",
+        "Carl Lewis",
+        "Usain Bolt"
+      ],
+      "correctIndex": 3,
+      "funFact": "His top foot speed reached nearly 28 mph!"
+    },
+    {
+      "id": "adult_201",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which animal produces cube-shaped poop so it doesn't roll off rocks and logs when marking its territory?",
+      "options": [
+        "The Wombat",
+        "The Koala",
+        "The Capybara",
+        "The Platypus"
+      ],
+      "correctIndex": 0,
+      "funFact": "Scientists won an Ig Nobel Prize for discovering how wombat intestines mold flat sides!"
+    },
+    {
+      "id": "adult_202",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "How many hearts and what color blood does a giant Pacific octopus have?",
+      "options": [
+        "1 heart and Green blood",
+        "3 hearts and bright Blue blood",
+        "2 hearts and Red blood",
+        "8 hearts (one per arm) and Purple blood"
+      ],
+      "correctIndex": 1,
+      "funFact": "Two hearts pump blood to the gills, one pumps to the body, and copper-based hemocyanin turns its blood blue!"
+    },
+    {
+      "id": "adult_203",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which bird is the only bird in the world that can fly backward, upside down, and hover in mid-air?",
+      "options": [
+        "The Barn Swallow",
+        "The Puffin",
+        "The Hummingbird",
+        "The Kingfisher"
+      ],
+      "correctIndex": 2,
+      "funFact": "Their wings beat in a figure-eight pattern up to 80 times per second!"
+    },
+    {
+      "id": "adult_204",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "What is the only mammal capable of true sustained flight?",
+      "options": [
+        "Colugos",
+        "Flying Squirrels",
+        "Sugar Gliders",
+        "Bats"
+      ],
+      "correctIndex": 3,
+      "funFact": "Flying squirrels only glide—bats have wing bones shaped just like elongated human fingers!"
+    },
+    {
+      "id": "adult_205",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Why are flamingos pink?",
+      "options": [
+        "From carotenoid pigments in the brine shrimp and blue-green algae they eat",
+        "From sunburn in tropical lagoons",
+        "From pink mineral clay they rub on their feathers",
+        "They are born bright neon pink inside pink eggs"
+      ],
+      "correctIndex": 0,
+      "funFact": "Flamingo chicks hatch with soft gray-white feathers!"
+    },
+    {
+      "id": "adult_206",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which metal is the only one that is a liquid at standard room temperature (alongside the non-metal bromine)?",
+      "options": [
+        "Cesium",
+        "Mercury (Quicksilver)",
+        "Titanium",
+        "Gallium"
+      ],
+      "correctIndex": 1,
+      "funFact": "Gallium melts at 85.6°F (29.7°C), so it stays solid on a table but melts right in your hand!"
+    },
+    {
+      "id": "adult_207",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "What is the loudest animal on Earth relative to body size—and what is the loudest animal overall?",
+      "options": [
+        "The Peacock & the Hippopotamus",
+        "The Howler Monkey & the African Lion",
+        "The Pistol Shrimp (snaps a 218-dB plasma bubble) & the Sperm Whale (230-dB clicks)",
+        "The Cicada & the African Elephant"
+      ],
+      "correctIndex": 2,
+      "funFact": "When a pistol shrimp snaps its claw shut, the cavitation bubble briefly flashes as hot as the surface of the Sun!"
+    },
+    {
+      "id": "adult_208",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which tree species in California includes \"Hyperion\" (the tallest living tree at 380 ft) and \"General Sherman\" (the largest by volume)?",
+      "options": [
+        "Douglas Firs",
+        "Bristlecone Pines",
+        "Baobab Trees",
+        "Coast Redwoods & Giant Sequoias"
+      ],
+      "correctIndex": 3,
+      "funFact": "While a Bristlecone Pine named Methuselah is the oldest individual tree at over 4,850 years old!"
+    },
+    {
+      "id": "adult_209",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "What animal is the national animal of Scotland?",
+      "options": [
+        "The Unicorn",
+        "The Loch Ness Monster",
+        "The Golden Eagle",
+        "The Highland Cow"
+      ],
+      "correctIndex": 0,
+      "funFact": "The Unicorn has been a Scottish heraldic symbol of purity and untamable strength since the 1300s!"
+    },
+    {
+      "id": "adult_210",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "How do honeybees communicate the exact direction and distance of a patch of flowers to the rest of the hive?",
+      "options": [
+        "By tapping antennae in Morse code",
+        "By performing a figure-eight \"Waggle Dance\"",
+        "By humming in different musical keys",
+        "By leaving a trail of pollen crumbs"
+      ],
+      "correctIndex": 1,
+      "funFact": "The angle of the waggle relative to straight up on the honeycomb matches the angle to the Sun!"
+    },
+    {
+      "id": "adult_211",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which semi-aquatic Australian mammal has a duck bill, beaver tail, otter feet, lays eggs, glows blue-green under UV light, and senses electricity?",
+      "options": [
+        "The Echidna",
+        "The Quokka",
+        "The Platypus",
+        "The Tasmanian Devil"
+      ],
+      "correctIndex": 2,
+      "funFact": "When British scientists first saw a preserved platypus in 1799, they thought someone had sewn a duck beak onto a beaver as a prank!"
+    },
+    {
+      "id": "adult_212",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "What percentage of a banana's DNA is shared with human beings (in terms of homologous protein-coding genes)?",
+      "options": [
+        "99.9%",
+        "12%",
+        "0.5%",
+        "Roughly 50% to 60%"
+      ],
+      "correctIndex": 3,
+      "funFact": "Because all living cells share ancient housekeeping genes for cell division and energy!"
+    },
+    {
+      "id": "adult_213",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which animal has the highest blood pressure in the animal kingdom (twice that of humans) so it can pump blood up its 6-foot neck to its brain?",
+      "options": [
+        "The Giraffe",
+        "The Cheetah",
+        "The Blue Whale",
+        "The Ostrich"
+      ],
+      "correctIndex": 0,
+      "funFact": "Giraffes also have super-tight skin on their lower legs that acts like astronaut G-suit compression socks!"
+    },
+    {
+      "id": "adult_214",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "What happens to water when it freezes into ice that is unusual compared to almost all other liquids?",
+      "options": [
+        "It shrinks by 20% and sinks",
+        "It expands by about 9% and becomes less dense, allowing ice to float",
+        "It becomes magnetic",
+        "It loses 10% of its mass"
+      ],
+      "correctIndex": 1,
+      "funFact": "If ice sank instead of floating, lakes and oceans would freeze solid from the bottom up!"
+    },
+    {
+      "id": "adult_215",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which microscopic, eight-legged \"water bear\" can survive boiling water, Antarctic ice, crushing ocean trenches, and the vacuum of outer space?",
+      "options": [
+        "The Paramecium",
+        "The Krill",
+        "The Tardigrade",
+        "The Amoeba"
+      ],
+      "correctIndex": 2,
+      "funFact": "Tardigrades curl into a dry \"tun\" state and can revive after decades without water!"
+    },
+    {
+      "id": "adult_216",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "How do sea otters keep from drifting apart while sleeping floating on their backs in kelp forests?",
+      "options": [
+        "They swim in circles while half-asleep",
+        "They link their tails together",
+        "They anchor onto rocks with their teeth",
+        "They hold paws with each other (and wrap themselves in kelp ribbons)"
+      ],
+      "correctIndex": 3,
+      "funFact": "A group of resting sea otters floating together is called a \"raft\"!"
+    },
+    {
+      "id": "adult_217",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "What color is a polar bear's actual skin underneath its hollow, transparent fur coat?",
+      "options": [
+        "Jet Black",
+        "Snow White",
+        "Pink",
+        "Silver-Gray"
+      ],
+      "correctIndex": 0,
+      "funFact": "Their black skin absorbs warmth from sunlight passing through their translucent guard hairs!"
+    },
+    {
+      "id": "adult_218",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which planet-sized weather phenomenon produces bolts of air heated to 50,000°F—five times hotter than the surface of the Sun?",
+      "options": [
+        "A Waterspout",
+        "A Lightning Bolt",
+        "A dust devil",
+        "An Aurora Borealis curtain"
+      ],
+      "correctIndex": 1,
+      "funFact": " That sudden extreme heating causes the air to expand supersonically, creating the boom of thunder!"
+    },
+    {
+      "id": "adult_219",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "How many brains does an earthworm have, and how many noses does a slug have?",
+      "options": [
+        "Earthworms have 0 brains; slugs have 8 noses",
+        "Earthworms have 10 brains; slugs have 0 noses",
+        "Earthworms have 1 brain (and 5 aortic arches); slugs have 4 noses (tentacles)",
+        "Earthworms have 2 brains; slugs have 2 noses"
+      ],
+      "correctIndex": 2,
+      "funFact": "And if you cut an earthworm in half, it does NOT become two worms—only the front head end can survive!"
+    },
+    {
+      "id": "adult_220",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which bird has eyeballs so large that they are bigger than its brain and completely fixed in its skull, requiring it to turn its head 270 degrees?",
+      "options": [
+        "The Ostrich",
+        "TheBald Eagle",
+        "The Toucan",
+        "The Owl"
+      ],
+      "correctIndex": 3,
+      "funFact": "And an ostrich's eye is two inches across—bigger than its brain AND larger than any land mammal's eye!"
+    },
+    {
+      "id": "adult_221",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "What is the hardest naturally occurring substance on Earth—and what biological material found in limpet sea-snail teeth is even stronger under tension?",
+      "options": [
+        "Diamond (hardest mineral) & Goethite nanofibers in Limpet teeth (strongest biological material)",
+        "Quartz & Shark Enamel",
+        "Obsidian & Turtle Shell",
+        "Titanium & Spider Silk"
+      ],
+      "correctIndex": 0,
+      "funFact": "Limpet sea snails use those ultra-strong microscopic teeth to scrape algae off rocky tidepools!"
+    },
+    {
+      "id": "adult_222",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Why do dogs have wet noses?",
+      "options": [
+        "To bounce sonar waves in the dark",
+        "A thin layer of mucus traps scent chemicals and evaporative cooling helps regulate temperature",
+        "Because they drink with their noses",
+        "To sense magnetic fields"
+      ],
+      "correctIndex": 1,
+      "funFact": "A dog's sense of smell is 10,000 to 100,000 times more sensitive than a human's!"
+    },
+    {
+      "id": "adult_223",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "Which ocean mammal has a 9-foot spiraled tusk that is actually an inside-out canine tooth packed with 10 million nerve endings?",
+      "options": [
+        "The Beluga Whale",
+        "The Walrus",
+        "The Narwhal (\"Unicorn of the Sea\")",
+        "The Dugong"
+      ],
+      "correctIndex": 2,
+      "funFact": "The real-life Unicorn of the Arctic Ocean!"
+    },
+    {
+      "id": "adult_224",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "How long does it take a three-toed sloth to digest a single meal of leaves?",
+      "options": [
+        "Exactly 12 hours",
+        "6 months",
+        "About 45 minutes",
+        "Up to 2 to 4 weeks"
+      ],
+      "correctIndex": 3,
+      "funFact": "Sloths move so slowly that green camouflage algae actually grows right in the grooves of their fur!"
+    },
+    {
+      "id": "adult_225",
+      "tier": "ADULT",
+      "category": "Nature & Science",
+      "prompt": "What is the largest living organism on Earth by total area and mass?",
+      "options": [
+        "A giant Honey Fungus mycelium network in Oregon (and Pando the Aspen grove in Utah)",
+        "A Giant Sequoia",
+        "A Blue Whale",
+        "The Great Barrier Reef"
+      ],
+      "correctIndex": 0,
+      "funFact": "Pando in Utah is a single male Quaking Aspen root system with 47,000 tree trunks weighing 6,000 tons!"
+    },
+    {
+      "id": "wyatt_001",
+      "tier": "WYATT_4YO",
+      "category": "Dinosaurs",
+      "prompt": "Which giant dinosaur had a huge mouth, tiny two-finger arms, and was the King of the Dinosaurs?",
+      "options": [
+        "🦖 T-Rex",
+        "🦕 Brachiosaurus",
+        "🐢 Sea Turtle",
+        "🐸 Bullfrog"
+      ],
+      "correctIndex": 0,
+      "funFact": "Roar! Tyrannosaurus Rex means Tyrant Lizard King!"
+    },
+    {
+      "id": "wyatt_002",
+      "tier": "WYATT_4YO",
+      "category": "Dinosaurs",
+      "prompt": "Which dinosaur had THREE sharp horns on its face and a big bony shield around its neck?",
+      "options": [
+        "🦅 Pterodactyl",
+        "🛡️ Triceratops",
+        "🐊 Crocodile",
+        "🦖 T-Rex"
+      ],
+      "correctIndex": 1,
+      "funFact": "Tri-cera-tops means three-horned face!"
+    },
+    {
+      "id": "wyatt_003",
+      "tier": "WYATT_4YO",
+      "category": "Dinosaurs",
+      "prompt": "Which gentle dinosaur had a super-duper LONG neck to munch leaves at the very top of tall trees?",
+      "options": [
+        "🐧 Penguin",
+        "🦖 Velociraptor",
+        "🦕 Brachiosaurus",
+        "🦀 Crab"
+      ],
+      "correctIndex": 2,
+      "funFact": "Brachiosaurus was as tall as a four-story building!"
+    },
+    {
+      "id": "wyatt_004",
+      "tier": "WYATT_4YO",
+      "category": "Dinosaurs",
+      "prompt": "Which dinosaur had rows of diamond-shaped plates along its back and spikes on its tail?",
+      "options": [
+        "🦖 T-Rex",
+        "🦈 Shark",
+        "🐎 Horse",
+        "🦕 Stegosaurus"
+      ],
+      "correctIndex": 3,
+      "funFact": "Those tail spikes are called a thagomizer!"
+    },
+    {
+      "id": "wyatt_005",
+      "tier": "WYATT_4YO",
+      "category": "Dinosaurs",
+      "prompt": "What flying reptile soared through the prehistoric skies on giant leathery wings?",
+      "options": [
+        "🦅 Pterodactyl",
+        "🐘 Elephant",
+        "🐄 Cow",
+        "🐢 Tortoise"
+      ],
+      "correctIndex": 0,
+      "funFact": "Swoosh! Pterosaurs ruled the skies!"
+    },
+    {
+      "id": "wyatt_006",
+      "tier": "WYATT_4YO",
+      "category": "Dinosaurs",
+      "prompt": "Which armored dinosaur had a heavy club on the end of its tail like a wrecking ball?",
+      "options": [
+        "🐇 Bunny",
+        "🛡️ Ankylosaurus",
+        "🦕 Diplodocus",
+        "🐍 Snake"
+      ],
+      "correctIndex": 1,
+      "funFact": "Ankylosaurus was built like a walking tank!"
+    },
+    {
+      "id": "wyatt_007",
+      "tier": "WYATT_4YO",
+      "category": "Dinosaurs",
+      "prompt": "What did baby dinosaurs hatch out of?",
+      "options": [
+        "🥥 Coconuts",
+        "🎃 Pumpkins",
+        "🥚 Dinosaur Eggs",
+        "🪨 Boulders"
+      ],
+      "correctIndex": 2,
+      "funFact": "Some dinosaur eggs were as big as footballs!"
+    },
+    {
+      "id": "wyatt_008",
+      "tier": "WYATT_4YO",
+      "category": "Dinosaurs",
+      "prompt": "What do we call a scientist who digs up dinosaur bones and fossils with brushes and hammers?",
+      "options": [
+        "🚒 Firefighter",
+        "🦷 Dentist",
+        "👨‍🍳 Chef",
+        "🦴 Paleontologist"
+      ],
+      "correctIndex": 3,
+      "funFact": "They uncover millions-of-years-old dino skeletons!"
+    },
+    {
+      "id": "wyatt_009",
+      "tier": "WYATT_4YO",
+      "category": "Space & Planets",
+      "prompt": "What blasts off into outer space with a giant fiery countdown: 3, 2, 1, LIFTOFF?",
+      "options": [
+        "🚀 Space Rocket",
+        "🛶 Canoe",
+        "🚲 Bicycle",
+        "🛹 Skateboard"
+      ],
+      "correctIndex": 0,
+      "funFact": "SpaceX Starship has 33 Raptor engines!"
+    },
+    {
+      "id": "wyatt_010",
+      "tier": "WYATT_4YO",
+      "category": "Space & Planets",
+      "prompt": "Which planet is famous for having giant, sparkling icy rings all around it?",
+      "options": [
+        "🌍 Earth",
+        "🪐 Saturn",
+        "🌕 The Moon",
+        "☁️ A Cloud"
+      ],
+      "correctIndex": 1,
+      "funFact": "Saturn's rings are made of billions of ice and rock chunks!"
+    },
+    {
+      "id": "wyatt_011",
+      "tier": "WYATT_4YO",
+      "category": "Space & Planets",
+      "prompt": "What shines brightly in the daytime sky to keep Planet Earth warm and help plants grow?",
+      "options": [
+        "🕯️ A Candle",
+        "💡 A Lightbulb",
+        "☀️ The Sun",
+        "🔦 A Flashlight"
+      ],
+      "correctIndex": 2,
+      "funFact": "The Sun is our very own star!"
+    },
+    {
+      "id": "wyatt_012",
+      "tier": "WYATT_4YO",
+      "category": "Space & Planets",
+      "prompt": "What do astronauts wear when they float outside their spaceship in outer space?",
+      "options": [
+        "🎩 A Top Hat",
+        "🩱 Swim Trunks",
+        "🧥 A Raincoat",
+        "👨‍🚀 A Spacesuit & Helmet"
+      ],
+      "correctIndex": 3,
+      "funFact": "With a jetpack and oxygen tank!"
+    },
+    {
+      "id": "wyatt_013",
+      "tier": "WYATT_4YO",
+      "category": "Space & Planets",
+      "prompt": "Which planet is known as the \"Red Planet\" where robot rovers drive around on rusty red rocks?",
+      "options": [
+        "🔴 Mars",
+        "🌍 Blue Earth",
+        "🧀 A Cheese Ball",
+        "🍉 A Watermelon"
+      ],
+      "correctIndex": 0,
+      "funFact": "Perseverance and Curiosity drive on Mars!"
+    },
+    {
+      "id": "wyatt_014",
+      "tier": "WYATT_4YO",
+      "category": "Space & Planets",
+      "prompt": "What glows in the nighttime sky and changes shape from a crescent banana to a big bright circle?",
+      "options": [
+        "🥞 A Pancake",
+        "🌕 The Moon",
+        "🎈 A Balloon",
+        "⚽ A Soccer Ball"
+      ],
+      "correctIndex": 1,
+      "funFact": "Twelve astronauts have walked on the Moon!"
+    },
+    {
+      "id": "wyatt_015",
+      "tier": "WYATT_4YO",
+      "category": "Space & Planets",
+      "prompt": "Why do astronauts float around inside a space station?",
+      "options": [
+        "🧲 Giant magnets",
+        "🎈 They are filled with helium",
+        "🌌 Zero-Gravity in Space",
+        "🦘 Invisible trampolines"
+      ],
+      "correctIndex": 2,
+      "funFact": "Everything floats in microgravity!"
+    },
+    {
+      "id": "wyatt_016",
+      "tier": "WYATT_4YO",
+      "category": "Space & Planets",
+      "prompt": "Which planet is the biggest giant planet in our whole solar system with a Great Red Spot storm?",
+      "options": [
+        "🪨 Mercury",
+        "🌑 Pluto",
+        "🎾 A Tennis Ball",
+        "🟠 Jupiter"
+      ],
+      "correctIndex": 3,
+      "funFact": "Over 1,300 Earths could fit inside Jupiter!"
+    },
+    {
+      "id": "wyatt_017",
+      "tier": "WYATT_4YO",
+      "category": "Construction & Vehicles",
+      "prompt": "Which big yellow construction truck has a long mechanical arm and a bucket for digging deep dirt holes?",
+      "options": [
+        "🏗️ Excavator",
+        "🍦 Ice Cream Truck",
+        "⛵ Sailboat",
+        "🚓 Police Car"
+      ],
+      "correctIndex": 0,
+      "funFact": "Scoop, lift, and dump!"
+    },
+    {
+      "id": "wyatt_018",
+      "tier": "WYATT_4YO",
+      "category": "Construction & Vehicles",
+      "prompt": "Which emergency vehicle has flashing red lights, a loud siren, a long ladder, and water hoses?",
+      "options": [
+        "🛷 Sled",
+        "🚒 Fire Truck",
+        "🚜 Farm Tractor",
+        "🛵 Scooter"
+      ],
+      "correctIndex": 1,
+      "funFact": "Wee-oo wee-oo! Firefighters to the rescue!"
+    },
+    {
+      "id": "wyatt_019",
+      "tier": "WYATT_4YO",
+      "category": "Construction & Vehicles",
+      "prompt": "Which heavy construction vehicle has a giant flat metal blade on the front for pushing piles of dirt and rocks?",
+      "options": [
+        "🏎️ Race Car",
+        "🚁 Helicopter",
+        "🚜 Bulldozer",
+        "🚲 Tricycle"
+      ],
+      "correctIndex": 2,
+      "funFact": "Bulldozers run on heavy steel caterpillar tracks!"
+    },
+    {
+      "id": "wyatt_020",
+      "tier": "WYATT_4YO",
+      "category": "Construction & Vehicles",
+      "prompt": "Which truck has a big spinning drum on the back to mix wet concrete for sidewalks?",
+      "options": [
+        "🚌 School Bus",
+        "🚕 Taxi",
+        "🚑 Ambulance",
+        "🚛 Cement Mixer"
+      ],
+      "correctIndex": 3,
+      "funFact": "The drum keeps spinning so the cement doesn't harden!"
+    },
+    {
+      "id": "wyatt_021",
+      "tier": "WYATT_4YO",
+      "category": "Construction & Vehicles",
+      "prompt": "What pulls a long line of freight cars along steel railroad tracks and goes \"CHOO-CHOO!\"?",
+      "options": [
+        "🚂 Train Locomotive",
+        "🛹 Skateboard",
+        "🛸 UFO",
+        "🚤 Speedboat"
+      ],
+      "correctIndex": 0,
+      "funFact": "Just like Grandpa's Clockwork Train Table!"
+    },
+    {
+      "id": "wyatt_022",
+      "tier": "WYATT_4YO",
+      "category": "Construction & Vehicles",
+      "prompt": "Which aircraft has spinning rotor blades on top so it can hover in one spot and land on a roof?",
+      "options": [
+        "🎈 Hot Air Balloon",
+        "🚁 Helicopter",
+        "🚂 Steam Train",
+        "🚚 Dump Truck"
+      ],
+      "correctIndex": 1,
+      "funFact": "Chopper blades spin super fast!"
+    },
+    {
+      "id": "wyatt_023",
+      "tier": "WYATT_4YO",
+      "category": "Construction & Vehicles",
+      "prompt": "Which truck tips its big back bed up in the air to pour out gravel, sand, or boulders?",
+      "options": [
+        "🛶 Rowboat",
+        "🦽 Shopping Cart",
+        "🚚 Dump Truck",
+        "🏎️ Formula 1 Car"
+      ],
+      "correctIndex": 2,
+      "funFact": "Beep-beep-beep, dump the load!"
+    },
+    {
+      "id": "wyatt_024",
+      "tier": "WYATT_4YO",
+      "category": "Construction & Vehicles",
+      "prompt": "What tall machine on a construction site uses a long steel cable and hook to lift heavy beams up to the top of a skyscraper?",
+      "options": [
+        "🎣 Fishing Rod",
+        "🧹 Broomstick",
+        "🪜 Step Stool",
+        "🏗️ Tower Crane"
+      ],
+      "correctIndex": 3,
+      "funFact": "Cranes build the tallest towers in the world!"
+    },
+    {
+      "id": "wyatt_025",
+      "tier": "WYATT_4YO",
+      "category": "Ocean & Wild Animals",
+      "prompt": "Which ocean animal has EIGHT wiggly tentacles with suction cups and can squirt dark ink?",
+      "options": [
+        "🐙 Octopus",
+        "🐠 Goldfish",
+        "🦆 Duck",
+        "🐸 Frog"
+      ],
+      "correctIndex": 0,
+      "funFact": "Octopuses are masters of camouflage!"
+    },
+    {
+      "id": "wyatt_026",
+      "tier": "WYATT_4YO",
+      "category": "Ocean & Wild Animals",
+      "prompt": "What is the biggest animal that has EVER lived on Earth—even bigger than the largest dinosaur?",
+      "options": [
+        "🐕 Puppy",
+        "🐋 Blue Whale",
+        "🐈 Kitten",
+        "🐁 Mouse"
+      ],
+      "correctIndex": 1,
+      "funFact": "A Blue Whale's heart is the size of a golf cart!"
+    },
+    {
+      "id": "wyatt_027",
+      "tier": "WYATT_4YO",
+      "category": "Ocean & Wild Animals",
+      "prompt": "Which fast ocean swimmer has a triangular fin on its back and rows of sharp teeth?",
+      "options": [
+        "🐌 Snail",
+        "🪼 Jellyfish",
+        "🦈 Great White Shark",
+        "⭐ Starfish"
+      ],
+      "correctIndex": 2,
+      "funFact": "Sharks have skeletons made of bendy cartilage!"
+    },
+    {
+      "id": "wyatt_028",
+      "tier": "WYATT_4YO",
+      "category": "Ocean & Wild Animals",
+      "prompt": "Which land animal can run faster than any other animal on Earth—as fast as a car on the highway?",
+      "options": [
+        "🐢 Tortoise",
+        "🦥 Sloth",
+        "🐌 Garden Snail",
+        "🐆 Cheetah"
+      ],
+      "correctIndex": 3,
+      "funFact": "A cheetah can sprint from 0 to 60 mph in three seconds!"
+    },
+    {
+      "id": "wyatt_029",
+      "tier": "WYATT_4YO",
+      "category": "Ocean & Wild Animals",
+      "prompt": "Which African animal is the tallest in the world with a super long neck and brown spots?",
+      "options": [
+        "🦒 Giraffe",
+        "🐖 Pig",
+        "🦔 Hedgehog",
+        "🦛 Hippo"
+      ],
+      "correctIndex": 0,
+      "funFact": "Even a giraffe's tongue is 18 inches long!"
+    },
+    {
+      "id": "wyatt_030",
+      "tier": "WYATT_4YO",
+      "category": "Ocean & Wild Animals",
+      "prompt": "Which largest land animal has big floppy ears, white tusks, and a long trunk it uses like a hose?",
+      "options": [
+        "🐿️ Squirrel",
+        "🐘 Elephant",
+        "🐒 Monkey",
+        "🦊 Fox"
+      ],
+      "correctIndex": 1,
+      "funFact": "Elephants can snorkel underwater using their trunks!"
+    },
+    {
+      "id": "wyatt_031",
+      "tier": "WYATT_4YO",
+      "category": "Ocean & Wild Animals",
+      "prompt": "Which black-and-white bird lives on the icy snow of Antarctica, cannot fly in the air, but swims like a torpedo underwater?",
+      "options": [
+        "🦜 Parrot",
+        "🦩 Flamingo",
+        "🐧 Penguin",
+        "🦅 Eagle"
+      ],
+      "correctIndex": 2,
+      "funFact": "Penguins toboggan across the ice on their bellies!"
+    },
+    {
+      "id": "wyatt_032",
+      "tier": "WYATT_4YO",
+      "category": "Ocean & Wild Animals",
+      "prompt": "Which ocean creature carries a hard shell on its back, has two big pinchers, and walks sideways on the beach?",
+      "options": [
+        "🦭 Seal",
+        "🐋 Whale",
+        "🐬 Dolphin",
+        "🦀 Crab"
+      ],
+      "correctIndex": 3,
+      "funFact": "Snap-snap go the crab claws!"
+    },
+    {
+      "id": "wyatt_033",
+      "tier": "WYATT_4YO",
+      "category": "Counting & Numbers",
+      "prompt": "If Wyatt has 2 Space Rockets and Sparky brings 2 MORE Space Rockets, how many rockets do they have in all?",
+      "options": [
+        "4️⃣ Four Rockets (2 + 2 = 4)",
+        "0️⃣ Zero Rockets",
+        "1️⃣ One Rocket",
+        "🔟 Ten Rockets"
+      ],
+      "correctIndex": 0,
+      "funFact": "Two plus two makes four!"
+    },
+    {
+      "id": "wyatt_034",
+      "tier": "WYATT_4YO",
+      "category": "Counting & Numbers",
+      "prompt": "How many wheels are on a regular family car or SUV?",
+      "options": [
+        "2️⃣ Two Wheels",
+        "4️⃣ Four Wheels",
+        "1️⃣ One Wheel",
+        "8️⃣ Eight Wheels"
+      ],
+      "correctIndex": 1,
+      "funFact": "Two in the front and two in the back!"
+    },
+    {
+      "id": "wyatt_035",
+      "tier": "WYATT_4YO",
+      "category": "Counting & Numbers",
+      "prompt": "How many fingers are on ONE of your hands (counting your thumb)?",
+      "options": [
+        "☝️ 1 Finger",
+        "🔟 100 Fingers",
+        "🖐️ 5 Fingers",
+        "✌️ 2 Fingers"
+      ],
+      "correctIndex": 2,
+      "funFact": "High five!"
+    },
+    {
+      "id": "wyatt_036",
+      "tier": "WYATT_4YO",
+      "category": "Counting & Numbers",
+      "prompt": "If you have 3 cookies and you eat 1 cookie, how many cookies are left on your plate?",
+      "options": [
+        "0️⃣ Zero Cookies",
+        "5️⃣ Five Cookies",
+        "9️⃣ Nine Cookies",
+        "2️⃣ Two Cookies (3 - 1 = 2)"
+      ],
+      "correctIndex": 3,
+      "funFact": "Three minus one leaves two delicious cookies!"
+    },
+    {
+      "id": "wyatt_037",
+      "tier": "WYATT_4YO",
+      "category": "Counting & Numbers",
+      "prompt": "What number comes right after 9 when you count up: 7, 8, 9, ...?",
+      "options": [
+        "🔟 10 (Ten)",
+        "3️⃣ 3 (Three)",
+        "1️⃣ 1 (One)",
+        "5️⃣ 5 (Five)"
+      ],
+      "correctIndex": 0,
+      "funFact": "Ten is a two-digit number!"
+    },
+    {
+      "id": "wyatt_038",
+      "tier": "WYATT_4YO",
+      "category": "Counting & Numbers",
+      "prompt": "How many sides and corners does a Triangle have?",
+      "options": [
+        "⬡ 6 Sides",
+        "🔺 3 Sides",
+        "⭕ 0 Sides",
+        "🟦 4 Sides"
+      ],
+      "correctIndex": 1,
+      "funFact": "Tri means three!"
+    },
+    {
+      "id": "wyatt_039",
+      "tier": "WYATT_4YO",
+      "category": "Counting & Numbers",
+      "prompt": "If Sparky has 4 golden stars and finds 1 more golden star, how many stars does Sparky have?",
+      "options": [
+        "⭐⭐⭐⭐⭐⭐⭐⭐ 8 Stars",
+        "⭐ 1 Star",
+        "⭐⭐⭐⭐⭐ 5 Stars (4 + 1 = 5)",
+        "⭐⭐ 2 Stars"
+      ],
+      "correctIndex": 2,
+      "funFact": "Four plus one equals five!"
+    },
+    {
+      "id": "wyatt_040",
+      "tier": "WYATT_4YO",
+      "category": "Counting & Numbers",
+      "prompt": "How many legs does a spider have on its web?",
+      "options": [
+        "🦵 2 Legs",
+        "🐕 4 Legs",
+        "🐍 0 Legs",
+        "🕷️ 8 Legs"
+      ],
+      "correctIndex": 3,
+      "funFact": "Insects have 6 legs, and spiders have 8 legs!"
+    },
+    {
+      "id": "wyatt_041",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "If you mix RED paint and YELLOW paint together on your palette, what color do you make?",
+      "options": [
+        "🟠 Orange",
+        "🟢 Green",
+        "⚫ Black",
+        "🟣 Purple"
+      ],
+      "correctIndex": 0,
+      "funFact": "Red plus Yellow makes bright FICSIT Orange!"
+    },
+    {
+      "id": "wyatt_042",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "If you mix BLUE paint and YELLOW paint together, what color do you get?",
+      "options": [
+        "🟤 Brown",
+        "🟢 Green",
+        "🔴 Red",
+        "🩷 Pink"
+      ],
+      "correctIndex": 1,
+      "funFact": "Blue plus Yellow makes Sparky's Emerald Green!"
+    },
+    {
+      "id": "wyatt_043",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "What pulls a ball back down to the ground when you throw it up in the air?",
+      "options": [
+        "🌬️ The Wind",
+        "🌈 A Rainbow",
+        "🌍 Gravity",
+        "☁️ Clouds"
+      ],
+      "correctIndex": 2,
+      "funFact": "Earth's gravity keeps our feet on the ground!"
+    },
+    {
+      "id": "wyatt_044",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "What metal object sticks to a fridge and pulls iron paperclips toward it with an invisible force?",
+      "options": [
+        "🪶 A Feather",
+        "🖍️ A Crayon",
+        "🧽 A Sponge",
+        "🧲 A Magnet"
+      ],
+      "correctIndex": 3,
+      "funFact": "Every magnet has a North pole and a South pole!"
+    },
+    {
+      "id": "wyatt_045",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "What happens to a cup of liquid water if you put it inside the cold freezer?",
+      "options": [
+        "🧊 It freezes into solid Ice",
+        "🎈 It floats away",
+        "🔥 It boils into steam",
+        "🍬 It turns into candy"
+      ],
+      "correctIndex": 0,
+      "funFact": "At 32 degrees Fahrenheit, water freezes into ice cubes!"
+    },
+    {
+      "id": "wyatt_046",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "What colorful arch appears in the sky when bright sunshine shines through raindrops?",
+      "options": [
+        "🌪️ A Tornado",
+        "🌈 A Rainbow",
+        "❄️ A Blizzard",
+        "☄️ A Comet"
+      ],
+      "correctIndex": 1,
+      "funFact": "Red, Orange, Yellow, Green, Blue, Indigo, Violet!"
+    },
+    {
+      "id": "wyatt_047",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "What does a caterpillar wrap itself inside before it transforms into a beautiful butterfly?",
+      "options": [
+        "🏠 A Birdhouse",
+        "🧤 A Mitten",
+        "🐛 A Chrysalis (Cocoon)",
+        "🐚 A Seashell"
+      ],
+      "correctIndex": 2,
+      "funFact": "That amazing transformation is called metamorphosis!"
+    },
+    {
+      "id": "wyatt_048",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "Which part of a tree drinks up water from the dirt underground and holds the tree steady in the wind?",
+      "options": [
+        "🪺 The Bird Nest",
+        "🍎 The Apples",
+        "🍂 The Top Leaves",
+        "🌱 The Roots"
+      ],
+      "correctIndex": 3,
+      "funFact": "Tree roots spread wide and deep underground!"
+    },
+    {
+      "id": "wyatt_049",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "Who is Wyatt's friendly emerald-and-gold cloud dragon sidekick in the Arcade?",
+      "options": [
+        "🐉 Sparky the Dragon",
+        "🦈 Bruce the Shark",
+        "🦖 Rex the Dino",
+        "🤖 Robo-Bot"
+      ],
+      "correctIndex": 0,
+      "funFact": "Sparky loves flying through clouds and breathing golden sparkles!"
+    },
+    {
+      "id": "wyatt_050",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "What color traffic light tells cars to GO?",
+      "options": [
+        "🟡 Yellow Light",
+        "🟢 Green Light",
+        "🟣 Purple Light",
+        "🔴 Red Light"
+      ],
+      "correctIndex": 1,
+      "funFact": "Red means Stop, Yellow means Slow Down, Green means Go!"
+    },
+    {
+      "id": "wyatt_051",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "Which tool has a magnifying glass lens that makes tiny bugs and curio treasures look HUGE?",
+      "options": [
+        "🪥 Toothbrush",
+        "🔨 Hammer",
+        "🔍 Magnifying Glass",
+        "🥄 Spoon"
+      ],
+      "correctIndex": 2,
+      "funFact": "Just like in the I Spy Curio Cabinet!"
+    },
+    {
+      "id": "wyatt_052",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "What do bees collect from flowers to make sweet golden honey inside their beehive?",
+      "options": [
+        "🪨 Pebbles",
+        "🌧️ Raindrops",
+        "❄️ Snowflakes",
+        "🌸 Flower Nectar & Pollen"
+      ],
+      "correctIndex": 3,
+      "funFact": "Busy bees visit thousands of flowers every day!"
+    },
+    {
+      "id": "wyatt_053",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "Which shape is completely round like a wheel, a coin, or a full Moon with zero corners?",
+      "options": [
+        "⭕ Circle",
+        "🔺 Triangle",
+        "⭐ Star",
+        "🟦 Square"
+      ],
+      "correctIndex": 0,
+      "funFact": "Circles roll smoothly down ramps!"
+    },
+    {
+      "id": "wyatt_054",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "What animal hops on strong back legs, has long ears, and loves crunching orange carrots?",
+      "options": [
+        "🐠 Fish",
+        "🐰 Bunny Rabbit",
+        "🐢 Turtle",
+        "🐍 Snake"
+      ],
+      "correctIndex": 1,
+      "funFact": "Just like Wyatt's awesome bunny ears!"
+    },
+    {
+      "id": "wyatt_055",
+      "tier": "WYATT_4YO",
+      "category": "Science, Colors & Action",
+      "prompt": "When a space rocket blasts hot fire out of the bottom nozzles, which way does the rocket go?",
+      "options": [
+        "⬇️ Down into the dirt",
+        "🔄 Sideways in a circle",
+        "⬆️ Straight UP into the sky!",
+        "🛑 Nowhere"
+      ],
+      "correctIndex": 2,
+      "funFact": "Action and reaction push the rocket up into orbit!"
+    },
+    {
+      "id": "emma_001",
+      "tier": "EMMA_3YO",
+      "category": "Magical & Unicorns",
+      "prompt": "Emma, tap the magical UNICORN with the sparkly horn!",
+      "options": [
+        "🦄 Unicorn",
+        "🐸 Frog",
+        "🚜 Tractor",
+        "🥦 Broccoli"
+      ],
+      "correctIndex": 0,
+      "funFact": "Neigh and sparkle! Space Princess Emma loves unicorns!"
+    },
+    {
+      "id": "emma_002",
+      "tier": "EMMA_3YO",
+      "category": "Magical & Unicorns",
+      "prompt": "Which one is a shiny golden CROWN for a Princess?",
+      "options": [
+        "🪣 Bucket",
+        "👑 Crown",
+        "☂️ Umbrella",
+        "👟 Sneaker"
+      ],
+      "correctIndex": 1,
+      "funFact": "Fit for Princess Emma!"
+    },
+    {
+      "id": "emma_003",
+      "tier": "EMMA_3YO",
+      "category": "Magical & Unicorns",
+      "prompt": "Tap the colorful RAINBOW in the sky!",
+      "options": [
+        "🥄 Spoon",
+        "🪨 Rock",
+        "🌈 Rainbow",
+        "📦 Cardboard Box"
+      ],
+      "correctIndex": 2,
+      "funFact": "So many pretty rainbow colors!"
+    },
+    {
+      "id": "emma_004",
+      "tier": "EMMA_3YO",
+      "category": "Magical & Unicorns",
+      "prompt": "Which one is a glowing golden STAR in the night sky?",
+      "options": [
+        "🥔 Potato",
+        "🧦 Sock",
+        "🧹 Broom",
+        "⭐ Gold Star"
+      ],
+      "correctIndex": 3,
+      "funFact": "Twinkle, twinkle, little star!"
+    },
+    {
+      "id": "emma_005",
+      "tier": "EMMA_3YO",
+      "category": "Magical & Unicorns",
+      "prompt": "Who is Emma's fluffy white puppy sidekick?",
+      "options": [
+        "🐶 Fluffy Doggie",
+        "🦉 Hoot Owl",
+        "🐢 Green Turtle",
+        "🦀 Red Crab"
+      ],
+      "correctIndex": 0,
+      "funFact": "Woof! Doggie wags his tail for Emma!"
+    },
+    {
+      "id": "emma_006",
+      "tier": "EMMA_3YO",
+      "category": "Magical & Unicorns",
+      "prompt": "Tap the pretty pink BUTTERFLY with wings!",
+      "options": [
+        "🧱 Brick",
+        "🦋 Butterfly",
+        "🪨 Boulder",
+        "🛞 Tire"
+      ],
+      "correctIndex": 1,
+      "funFact": "Flutter, flutter go the butterfly wings!"
+    },
+    {
+      "id": "emma_007",
+      "tier": "EMMA_3YO",
+      "category": "Magical & Unicorns",
+      "prompt": "Which one is a magical FAIRY WAND / SPARKLE HEART?",
+      "options": [
+        "🔧 Wrench",
+        "🪣 Mop Bucket",
+        "💖 Sparkle Heart",
+        "📎 Paperclip"
+      ],
+      "correctIndex": 2,
+      "funFact": "Bibbidi-bobbidi-sparkle!"
+    },
+    {
+      "id": "emma_008",
+      "tier": "EMMA_3YO",
+      "category": "Magical & Unicorns",
+      "prompt": "Tap the royal CASTLE with tall towers!",
+      "options": [
+        "🗑️ Trash Can",
+        "📮 Mailbox",
+        "⛺ Tent",
+        "🏰 Royal Castle"
+      ],
+      "correctIndex": 3,
+      "funFact": "Welcome to Princess Emma's Unicorn Castle!"
+    },
+    {
+      "id": "emma_009",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which animal says \"MOO\" and gives us milk on the farm?",
+      "options": [
+        "🐮 Cow",
+        "🐟 Fish",
+        "🐸 Frog",
+        "🐝 Bumblebee"
+      ],
+      "correctIndex": 0,
+      "funFact": "Moooo says the friendly farm cow!"
+    },
+    {
+      "id": "emma_010",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which little green animal hops on lily pads and says \"RIBBIT, RIBBIT\"?",
+      "options": [
+        "🦁 Lion",
+        "🐸 Frog",
+        "🐘 Elephant",
+        "🦒 Giraffe"
+      ],
+      "correctIndex": 1,
+      "funFact": "Ribbit-ribbit, hop-hop!"
+    },
+    {
+      "id": "emma_011",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which yellow bird swims on the pond and says \"QUACK, QUACK\"?",
+      "options": [
+        "🐒 Monkey",
+        "🦊 Fox",
+        "🦆 Duck",
+        "🐻 Bear"
+      ],
+      "correctIndex": 2,
+      "funFact": "Quack-quack! Ducks love splashing in water!"
+    },
+    {
+      "id": "emma_012",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which furry pet purrs softly and says \"MEOW\"?",
+      "options": [
+        "🐓 Rooster",
+        "🐷 Piggy",
+        "🐴 Horse",
+        "🐱 Kitty Cat"
+      ],
+      "correctIndex": 3,
+      "funFact": "Meow, purr-purr!"
+    },
+    {
+      "id": "emma_013",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which pink farm animal rolls in the mud and says \"OINK, OINK\"?",
+      "options": [
+        "🐷 Piggy",
+        "🦅 Eagle",
+        "🐍 Snake",
+        "🦈 Shark"
+      ],
+      "correctIndex": 0,
+      "funFact": "Oink-oink!"
+    },
+    {
+      "id": "emma_014",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which animal has a big fluffy mane and gives a mighty \"ROAR\"?",
+      "options": [
+        "🐥 Baby Chick",
+        "🦁 Lion",
+        "🐌 Snail",
+        "🐰 Bunny"
+      ],
+      "correctIndex": 1,
+      "funFact": "Roar goes the Lion!"
+    },
+    {
+      "id": "emma_015",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which silly animal loves climbing trees, eating bananas, and saying \"OOOH-OOOH AAH-AAH\"?",
+      "options": [
+        "🦀 Crab",
+        "🐢 Turtle",
+        "🐵 Monkey",
+        "🐟 Goldfish"
+      ],
+      "correctIndex": 2,
+      "funFact": "Monkeys swing from branch to branch!"
+    },
+    {
+      "id": "emma_016",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which fluffy white farm animal has soft wool and says \"BAA, BAA\"?",
+      "options": [
+        "🐊 Alligator",
+        "🦉 Owl",
+        "🐝 Bee",
+        "🐑 Sheep"
+      ],
+      "correctIndex": 3,
+      "funFact": "Baa, baa, fluffy sheep!"
+    },
+    {
+      "id": "emma_017",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which night bird sits up in a tree with big round eyes and says \"HOOT, HOOT\"?",
+      "options": [
+        "🦉 Owl",
+        "🐄 Cow",
+        "🐕 Dog",
+        "🐖 Pig"
+      ],
+      "correctIndex": 0,
+      "funFact": "Hoot-hoot in the moonlight!"
+    },
+    {
+      "id": "emma_018",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which striped buzzing insect flies from flower to flower and says \"BZZZZ\"?",
+      "options": [
+        "🐧 Penguin",
+        "🐝 Bumblebee",
+        "🐘 Elephant",
+        "🐎 Horse"
+      ],
+      "correctIndex": 1,
+      "funFact": "Bzzzz goes the busy bee!"
+    },
+    {
+      "id": "emma_019",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which animal gallops across the meadow and says \"NEIGH\"?",
+      "options": [
+        "🐸 Frog",
+        "🐠 Fish",
+        "🐴 Horse",
+        "🦀 Crab"
+      ],
+      "correctIndex": 2,
+      "funFact": "Giddy-up, horsey!"
+    },
+    {
+      "id": "emma_020",
+      "tier": "EMMA_3YO",
+      "category": "Animal Sounds & Friends",
+      "prompt": "Which cute hopping animal has long floppy ears and wiggles its little nose?",
+      "options": [
+        "🐙 Octopus",
+        "🐊 Crocodile",
+        "🦈 Shark",
+        "🐰 Bunny Rabbit"
+      ],
+      "correctIndex": 3,
+      "funFact": "Hop, hop, little bunny!"
+    },
+    {
+      "id": "emma_021",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Tap the sweet red STRAWBERRY!",
+      "options": [
+        "🍓 Strawberry",
+        "🥨 Pretzel",
+        "🥦 Broccoli",
+        "🧀 Cheese"
+      ],
+      "correctIndex": 0,
+      "funFact": "Yum! Juicy red strawberries!"
+    },
+    {
+      "id": "emma_022",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Which yummy treat is an ICE CREAM CONE?",
+      "options": [
+        "🥕 Carrot",
+        "🍦 Ice Cream Cone",
+        "🌽 Corn Cob",
+        "🥬 Lettuce"
+      ],
+      "correctIndex": 1,
+      "funFact": "Cold and sweet ice cream!"
+    },
+    {
+      "id": "emma_023",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Tap the yellow fruit that monkeys love to peel and eat: a BANANA!",
+      "options": [
+        "🍇 Purple Grapes",
+        "🍉 Watermelon",
+        "🍌 Banana",
+        "🍎 Red Apple"
+      ],
+      "correctIndex": 2,
+      "funFact": "Peel the yellow banana!"
+    },
+    {
+      "id": "emma_024",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Which one is a birthday CUPCAKE with frosting on top?",
+      "options": [
+        "🥔 Potato",
+        "🥪 Sandwich",
+        "🥚 Egg",
+        "🧁 Cupcake"
+      ],
+      "correctIndex": 3,
+      "funFact": "Happy tea party cupcake!"
+    },
+    {
+      "id": "emma_025",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Tap the crunchy red APPLE that grows on an apple tree!",
+      "options": [
+        "🍎 Red Apple",
+        "🍕 Pizza Slice",
+        "🌭 Hot Dog",
+        "🍿 Popcorn"
+      ],
+      "correctIndex": 0,
+      "funFact": "Crunch! A shiny red apple!"
+    },
+    {
+      "id": "emma_026",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Which one is a warm cheesy slice of PIZZA?",
+      "options": [
+        "🍍 Pineapple",
+        "🍕 Pizza",
+        "🥥 Coconut",
+        "🍉 Watermelon"
+      ],
+      "correctIndex": 1,
+      "funFact": "Mamma mia, yummy pizza!"
+    },
+    {
+      "id": "emma_027",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Tap the chocolate chip COOKIE!",
+      "options": [
+        "🧄 Garlic",
+        "🥒 Cucumber",
+        "🍪 Cookie",
+        "🧅 Onion"
+      ],
+      "correctIndex": 2,
+      "funFact": "Cookies and milk!"
+    },
+    {
+      "id": "emma_028",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Which orange vegetable grows in the garden and bunnies love to crunch?",
+      "options": [
+        "🫐 Blueberries",
+        "🍌 Banana",
+        "🥨 Pretzel",
+        "🥕 Orange Carrot"
+      ],
+      "correctIndex": 3,
+      "funFact": "Crunch-crunch goes the orange carrot!"
+    },
+    {
+      "id": "emma_029",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Tap the big green-and-pink slice of juicy WATERMELON!",
+      "options": [
+        "🍉 Watermelon",
+        "🥞 Pancakes",
+        "🧇 Waffle",
+        "🍞 Bread Loaf"
+      ],
+      "correctIndex": 0,
+      "funFact": "So refreshing on a sunny summer day!"
+    },
+    {
+      "id": "emma_030",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Which one is a stack of warm breakfast PANCAKES with butter and syrup?",
+      "options": [
+        "🌶️ Chili Pepper",
+        "🥞 Pancakes",
+        "🥦 Broccoli",
+        "🍋 Sour Lemon"
+      ],
+      "correctIndex": 1,
+      "funFact": "Yummy breakfast pancakes!"
+    },
+    {
+      "id": "emma_031",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Tap the purple bunch of GRAPES!",
+      "options": [
+        "🥕 Carrot",
+        "🌽 Corn",
+        "🍇 Purple Grapes",
+        "🧀 Cheese"
+      ],
+      "correctIndex": 2,
+      "funFact": "Sweet purple grapes!"
+    },
+    {
+      "id": "emma_032",
+      "tier": "EMMA_3YO",
+      "category": "Yummy Foods & Treats",
+      "prompt": "Which treat has a hole in the middle and pink frosting sprinkles: a DONUT?",
+      "options": [
+        "🥣 Soup Bowl",
+        "🍙 Rice Ball",
+        "🥗 Green Salad",
+        "🍩 Sprinkled Donut"
+      ],
+      "correctIndex": 3,
+      "funFact": "Yum, a pink sprinkled donut!"
+    },
+    {
+      "id": "emma_033",
+      "tier": "EMMA_3YO",
+      "category": "Colors, Weather & Nature",
+      "prompt": "What shines bright and warm in the blue sky on a sunny summer day?",
+      "options": [
+        "☀️ Bright Sun",
+        "🦇 Bat",
+        "⛄ Snowman",
+        "🌙 Crescent Moon"
+      ],
+      "correctIndex": 0,
+      "funFact": "Put on your sunglasses!"
+    },
+    {
+      "id": "emma_034",
+      "tier": "EMMA_3YO",
+      "category": "Colors, Weather & Nature",
+      "prompt": "What do you hold over your head to stay dry when raindrops fall from the clouds?",
+      "options": [
+        "🕶️ Sunglasses",
+        "☔ Umbrella",
+        "🛼 Roller Skate",
+        "🎸 Guitar"
+      ],
+      "correctIndex": 1,
+      "funFact": "Pitter-patter goes the rain!"
+    },
+    {
+      "id": "emma_035",
+      "tier": "EMMA_3YO",
+      "category": "Colors, Weather & Nature",
+      "prompt": "Tap the frosty white SNOWMAN with a carrot nose!",
+      "options": [
+        "🌵 Cactus",
+        "🌻 Sunflower",
+        "⛄ Snowman",
+        "🌴 Palm Tree"
+      ],
+      "correctIndex": 2,
+      "funFact": "Brrr! Built out of three big snowballs!"
+    },
+    {
+      "id": "emma_036",
+      "tier": "EMMA_3YO",
+      "category": "Colors, Weather & Nature",
+      "prompt": "Which one is a pretty pink FLOWER blooming in the garden?",
+      "options": [
+        "🛞 Car Tire",
+        "🪨 Gray Rock",
+        "🪵 Wooden Log",
+        "🌸 Pink Flower"
+      ],
+      "correctIndex": 3,
+      "funFact": "Smell the pretty spring flowers!"
+    },
+    {
+      "id": "emma_037",
+      "tier": "EMMA_3YO",
+      "category": "Colors, Weather & Nature",
+      "prompt": "Tap the tall green PINE TREE from the forest!",
+      "options": [
+        "🌲 Green Tree",
+        "🍄 Red Mushroom",
+        "🐚 Seashell",
+        "🪶 Feather"
+      ],
+      "correctIndex": 0,
+      "funFact": "Tall and green in the woods!"
+    },
+    {
+      "id": "emma_038",
+      "tier": "EMMA_3YO",
+      "category": "Colors, Weather & Nature",
+      "prompt": "Which one do you find in the sand at the ocean beach: a SEASHELL?",
+      "options": [
+        "🚜 Tractor",
+        "🐚 Seashell",
+        "🛏️ Bed",
+        "⛄ Snowman"
+      ],
+      "correctIndex": 1,
+      "funFact": "Hold it up to your ear to hear the ocean waves!"
+    },
+    {
+      "id": "emma_039",
+      "tier": "EMMA_3YO",
+      "category": "Colors, Weather & Nature",
+      "prompt": "Tap the big orange PUMPKIN from the pumpkin patch!",
+      "options": [
+        "🥝 Green Kiwi",
+        "🫐 Blueberry",
+        "🎃 Orange Pumpkin",
+        "🍋 Yellow Lemon"
+      ],
+      "correctIndex": 2,
+      "funFact": "A big round orange pumpkin!"
+    },
+    {
+      "id": "emma_040",
+      "tier": "EMMA_3YO",
+      "category": "Colors, Weather & Nature",
+      "prompt": "What white, fluffy things float across the blue daytime sky?",
+      "options": [
+        "🪨 Heavy Rocks",
+        "🪑 Chairs",
+        "📚 Books",
+        "☁️ Fluffy Clouds"
+      ],
+      "correctIndex": 3,
+      "funFact": "Sparky loves zooming through fluffy clouds!"
+    },
+    {
+      "id": "emma_041",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Which toy floats in the air on a string at a birthday party: a red BALLOON?",
+      "options": [
+        "🎈 Red Balloon",
+        "🪨 Rock",
+        "🧱 Brick",
+        "🔨 Heavy Hammer"
+      ],
+      "correctIndex": 0,
+      "funFact": "Pop! Up floats the red balloon!"
+    },
+    {
+      "id": "emma_042",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Tap the cuddly brown TEDDY BEAR!",
+      "options": [
+        "🔦 Flashlight",
+        "🧸 Teddy Bear",
+        "⏰ Alarm Clock",
+        "📞 Telephone"
+      ],
+      "correctIndex": 1,
+      "funFact": "Give the soft teddy bear a big hug!"
+    },
+    {
+      "id": "emma_043",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "What do you put on your feet before you go outside to run and play?",
+      "options": [
+        "🧤 Mittens",
+        "🎩 Hat",
+        "👟 Shoes / Sneakers",
+        "🧣 Scarf"
+      ],
+      "correctIndex": 2,
+      "funFact": "Tie your shoes and let's go play!"
+    },
+    {
+      "id": "emma_044",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Which one is a colorful wrapped BIRTHDAY PRESENT with a ribbon bow?",
+      "options": [
+        "🪣 Bucket",
+        "📦 Empty Box",
+        "🗑️ Trash Can",
+        "🎁 Gift Box"
+      ],
+      "correctIndex": 3,
+      "funFact": "Surprise! Open the present!"
+    },
+    {
+      "id": "emma_045",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "What do we read together at bedtime with pictures and stories inside?",
+      "options": [
+        "📖 Storybook",
+        "🧽 Sponge",
+        "🍳 Frying Pan",
+        "🧹 Broom"
+      ],
+      "correctIndex": 0,
+      "funFact": "Once upon a time!"
+    },
+    {
+      "id": "emma_046",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Tap the round black-and-white SOCCER BALL that you kick across the grass!",
+      "options": [
+        "🎸 Guitar",
+        "⚽ Soccer Ball",
+        "🖍️ Crayon",
+        "🔑 Key"
+      ],
+      "correctIndex": 1,
+      "funFact": "Kick the ball—GOAL!"
+    },
+    {
+      "id": "emma_047",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Which one do we use to brush our teeth every morning and every night?",
+      "options": [
+        "🖍️ Crayon",
+        "🔨 Hammer",
+        "🪥 Toothbrush",
+        "🥄 Soup Spoon"
+      ],
+      "correctIndex": 2,
+      "funFact": "Brush-brush-brush for sparkling clean teeth!"
+    },
+    {
+      "id": "emma_048",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "What flies high in the sky at the end of a long string on a windy day: a KITE?",
+      "options": [
+        "🚪 Door",
+        "🛋️ Couch",
+        "🛁 Bathtub",
+        "🪁 Colorful Kite"
+      ],
+      "correctIndex": 3,
+      "funFact": "Up, up, and away in the breeze!"
+    },
+    {
+      "id": "emma_049",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Tap the shiny red FIRE TRUCK that goes \"WEE-OO WEE-OO\"!",
+      "options": [
+        "🚒 Fire Truck",
+        "🚲 Bicycle",
+        "🛶 Canoe",
+        "🛹 Skateboard"
+      ],
+      "correctIndex": 0,
+      "funFact": "Here comes the red fire engine!"
+    },
+    {
+      "id": "emma_050",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Which one is a cozy warm BED with a pillow and blanket for sleeping?",
+      "options": [
+        "🛝 Playground Slide",
+        "🛏️ Cozy Bed",
+        "🛒 Shopping Cart",
+        "🚲 Bicycle"
+      ],
+      "correctIndex": 1,
+      "funFact": "Nighty-night, sweet dreams!"
+    },
+    {
+      "id": "emma_051",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Tap the musical DRUM that you tap with drumsticks: \"BOOM-BOOM-BOOM\"!",
+      "options": [
+        "🧢 Cap",
+        "🧦 Sock",
+        "🥁 Drum",
+        "🧤 Glove"
+      ],
+      "correctIndex": 2,
+      "funFact": "Boom-ba-doom goes the drum!"
+    },
+    {
+      "id": "emma_052",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Which one is a shiny TEAPOT for Princess Emma's royal tea party?",
+      "options": [
+        "🏀 Basketball",
+        "🛹 Skateboard",
+        "🔨 Hammer",
+        "🫖 Teapot"
+      ],
+      "correctIndex": 3,
+      "funFact": "Pour a warm cup of royal tea!"
+    },
+    {
+      "id": "emma_053",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Tap the colorful ARTIST PALETTE & PAINT for drawing pictures!",
+      "options": [
+        "🎨 Paint Palette",
+        "🥄 Spoon",
+        "🔑 Key",
+        "🪨 Rock"
+      ],
+      "correctIndex": 0,
+      "funFact": "Splash on the rainbow paint!"
+    },
+    {
+      "id": "emma_054",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Which one flies astronauts up to the stars: a SPACE ROCKET?",
+      "options": [
+        "🚲 Bicycle",
+        "🚀 Space Rocket",
+        "🚜 Farm Tractor",
+        "⛵ Sailboat"
+      ],
+      "correctIndex": 1,
+      "funFact": "3, 2, 1, Blastoff!"
+    },
+    {
+      "id": "emma_055",
+      "tier": "EMMA_3YO",
+      "category": "Everyday Toys, Clothes & Fun",
+      "prompt": "Tap the happy smiling SUNFLOWER with bright yellow petals!",
+      "options": [
+        "🌵 Prickly Cactus",
+        "🪨 Gray Stone",
+        "🌻 Sunflower",
+        "🪵 Brown Log"
+      ],
+      "correctIndex": 2,
+      "funFact": "Sunflowers turn their faces toward the sun!"
+    }
+  ]
+}

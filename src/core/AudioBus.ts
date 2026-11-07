@@ -1083,6 +1083,13 @@ class AudioBusManager {
     }, 1800);
   }
 
+  public stopCozyLoop(): void {
+    if (this.ambientTimer !== null) {
+      window.clearInterval(this.ambientTimer);
+      this.ambientTimer = null;
+    }
+  }
+
   public toggleMute(): boolean {
     this.isMuted = !this.isMuted;
     Howler.mute(this.isMuted);

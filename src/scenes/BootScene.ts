@@ -30,6 +30,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('mode-read', '/assets/hub/sprites/mode-read.png?v=hub2');
     this.load.image('mode-arcade', '/assets/hub/sprites/mode-arcade.png?v=hub2');
     this.load.image('mode-create', '/assets/hub/sprites/mode-create.png?v=hub2');
+    this.load.image('mode-tv', '/assets/hub/sprites/mode-tv.png?v=tv1');
     this.load.image('book-nana', '/assets/hub/sprites/book-nana.png?v=hub2');
     this.load.image('book-cover-colorado', '/assets/stories/colorado/pages/book-cover-colorado.png?v=co1');
     this.load.image('book-grandpa-bapci', '/assets/hub/sprites/book-grandpa-bapci.png?v=hub2');
@@ -48,6 +49,35 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hub-toy-unicorn', '/assets/hub/arcade/hub-toy-unicorn.png?v=uc1');
     this.load.image('hub-toy-ispy', '/assets/hub/arcade/hub-toy-ispy.png?v=ispy2');
     this.load.image('hub-toy-train', '/assets/hub/arcade/hub-toy-train.png?v=tr1');
+    this.load.image('hub-toy-starship-unicorn', '/assets/hub/arcade/hub-toy-starship-unicorn.png?v=su1');
+
+    // 0a-1b. Starship Unicorn: Orbital Trivia (`StarshipUnicornScene.ts`) 1080p/4K HD Assets
+    this.load.image('starship-board-bg', '/assets/games/starship-unicorn/starship-board-bg.jpg?v=su1');
+    const starshipAstronautIds = [
+      'robert',
+      'rita',
+      'wyatt',
+      'emma',
+      'papa',
+      'nana',
+      'grandpa',
+      'babci',
+      'guest'
+    ];
+    for (const astroId of starshipAstronautIds) {
+      this.load.image(
+        `starship-astro-${astroId}`,
+        `/assets/games/starship-unicorn/portraits/astro_${astroId}.png?v=su1`
+      );
+      this.load.image(
+        `starship-card-${astroId}`,
+        `/assets/games/starship-unicorn/cards/card_${astroId}.png?v=su1`
+      );
+      this.load.image(
+        `starship-token-${astroId}`,
+        `/assets/games/starship-unicorn/tokens/token_${astroId}.png?v=su1`
+      );
+    }
 
     // 0a-2. Heirloom Art & Sticker Studio Frame + 8 Illustrated Tool Icons + 12 Coloring Book Templates (936x560)
     this.load.image('studio-frame-bg', '/assets/games/art-studio/studio-frame-bg.jpg?v=studio2');
@@ -1343,6 +1373,7 @@ export class BootScene extends Phaser.Scene {
       'mode-read',
       'mode-arcade',
       'mode-create',
+      'mode-tv',
       'book-nana',
       'book-grandpa-bapci',
       'book-louisiana',
@@ -1514,6 +1545,44 @@ export class BootScene extends Phaser.Scene {
     texKeys.forEach((key) => {
       if (this.textures.exists(key)) {
         this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    });
+
+    // Enforce smooth LINEAR filtering on all Starship Unicorn 1080p/4K HD textures!
+    const linearKeys = [
+      'hub-toy-starship-unicorn',
+      'starship-board-bg',
+      'starship-astro-robert',
+      'starship-astro-rita',
+      'starship-astro-wyatt',
+      'starship-astro-emma',
+      'starship-astro-papa',
+      'starship-astro-nana',
+      'starship-astro-grandpa',
+      'starship-astro-babci',
+      'starship-astro-guest',
+      'starship-card-robert',
+      'starship-card-rita',
+      'starship-card-wyatt',
+      'starship-card-emma',
+      'starship-card-papa',
+      'starship-card-nana',
+      'starship-card-grandpa',
+      'starship-card-babci',
+      'starship-card-guest',
+      'starship-token-robert',
+      'starship-token-rita',
+      'starship-token-wyatt',
+      'starship-token-emma',
+      'starship-token-papa',
+      'starship-token-nana',
+      'starship-token-grandpa',
+      'starship-token-babci',
+      'starship-token-guest'
+    ];
+    linearKeys.forEach((key) => {
+      if (this.textures.exists(key)) {
+        this.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR);
       }
     });
 

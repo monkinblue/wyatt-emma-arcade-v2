@@ -22,6 +22,7 @@ import { UnicornCastleScene } from './scenes/UnicornCastleScene';
 import { ColoradoStoryScene } from './scenes/ColoradoStoryScene';
 import { ISpyScene } from './scenes/ISpyScene';
 import { TrainTableScene } from './scenes/TrainTableScene';
+import { StarshipUnicornScene } from './scenes/StarshipUnicornScene';
 import { AudioBus } from './core/AudioBus';
 import { PWAInstallManager } from './core/PWAInstallManager';
 
@@ -91,7 +92,8 @@ const config: Phaser.Types.Core.GameConfig = {
     UnicornCastleScene,
     ColoradoStoryScene,
     ISpyScene,
-    TrainTableScene
+    TrainTableScene,
+    StarshipUnicornScene
   ]
 };
 

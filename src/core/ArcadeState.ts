@@ -7,7 +7,7 @@
  */
 
 export type KidId = 'wyatt' | 'emma';
-export type HubTabId = 'read' | 'play' | 'create';
+export type HubTabId = 'read' | 'play' | 'create' | 'tv';
 export type StoryMode = 'read-to-me' | 'let-me-play';
 
 export interface KidProfile {
@@ -94,7 +94,9 @@ class ArcadeStateManager {
       return {
         activeKid: parsed.activeKid === 'emma' ? 'emma' : 'wyatt',
         activeTab:
-          parsed.activeTab === 'play' || parsed.activeTab === 'create'
+          parsed.activeTab === 'play' ||
+          parsed.activeTab === 'create' ||
+          parsed.activeTab === 'tv'
             ? parsed.activeTab
             : 'read',
         storyMode: parsed.storyMode === 'read-to-me' ? 'read-to-me' : 'let-me-play',
