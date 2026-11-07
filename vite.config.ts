@@ -10,8 +10,7 @@ export default defineConfig({
         'favicon.svg',
         'apple-touch-icon.png',
         'pwa-192x192.png',
-        'pwa-512x512.png',
-        'assets/**/*'
+        'pwa-512x512.png'
       ],
       manifest: {
         name: "Wyatt & Emma's Heirloom Arcade",
@@ -53,7 +52,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,mp3,wav,ogg,json,woff,woff2}'],
-        globIgnores: ['**/raw/**', '**/refs/**'],
+        globIgnores: ['**/raw/**', '**/refs/**', '**/pages_v1_backup/**', '**/Old/**'],
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         clientsClaim: true,

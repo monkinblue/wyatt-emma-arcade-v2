@@ -127,6 +127,38 @@
       </div>
     </div>
     <div id="app"></div>
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('sw_fix_v1') !== 'done') {
+            localStorage.setItem('sw_fix_v1', 'done');
+            var swPromise =
+              'serviceWorker' in navigator
+                ? navigator.serviceWorker.getRegistrations().then(function (regs) {
+                    return Promise.all(
+                      regs.map(function (r) {
+                        return r.unregister();
+                      })
+                    );
+                  })
+                : Promise.resolve();
+            var cachePromise =
+              'caches' in window
+                ? caches.keys().then(function (keys) {
+                    return Promise.all(
+                      keys.map(function (k) {
+                        return caches.delete(k);
+                      })
+                    );
+                  })
+                : Promise.resolve();
+            Promise.all([swPromise, cachePromise]).finally(function () {
+              window.location.reload();
+            });
+          }
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
