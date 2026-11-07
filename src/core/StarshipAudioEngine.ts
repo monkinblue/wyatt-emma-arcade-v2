@@ -63,6 +63,7 @@ class StarshipAudioEngineImpl {
   private voiceHowls: Map<StarshipVoiceKey, Howl> = new Map();
   private sfxHowls: Map<StarshipSfxKey, Howl> = new Map();
   private activeVoiceHowl: Howl | null = null;
+  private lastWelcomeTimestamp = 0;
 
   private ensureContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
@@ -82,10 +83,18 @@ class StarshipAudioEngineImpl {
 
   /**
    * Plays an ElevenLabs Mission Control announcer voice clip from `assets/audio/starship/voice/<key>.mp3`.
-   * Automatically stops any previous announcer clip so voice callouts stay crisp.
+   * Automatically stops any previous announcer clip and guards `welcome_title` against double-triggering.
    */
   public playVoice(key: StarshipVoiceKey, onEnd?: () => void): void {
-    this.stopVoice();
+    const nowMs = Date.now();
+    if (key === 'welcome_title') {
+      if (nowMs - this.lastWelcomeTimestamp < 3500) {
+        return;
+      }
+      this.lastWelcomeTimestamp = nowMs;
+    }
+
+    this.stopAllVoice();
 
     let howl = this.voiceHowls.get(key);
     if (!howl) {
@@ -112,14 +121,23 @@ class StarshipAudioEngineImpl {
     howl.play();
   }
 
-  public stopVoice(): void {
+  public stopAllVoice(): void {
     if (this.activeVoiceHowl) {
       this.activeVoiceHowl.stop();
       this.activeVoiceHowl = null;
     }
+    this.voiceHowls.forEach((h) => {
+      if (h.playing()) {
+        h.stop();
+      }
+    });
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+  }
+
+  public stopVoice(): void {
+    this.stopAllVoice();
   }
 
   /**
@@ -236,28 +254,55 @@ class StarshipAudioEngineImpl {
   }
 
   /**
-   * Tactile metallic cockpit rocker switch click (`[ 🔊 READ QUESTION ]` / `[ SKIP TO ROLL ➔ ]`).
+   * Heavy Satisfactory Space-Elevator Industrial Rocker Switch / Mode Button Clunk:
+   * Hydraulic relay latch + metallic bolt clunk + low pressurized pneumatic hiss.
    */
   public playRockerSwitchClick(upward = true): void {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime;
 
-    // Mechanical spring snap
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(upward ? 280 : 420, now);
-    osc.frequency.exponentialRampToValueAtTime(upward ? 680 : 190, now + 0.065);
-    gain.gain.setValueAtTime(0.16, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.075);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.08);
+    // 1. Sub-bass hydraulic relay thud
+    const subOsc = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(102, now);
+    subOsc.frequency.exponentialRampToValueAtTime(34, now + 0.16);
+    subGain.gain.setValueAtTime(0.28, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    subOsc.connect(subGain);
+    subGain.connect(ctx.destination);
+    subOsc.start(now);
+    subOsc.stop(now + 0.19);
 
-    // Subtle pneumatic micro-puff
-    this.triggerNoiseBurst(0.06, 'bandpass', 2200, 900, 0.06, 0.01, 3.0);
+    // 2. Heavy metallic bolt clunk (two-stage industrial breaker snap)
+    const boltOsc = ctx.createOscillator();
+    const boltGain = ctx.createGain();
+    boltOsc.type = 'sawtooth';
+    boltOsc.frequency.setValueAtTime(upward ? 230 : 190, now + 0.01);
+    boltOsc.frequency.exponentialRampToValueAtTime(upward ? 64 : 48, now + 0.085);
+    boltGain.gain.setValueAtTime(0.18, now + 0.01);
+    boltGain.gain.exponentialRampToValueAtTime(0.001, now + 0.095);
+    boltOsc.connect(boltGain);
+    boltGain.connect(ctx.destination);
+    boltOsc.start(now + 0.01);
+    boltOsc.stop(now + 0.1);
+
+    // 3. Secondary mechanical ratchet lock at +45ms
+    const latchOsc = ctx.createOscillator();
+    const latchGain = ctx.createGain();
+    latchOsc.type = 'triangle';
+    latchOsc.frequency.setValueAtTime(upward ? 390 : 280, now + 0.045);
+    latchOsc.frequency.exponentialRampToValueAtTime(upward ? 135 : 95, now + 0.11);
+    latchGain.gain.setValueAtTime(0.16, now + 0.045);
+    latchGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    latchOsc.connect(latchGain);
+    latchGain.connect(ctx.destination);
+    latchOsc.start(now + 0.045);
+    latchOsc.stop(now + 0.13);
+
+    // 4. Low pressurized pneumatic hiss
+    this.triggerNoiseBurst(0.18, 'bandpass', 1850, 520, 0.12, 0.025, 1.9);
   }
 
   /**
@@ -331,37 +376,69 @@ class StarshipAudioEngineImpl {
   }
 
   /**
-   * Lobby astronaut bay lock-in or de-selection tone.
+   * Satisfactory Space-Elevator Industrial Switchgear Lever Lock:
+   * Selecting/deselecting an Astronaut Card or Mode Button fires a heavy
+   * hydraulic relay latch + metallic bolt clunk + low pneumatic hiss.
    */
   public playLobbyToggle(selected: boolean, slotIndex = 0): void {
     const ctx = this.ensureContext();
     if (!ctx) return;
     const now = ctx.currentTime;
-    const baseFreqs = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
-    const f = baseFreqs[slotIndex % baseFreqs.length];
 
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = selected ? 'triangle' : 'sine';
-    if (selected) {
-      osc.frequency.setValueAtTime(f * 0.75, now);
-      osc.frequency.exponentialRampToValueAtTime(f * 1.5, now + 0.14);
-    } else {
-      osc.frequency.setValueAtTime(f, now);
-      osc.frequency.exponentialRampToValueAtTime(f * 0.65, now + 0.12);
-    }
+    // 1. Deep hydraulic piston relay thud (`112Hz -> 30Hz`)
+    const subOsc = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(selected ? 112 : 88, now);
+    subOsc.frequency.exponentialRampToValueAtTime(30, now + 0.22);
+    subGain.gain.setValueAtTime(0.34, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.24);
+    subOsc.connect(subGain);
+    subGain.connect(ctx.destination);
+    subOsc.start(now);
+    subOsc.stop(now + 0.25);
 
-    gain.gain.setValueAtTime(0.14, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    // 2. Heavy metallic bolt clunk (`CLANK` transient)
+    const boltOsc = ctx.createOscillator();
+    const boltFilter = ctx.createBiquadFilter();
+    const boltGain = ctx.createGain();
+    boltOsc.type = 'sawtooth';
+    boltOsc.frequency.setValueAtTime(selected ? 220 + slotIndex * 18 : 175, now + 0.012);
+    boltOsc.frequency.exponentialRampToValueAtTime(selected ? 58 : 44, now + 0.11);
+    boltFilter.type = 'lowpass';
+    boltFilter.frequency.setValueAtTime(1400, now + 0.012);
+    boltFilter.frequency.exponentialRampToValueAtTime(320, now + 0.11);
+    boltGain.gain.setValueAtTime(0.22, now + 0.012);
+    boltGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    boltOsc.connect(boltFilter);
+    boltFilter.connect(boltGain);
+    boltGain.connect(ctx.destination);
+    boltOsc.start(now + 0.012);
+    boltOsc.stop(now + 0.13);
 
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.16);
+    // 3. Space-Elevator Secondary Locking Pin Snap (`t + 0.06s`)
+    const pinOsc = ctx.createOscillator();
+    const pinGain = ctx.createGain();
+    pinOsc.type = 'triangle';
+    const startPinHz = selected ? 340 + slotIndex * 24 : 240;
+    const endPinHz = selected ? 140 + slotIndex * 10 : 82;
+    pinOsc.frequency.setValueAtTime(startPinHz, now + 0.06);
+    pinOsc.frequency.exponentialRampToValueAtTime(endPinHz, now + 0.14);
+    pinGain.gain.setValueAtTime(0.18, now + 0.06);
+    pinGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    pinOsc.connect(pinGain);
+    pinGain.connect(ctx.destination);
+    pinOsc.start(now + 0.06);
+    pinOsc.stop(now + 0.16);
+
+    // 4. Low pressurized pneumatic air release hiss (`pssshhh`)
+    this.triggerNoiseBurst(0.24, 'bandpass', selected ? 1950 : 1450, 480, 0.14, 0.035, 1.7);
   }
 
   /**
-   * Deep SpaceX Raptor engine ignition rumble + ascending orbital telemetry sweep.
+   * Satisfactory Space-Elevator Seal Lock & Orbital Ignition Sequence:
+   * - 3 heavy mechanical clamps locking in sequence (`CLANK! -> CLANK! -> CLANK!`),
+   * - Followed by a deep sub-bass turbine spool-up and pressurized steam release!
    */
   public playLaunchIgnition(): void {
     this.playSampledSfx('rocket_ignition', 0.68);
@@ -369,29 +446,85 @@ class StarshipAudioEngineImpl {
     if (!ctx) return;
     const now = ctx.currentTime;
 
-    const notes = [220, 277.18, 329.63, 440, 659.25];
-    notes.forEach((hz, idx) => {
+    // 1. Three Heavy Mechanical Gantry Clamps Locking in Sequence (`CLANK! -> CLANK! -> CLANK!`)
+    const clampOffsets = [0.0, 0.17, 0.34];
+    clampOffsets.forEach((offset, idx) => {
+      const t = now + offset;
+
+      // Heavy sub-bass clamp slam
+      const sub = ctx.createOscillator();
+      const subGain = ctx.createGain();
+      sub.type = 'sine';
+      sub.frequency.setValueAtTime(128 - idx * 10, t);
+      sub.frequency.exponentialRampToValueAtTime(28, t + 0.15);
+      subGain.gain.setValueAtTime(0.36, t);
+      subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+      sub.connect(subGain);
+      subGain.connect(ctx.destination);
+      sub.start(t);
+      sub.stop(t + 0.17);
+
+      // Metallic steel clamp bolt impact (`CLANK!`)
+      const clang = ctx.createOscillator();
+      const clangFilter = ctx.createBiquadFilter();
+      const clangGain = ctx.createGain();
+      clang.type = 'sawtooth';
+      clang.frequency.setValueAtTime(280 + idx * 35, t + 0.008);
+      clang.frequency.exponentialRampToValueAtTime(56, t + 0.11);
+      clangFilter.type = 'bandpass';
+      clangFilter.Q.setValueAtTime(2.4, t + 0.008);
+      clangFilter.frequency.setValueAtTime(920 + idx * 120, t + 0.008);
+      clangFilter.frequency.exponentialRampToValueAtTime(260, t + 0.11);
+      clangGain.gain.setValueAtTime(0.24, t + 0.008);
+      clangGain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      clang.connect(clangFilter);
+      clangFilter.connect(clangGain);
+      clangGain.connect(ctx.destination);
+      clang.start(t + 0.008);
+      clang.stop(t + 0.13);
+
+      // Short pneumatic clamp seal burst
+      this.triggerNoiseBurst(0.11, 'bandpass', 2200, 680, 0.12, offset + 0.02, 2.2);
+    });
+
+    // 2. Deep Sub-Bass Turbine Spool-Up (`t + 0.48s .. 1.65s`)
+    const spoolStart = now + 0.48;
+    const subTurbine = ctx.createOscillator();
+    const subTurbineGain = ctx.createGain();
+    subTurbine.type = 'sine';
+    subTurbine.frequency.setValueAtTime(36, spoolStart);
+    subTurbine.frequency.exponentialRampToValueAtTime(145, spoolStart + 1.05);
+    subTurbineGain.gain.setValueAtTime(0.001, spoolStart);
+    subTurbineGain.gain.linearRampToValueAtTime(0.32, spoolStart + 0.28);
+    subTurbineGain.gain.exponentialRampToValueAtTime(0.001, spoolStart + 1.18);
+    subTurbine.connect(subTurbineGain);
+    subTurbineGain.connect(ctx.destination);
+    subTurbine.start(spoolStart);
+    subTurbine.stop(spoolStart + 1.2);
+
+    const turbineHarmony = [72, 108, 144];
+    turbineHarmony.forEach((baseHz, i) => {
       const osc = ctx.createOscillator();
+      const filter = ctx.createBiquadFilter();
       const gain = ctx.createGain();
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(hz * 0.5, now + idx * 0.06);
-      osc.frequency.exponentialRampToValueAtTime(hz, now + 0.75 + idx * 0.05);
-
-      const filter = ctx.createBiquadFilter();
+      osc.frequency.setValueAtTime(baseHz, spoolStart + i * 0.03);
+      osc.frequency.exponentialRampToValueAtTime(baseHz * 2.8, spoolStart + 1.08);
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(900, now);
-      filter.frequency.exponentialRampToValueAtTime(3200, now + 0.9);
-
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.065, now + 0.18);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.15);
-
+      filter.frequency.setValueAtTime(240, spoolStart);
+      filter.frequency.exponentialRampToValueAtTime(2400, spoolStart + 1.0);
+      gain.gain.setValueAtTime(0.001, spoolStart);
+      gain.gain.linearRampToValueAtTime(0.09, spoolStart + 0.3);
+      gain.gain.exponentialRampToValueAtTime(0.001, spoolStart + 1.15);
       osc.connect(filter);
       filter.connect(gain);
       gain.connect(ctx.destination);
-      osc.start(now + idx * 0.06);
-      osc.stop(now + 1.2);
+      osc.start(spoolStart + i * 0.03);
+      osc.stop(spoolStart + 1.18);
     });
+
+    // 3. Massive Pressurized Cryo-Steam Release (`t + 0.52s .. 1.50s`)
+    this.triggerNoiseBurst(0.92, 'bandpass', 2600, 420, 0.18, 0.52, 1.4);
   }
 
   /**

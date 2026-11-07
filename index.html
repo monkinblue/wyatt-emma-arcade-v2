@@ -130,8 +130,8 @@
     <script>
       (function () {
         try {
-          if (localStorage.getItem('sw_fix_v1') !== 'done') {
-            localStorage.setItem('sw_fix_v1', 'done');
+          if (localStorage.getItem('sw_fix_v2') !== 'done') {
+            localStorage.setItem('sw_fix_v2', 'done');
             var swPromise =
               'serviceWorker' in navigator
                 ? navigator.serviceWorker.getRegistrations().then(function (regs) {

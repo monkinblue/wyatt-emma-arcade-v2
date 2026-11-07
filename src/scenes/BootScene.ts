@@ -52,7 +52,8 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hub-toy-starship-unicorn', '/assets/hub/arcade/hub-toy-starship-unicorn.png?v=su1');
 
     // 0a-1b. Starship Unicorn: Orbital Trivia (`StarshipUnicornScene.ts`) 1080p/4K HD Assets
-    this.load.image('starship-board-bg', '/assets/games/starship-unicorn/starship-board-bg.jpg?v=su1');
+    this.load.image('board-isometric-factory', '/assets/starship/board-isometric-factory.png?v=iso2');
+    this.load.image('starship-board-bg', '/assets/games/starship-unicorn/starship-board-bg.jpg?v=iso2');
     const starshipAstronautIds = [
       'robert',
       'rita',

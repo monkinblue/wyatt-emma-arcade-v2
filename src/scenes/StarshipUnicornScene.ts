@@ -389,49 +389,49 @@ interface SectorLandmarkSpec {
 const SECTOR_LANDMARKS: SectorLandmarkSpec[] = [
   {
     sectorNum: 1,
-    title: 'SECTOR 1: STARBASE LAUNCH COMPLEX',
-    subtitle: 'Orbital Gantry & Floodlights',
-    x: 205,
-    y: 472,
-    accentColor: 0xf59e0b,
-    hexColor: '#fbbf24',
+    title: 'SECTOR 1: STARBASE LAUNCHPAD',
+    subtitle: 'Primary Orbital Gantry & LOX Venting',
+    x: 148,
+    y: 676,
+    accentColor: 0x38bdf8,
+    hexColor: '#7dd3fc',
     icon: '🚀'
   },
   {
     sectorNum: 2,
-    title: 'SECTOR 2: FICSIT HYPER-REFINERY',
-    subtitle: 'Plasma Conduits & Turbo Turbines',
-    x: 880,
-    y: 468,
-    accentColor: 0xf97316,
-    hexColor: '#fdba74',
-    icon: '⚙️'
+    title: 'SECTOR 2: FICSIT SMELTER COMPLEX',
+    subtitle: 'Tri-Stack Alloy Refinery',
+    x: 255,
+    y: 74,
+    accentColor: 0xf59e0b,
+    hexColor: '#fbbf24',
+    icon: '🏭'
   },
   {
     sectorNum: 3,
-    title: 'SECTOR 3: CRYSTAL ASTEROID TRENCH',
-    subtitle: 'Bioluminescent Meteor Field',
-    x: 645,
-    y: 295,
-    accentColor: 0xa855f7,
-    hexColor: '#d8b4fe',
-    icon: '☄️'
+    title: 'SECTOR 3: GLASS-DOMED ROVER DEPOT',
+    subtitle: 'Central Plateau Logistics Hub',
+    x: 628,
+    y: 238,
+    accentColor: 0x10b981,
+    hexColor: '#6ee7b7',
+    icon: '🛸'
   },
   {
     sectorNum: 4,
-    title: 'SECTOR 4: RAINBOW NEBULA RELAY',
-    subtitle: 'Prismatic Starlight Bridges',
-    x: 245,
-    y: 162,
-    accentColor: 0x38bdf8,
-    hexColor: '#7dd3fc',
-    icon: '🌈'
+    title: 'SECTOR 4: BOOSTER GANTRY ARRAY',
+    subtitle: 'Secondary Orbital Fuel Complex',
+    x: 985,
+    y: 618,
+    accentColor: 0xa855f7,
+    hexColor: '#d8b4fe',
+    icon: '⚡'
   },
   {
     sectorNum: 5,
     title: 'SECTOR 5: UNICORN CITADEL SUMMIT',
-    subtitle: 'Galactic Champion Sanctuary',
-    x: 1035,
+    subtitle: 'Iridescent Starbase Sanctuary',
+    x: 1110,
     y: 74,
     accentColor: 0xf472b6,
     hexColor: '#f9a8d4',
@@ -465,6 +465,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
   private lastChosenPadColor: PadColorType = 'RED';
   private pendingColorWarpBonus = false;
   private isRollingDice = false;
+  private hasPlayedWelcomeNarration = false;
 
   // Display Containers
   private bgContainer!: Phaser.GameObjects.Container;
@@ -474,19 +475,29 @@ export class StarshipUnicornScene extends Phaser.Scene {
   private tokensContainer!: Phaser.GameObjects.Container;
   private topHudContainer!: Phaser.GameObjects.Container;
   private dockContainer!: Phaser.GameObjects.Container;
+  private diceConsoleContainer!: Phaser.GameObjects.Container;
   private cutsceneContainer!: Phaser.GameObjects.Container;
   private lobbyContainer!: Phaser.GameObjects.Container;
   private victoryContainer!: Phaser.GameObjects.Container;
   private activeHighlightRing!: Phaser.GameObjects.Graphics;
+  private padRimGlowMap: Map<number, Phaser.GameObjects.Graphics> = new Map();
 
   constructor() {
     super({ key: 'StarshipUnicornScene' });
   }
 
+  public preload(): void {
+    if (!this.textures.exists('board-isometric-factory')) {
+      this.load.image('board-isometric-factory', '/assets/starship/board-isometric-factory.png?v=iso2');
+    }
+  }
+
   public create(): void {
-    // Silence cozy music-box BGM so living-room speakers are 100% silent when idle
+    // Silence cozy music-box BGM & stop any leftover voice so living-room speakers are 100% clean
     AudioBus.stopCozyLoop();
+    StarshipAudio.stopAllVoice();
     StarshipAudio.stopAmbientStarbasePad();
+    this.hasPlayedWelcomeNarration = false;
     this.enforceLinearFiltering();
     this.ensureSmoothGlowTextures();
 
@@ -494,12 +505,13 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.biomePropsContainer = this.add.container(0, 0).setDepth(5);
     this.boardContainer = this.add.container(0, 0).setDepth(10);
     this.trajectoryLaserContainer = this.add.container(0, 0).setDepth(18);
-    this.tokensContainer = this.add.container(0, 0).setDepth(25);
-    this.topHudContainer = this.add.container(0, 0).setDepth(40);
-    this.dockContainer = this.add.container(0, 0).setDepth(50);
-    this.cutsceneContainer = this.add.container(0, 0).setDepth(90);
-    this.lobbyContainer = this.add.container(0, 0).setDepth(100);
-    this.victoryContainer = this.add.container(0, 0).setDepth(150);
+    this.tokensContainer = this.add.container(0, 0).setDepth(100);
+    this.topHudContainer = this.add.container(0, 0).setDepth(850);
+    this.dockContainer = this.add.container(0, 0).setDepth(860).setAlpha(1).setVisible(true);
+    this.diceConsoleContainer = this.add.container(0, 0).setDepth(910);
+    this.cutsceneContainer = this.add.container(0, 0).setDepth(950);
+    this.lobbyContainer = this.add.container(0, 0).setDepth(1000);
+    this.victoryContainer = this.add.container(0, 0).setDepth(1100);
 
     this.renderCosmicBackdrop();
     this.buildAndRenderOrbitalBoard(this.missionTotalPads);
@@ -507,7 +519,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.openPreFlightLobby(true);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      StarshipAudio.stopVoice();
+      StarshipAudio.stopAllVoice();
       StarshipAudio.stopAmbientStarbasePad();
     });
 
@@ -515,7 +527,12 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   private enforceLinearFiltering(): void {
-    const keysToSmooth: string[] = ['starship-board-bg', 'hub-toy-starship-unicorn', 'mode-tv'];
+    const keysToSmooth: string[] = [
+      'board-isometric-factory',
+      'starship-board-bg',
+      'hub-toy-starship-unicorn',
+      'mode-tv'
+    ];
     for (const spec of ASTRONAUT_ROSTER) {
       keysToSmooth.push(`starship-astro-${spec.id}`);
       keysToSmooth.push(`starship-card-${spec.id}`);
@@ -559,15 +576,34 @@ export class StarshipUnicornScene extends Phaser.Scene {
         this.textures.get('starship-flare-dot').setFilter(Phaser.Textures.FilterMode.LINEAR);
       }
     }
+
+    if (!this.textures.exists('starship-smoke-puff')) {
+      const smokeTex = this.textures.createCanvas('starship-smoke-puff', 96, 96);
+      if (smokeTex) {
+        const ctx = smokeTex.getContext();
+        const grad = ctx.createRadialGradient(48, 48, 4, 48, 48, 44);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+        grad.addColorStop(0.5, 'rgba(226, 232, 240, 0.42)');
+        grad.addColorStop(1, 'rgba(226, 232, 240, 0.0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 96, 96);
+        smokeTex.refresh();
+        this.textures.get('starship-smoke-puff').setFilter(Phaser.Textures.FilterMode.LINEAR);
+      }
+    }
   }
 
   private renderCosmicBackdrop(): void {
     this.bgContainer.removeAll(true);
 
-    if (this.textures.exists('starship-board-bg')) {
-      this.textures.get('starship-board-bg').setFilter(Phaser.Textures.FilterMode.LINEAR);
+    const bgKey = this.textures.exists('board-isometric-factory')
+      ? 'board-isometric-factory'
+      : 'starship-board-bg';
+
+    if (this.textures.exists(bgKey)) {
+      this.textures.get(bgKey).setFilter(Phaser.Textures.FilterMode.LINEAR);
       const bgImg = this.add
-        .image(640, 360, 'starship-board-bg')
+        .image(640, 360, bgKey)
         .setOrigin(0.5, 0.5)
         .setDisplaySize(1280, 720);
       this.bgContainer.add(bgImg);
@@ -578,38 +614,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
       this.bgContainer.add(g);
     }
 
-    // Deep space tactical contrast scrim so 3D-extruded biome pads and laser lines pop cleanly
+    // Subtle atmospheric contrast glaze (keeps the isometric alien plateau vibrant and crisp)
     const boardScrim = this.add.graphics();
-    boardScrim.fillStyle(0x030712, 0.42);
+    boardScrim.fillStyle(0x020617, 0.12);
     boardScrim.fillRect(0, 0, 1280, 720);
     this.bgContainer.add(boardScrim);
-
-    // Subtle twinkling nebula stars
-    const nebulaColors = [0x38bdf8, 0xf472b6, 0xa855f7, 0xf59e0b, 0x10b981];
-    for (let i = 0; i < 16; i++) {
-      const nx = Phaser.Math.Between(70, 1210);
-      const ny = Phaser.Math.Between(65, 495);
-      const scale = Phaser.Math.FloatBetween(0.16, 0.36);
-      const flare = this.add
-        .image(nx, ny, 'starship-flare-dot')
-        .setTint(nebulaColors[i % nebulaColors.length])
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setScale(scale)
-        .setAlpha(Phaser.Math.FloatBetween(0.22, 0.7));
-      this.bgContainer.add(flare);
-
-      this.tweens.add({
-        targets: flare,
-        alpha: { from: 0.16, to: 0.8 },
-        scaleX: { from: scale * 0.75, to: scale * 1.3 },
-        scaleY: { from: scale * 0.75, to: scale * 1.3 },
-        duration: Phaser.Math.Between(2000, 3600),
-        delay: i * 120,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-      });
-    }
   }
 
   // ===========================================================================
@@ -717,8 +726,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
           padsRemaining === 0
             ? '🏆 AT CITADEL!'
             : this.players.length <= 4
-            ? `PAD ${p.padIndex + 1} (${padsRemaining} TO GO)`
-            : `P${p.padIndex + 1} (-${padsRemaining})`;
+            ? `PAD ${p.padIndex} (${padsRemaining} TO GO)`
+            : `P${p.padIndex} (-${padsRemaining})`;
 
         const padLbl = this.add
           .text(8, 7, distText, {
@@ -749,9 +758,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
       AudioBus.getMuted() ? '🔇' : '🔊',
       0x94a3b8,
       () => {
+        StarshipAudio.playRockerSwitchClick(false);
         const muted = AudioBus.toggleMute();
         if (muted) {
-          StarshipAudio.stopVoice();
+          StarshipAudio.stopAllVoice();
         }
         this.renderTopMissionHeader();
       }
@@ -797,7 +807,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     c.add([g, txt]);
-    Juice.makeTactileButton(this, c, Math.max(w, 64), Math.max(h, 52), onTap, 'pop');
+    Juice.makeTactileButton(this, c, Math.max(w, 64), Math.max(h, 52), onTap, null);
     return c;
   }
 
@@ -813,7 +823,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.cutsceneContainer.removeAll(true);
     this.trajectoryLaserContainer.removeAll(true);
 
-    if (isInitialBoot) {
+    if (isInitialBoot && !this.hasPlayedWelcomeNarration) {
+      this.hasPlayedWelcomeNarration = true;
+      StarshipAudio.stopAllVoice();
       StarshipAudio.playVoice('welcome_title', () => {
         if (this.scenePhase === 'LOBBY') {
           StarshipAudio.playVoice('lobby_select');
@@ -1005,7 +1017,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
         const existingIdx = this.selectedAstronautIds.indexOf(spec.id);
         if (existingIdx !== -1) {
           if (this.selectedAstronautIds.length <= 2) {
-            StarshipAudio.playUiChirp(320, 260);
+            StarshipAudio.playRockerSwitchClick(false);
             Juice.popFloatingLabel(this, cx, cy - 40, 'MIN 2 ASTRONAUTS!', '#f59e0b');
             return;
           }
@@ -1014,7 +1026,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
           this.openPreFlightLobby(false);
         } else {
           if (this.selectedAstronautIds.length >= 6) {
-            StarshipAudio.playUiChirp(320, 260);
+            StarshipAudio.playRockerSwitchClick(false);
             Juice.popFloatingLabel(this, cx, cy - 40, 'MAX 6 LAUNCH BAYS FULL!', '#f59e0b');
             return;
           }
@@ -1051,9 +1063,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
       isQuick,
       0x38bdf8,
       () => {
+        StarshipAudio.playLobbyToggle(true, 0);
         if (this.missionTotalPads !== 25) {
           this.missionTotalPads = 25;
-          StarshipAudio.playRockerSwitchClick(true);
           this.buildAndRenderOrbitalBoard(this.missionTotalPads);
           this.openPreFlightLobby(false);
         }
@@ -1071,9 +1083,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
       isGrand,
       0xf59e0b,
       () => {
+        StarshipAudio.playLobbyToggle(true, 2);
         if (this.missionTotalPads !== 50) {
           this.missionTotalPads = 50;
-          StarshipAudio.playRockerSwitchClick(true);
           this.buildAndRenderOrbitalBoard(this.missionTotalPads);
           this.openPreFlightLobby(false);
         }
@@ -1105,7 +1117,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const launchSub = this.add
-      .text(0, 14, `DEPLOY ${this.selectedAstronautIds.length} ASTRONAUT FIGURINES TO SECTOR 1`, {
+      .text(0, 14, `DEPLOY ${this.selectedAstronautIds.length} ASTRONAUT FIGURINES TO PAD 0 LAUNCHPAD`, {
         fontFamily: '"Segoe UI", "Fredoka", system-ui, sans-serif',
         fontSize: '11px',
         fontStyle: 'bold',
@@ -1132,7 +1144,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       () => {
         this.initiateMissionLaunch();
       },
-      'fanfare'
+      null
     );
 
     this.lobbyContainer.add([quickBtn, grandBtn, launchBtn]);
@@ -1176,7 +1188,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     c.add([g, t1, t2]);
-    Juice.makeTactileButton(this, c, w, h, onTap, 'pop');
+    Juice.makeTactileButton(this, c, w, h, onTap, null);
     return c;
   }
 
@@ -1214,111 +1226,116 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   // ===========================================================================
-  // UPGRADE 4: COHERENT 5-SECTOR 3D ISOMETRIC BIOME BOARD
+  // UPGRADE 4: CONTINUOUS 3D ISOMETRIC CONVEYOR-BELT TRACK & PLASMA PIPES
   // ===========================================================================
 
   private buildAndRenderOrbitalBoard(totalPads: 25 | 50): void {
     this.boardContainer.removeAll(true);
     this.biomePropsContainer.removeAll(true);
     this.trajectoryLaserContainer.removeAll(true);
+    this.padRimGlowMap.clear();
     this.boardPads = [];
 
     const colorCycle: PadColorType[] = ['RED', 'BLUE', 'AMBER', 'EMERALD'];
 
-    // Organic Winding S-Curve & Spiral Orbital Expedition Control Points across 5 Distinct Sectors:
-    // Sector 1 (Bottom-Left Launch Complex) -> Sector 2 (Lower-Right FICSIT Hyper-Refinery)
-    // -> Sector 3 (Center Crystal Asteroid Trench) -> Sector 4 (Upper-Left Rainbow Nebula Relay)
-    // -> Sector 5 (Upper-Right Unicorn Citadel Summit)
-    const splineWaypoints: Array<[number, number]> = [
-      // Sector 1: Starbase Launch Complex
-      [115, 430],
-      [230, 444],
-      [365, 436],
-      [510, 418],
-      // Sector 2: FICSIT Hyper-Refinery
-      [665, 434],
-      [835, 442],
-      [1015, 428],
-      [1145, 382],
-      [1155, 314],
-      // Sector 3: Crystal Asteroid Trench
-      [1025, 276],
-      [855, 286],
-      [675, 304],
-      [490, 294],
-      [310, 272],
-      // Sector 4: Rainbow Nebula Relay
-      [165, 238],
-      [142, 174],
-      [268, 134],
-      [448, 146],
-      [632, 160],
-      // Sector 5: Unicorn Citadel Summit
-      [808, 142],
-      [968, 124],
-      [1132, 118]
+    // Continuous 30° Isometric Factory Causeway Waypoints locked onto `board-isometric-factory.png`:
+    // PAD 0 (Bottom-Left Launchpad Staging Bay) -> Top-Left Smelter Factory -> Central Rover Dome -> Mid-Right Booster Gantry -> Top-Right Citadel
+    const highwayWaypoints: Array<[number, number]> = [
+      [152, 614],
+      [158, 534],
+      [168, 452],
+      [190, 374],
+      [218, 298],
+      [268, 234],
+      [346, 214],
+      [422, 246],
+      [468, 310],
+      [436, 384],
+      [386, 456],
+      [368, 536],
+      [434, 594],
+      [522, 578],
+      [584, 508],
+      [626, 430],
+      [664, 350],
+      [714, 274],
+      [794, 236],
+      [868, 286],
+      [888, 370],
+      [916, 456],
+      [998, 434],
+      [1062, 350],
+      [1102, 262],
+      [1142, 168]
     ];
 
     const spline = new Phaser.Curves.Spline(
-      splineWaypoints.map(([wx, wy]) => new Phaser.Math.Vector2(wx, wy))
+      highwayWaypoints.map(([wx, wy]) => new Phaser.Math.Vector2(wx, wy))
     );
 
-    for (let padIdx = 0; padIdx < totalPads; padIdx++) {
-      const t = totalPads <= 1 ? 0 : padIdx / (totalPads - 1);
-      const pt = spline.getPoint(t);
+    // Build `totalPads + 1` positions:
+    // - `padIdx = 0` is `PAD 0` (`LAUNCHPAD BAY 0`) at `t = 0`
+    // - `padIdx = 1..totalPads` are contiguous conveyor belt segments `1` through `25` (or `50`),
+    //   where `padIdx = i` sits at the center of belt segment `[(i - 0.5) / (totalPads + 0.5)]`!
+    const denom = totalPads + 0.5;
+
+    for (let padIdx = 0; padIdx <= totalPads; padIdx++) {
+      const t = padIdx === 0 ? 0 : (padIdx + 0.0) / denom;
+      const clampedT = Phaser.Math.Clamp(t, 0, 1);
+      const pt = spline.getPoint(clampedT);
       const x = Math.round(pt.x);
       const y = Math.round(pt.y);
 
-      const sectorIndex = Math.min(5, Math.floor(t * 5) + 1);
-      let padColor: PadColorType = colorCycle[padIdx % 4];
+      const sectorIndex = Math.min(5, Math.floor(clampedT * 5) + 1);
+      let padColor: PadColorType = padIdx === 0 ? 'BLUE' : colorCycle[(padIdx - 1) % 4];
 
       let special: SpecialTileType = 'NONE';
       let wormholeTargetIndex: number | undefined;
 
       if (totalPads === 25) {
-        if (padIdx === 6 || padIdx === 13 || padIdx === 20 || padIdx === 24) {
+        if (padIdx === 7 || padIdx === 13 || padIdx === 20 || padIdx === 25) {
           padColor = 'RAINBOW';
         }
         if (padIdx === 0) {
           special = 'LAUNCHPAD';
-        } else if (padIdx === 24) {
+        } else if (padIdx === 25) {
           special = 'CITADEL';
-        } else if (padIdx === 4) {
+        } else if (padIdx === 5) {
           special = 'WORMHOLE';
-          wormholeTargetIndex = 9;
-        } else if (padIdx === 14) {
+          wormholeTargetIndex = 10;
+        } else if (padIdx === 15) {
           special = 'WORMHOLE';
-          wormholeTargetIndex = 19;
-        } else if (padIdx === 7 || padIdx === 16) {
+          wormholeTargetIndex = 20;
+        } else if (padIdx === 3 || padIdx === 11 || padIdx === 18 || padIdx === 22) {
           special = 'OVERCLOCK';
-        } else if (padIdx === 11 || padIdx === 21) {
+        } else if (padIdx === 8 || padIdx === 16 || padIdx === 21) {
           special = 'ASTEROID';
-        } else if (padIdx === 8 || padIdx === 17) {
+        } else if (padIdx === 7 || padIdx === 13 || padIdx === 20) {
           special = 'RAINBOW_STARSHIP';
         }
       } else {
-        if (padIdx % 8 === 7 || padIdx === 49) {
+        if ((padIdx > 0 && padIdx % 8 === 0) || padIdx === 50) {
           padColor = 'RAINBOW';
         }
         if (padIdx === 0) {
           special = 'LAUNCHPAD';
-        } else if (padIdx === 49) {
+        } else if (padIdx === 50) {
           special = 'CITADEL';
-        } else if (padIdx === 5 || padIdx === 18 || padIdx === 31) {
+        } else if (padIdx === 6 || padIdx === 19 || padIdx === 32) {
           special = 'WORMHOLE';
-          wormholeTargetIndex = Math.min(48, padIdx + 5);
-        } else if (padIdx === 9 || padIdx === 22 || padIdx === 36 || padIdx === 42) {
+          wormholeTargetIndex = Math.min(49, padIdx + 5);
+        } else if (padIdx === 10 || padIdx === 23 || padIdx === 37 || padIdx === 43) {
           special = 'OVERCLOCK';
-        } else if (padIdx === 14 || padIdx === 27 || padIdx === 39 || padIdx === 45) {
+        } else if (padIdx === 15 || padIdx === 28 || padIdx === 40 || padIdx === 46) {
           special = 'ASTEROID';
-        } else if (padIdx === 11 || padIdx === 24 || padIdx === 34) {
+        } else if (padIdx === 12 || padIdx === 25 || padIdx === 35) {
           special = 'RAINBOW_STARSHIP';
         }
       }
 
       this.boardPads.push({
         index: padIdx,
-        numberLabel: padIdx + 1,
+        numberLabel: padIdx,
         x,
         y,
         sectorIndex,
@@ -1328,156 +1345,231 @@ export class StarshipUnicornScene extends Phaser.Scene {
       });
     }
 
-    // 1. Render 5-Sector Ambient Biome Landmarks & Animated Props
+    // 1. Living Factory Environmental FX (Smelter Smoke Plumes & Rocket Cryo-Steam) + Landmark Plaques
     this.render5SectorBiomeLandmarksAndProps();
 
-    // 2. Render Multi-Layered 3D Energy Bridges & Directional Light Pulses
-    const bridgeG = this.add.graphics();
-    for (let i = 0; i < this.boardPads.length - 1; i++) {
-      const pA = this.boardPads[i];
-      const pB = this.boardPads[i + 1];
-      // Lower 3D structural girder shadow
-      bridgeG.lineStyle(14, 0x020617, 0.72);
-      bridgeG.lineBetween(pA.x, pA.y + 7, pB.x, pB.y + 7);
-      // Outer plasma conduit aura
-      const sectorCol = SECTOR_LANDMARKS[Math.min(4, pA.sectorIndex - 1)].accentColor;
-      bridgeG.lineStyle(11, sectorCol, 0.24);
-      bridgeG.lineBetween(pA.x, pA.y, pB.x, pB.y);
-      // Brushed gunmetal deck girder
-      bridgeG.lineStyle(6.5, 0x1e293b, 0.95);
-      bridgeG.lineBetween(pA.x, pA.y, pB.x, pB.y);
-      // Inner FICSIT telemetry light rail
-      bridgeG.lineStyle(2, 0x38bdf8, 0.8);
-      bridgeG.lineBetween(pA.x, pA.y, pB.x, pB.y);
+    // Helper to compute left & right rail points of the 30° isometric conveyor belt at parameter `t`
+    const beltHalfW = totalPads === 25 ? 21 : 17;
+    const getBeltCrossSection = (tVal: number) => {
+      const clamped = Phaser.Math.Clamp(tVal, 0, 1);
+      const center = spline.getPoint(clamped);
+      const tA = Math.max(0, clamped - 0.008);
+      const tB = Math.min(1, clamped + 0.008);
+      const pA = spline.getPoint(tA);
+      const pB = spline.getPoint(tB);
+      const dx = pB.x - pA.x;
+      const dy = pB.y - pA.y;
+      const len = Math.max(0.0001, Math.hypot(dx, dy));
+      const tx = dx / len;
+      const ty = dy / len;
+      // 30° isometric foreshortened normal vector
+      const nx = -ty * beltHalfW;
+      const ny = tx * (beltHalfW * 0.72);
+      return {
+        center,
+        tx,
+        ty,
+        nx,
+        ny,
+        angle: Math.atan2(dy, dx),
+        left: new Phaser.Geom.Point(center.x + nx, center.y + ny),
+        right: new Phaser.Geom.Point(center.x - nx, center.y - ny)
+      };
+    };
+
+    // 2. Continuous 3D-Extruded Conveyor-Belt Causeway Roadbed, Guardrails & Parallel Glass Plasma Pipeline
+    const densePts = spline.getPoints(150);
+    const roadbedG = this.add.graphics();
+
+    // (2a) Ground Drop Shadow under the entire continuous causeway
+    for (let i = 0; i < densePts.length - 1; i++) {
+      const a = densePts[i];
+      const b = densePts[i + 1];
+      roadbedG.lineStyle(beltHalfW * 2 + 16, 0x010409, 0.76);
+      roadbedG.lineBetween(a.x + 2, a.y + 13, b.x + 2, b.y + 13);
     }
 
-    // Draw glowing Hyperloop Wormhole plasma shortcut conduits (`+5` spaces)
+    // (2b) 3D Extruded Lower Steel Girder Wall (`y + 9px` vertical extrusion)
+    for (let i = 0; i < densePts.length - 1; i++) {
+      const a = densePts[i];
+      const b = densePts[i + 1];
+      roadbedG.lineStyle(beltHalfW * 2 + 10, 0x090f1d, 0.98);
+      roadbedG.lineBetween(a.x, a.y + 9, b.x, b.y + 9);
+      roadbedG.lineStyle(beltHalfW * 2 + 8, 0x1e293b, 0.96);
+      roadbedG.lineBetween(a.x, a.y + 4, b.x, b.y + 4);
+    }
+
+    // (2c) Raised Brushed-Titanium Outer Guardrails & Recessed Dark Gunmetal Conveyor Channel
+    for (let i = 0; i < densePts.length - 1; i++) {
+      const a = densePts[i];
+      const b = densePts[i + 1];
+      roadbedG.lineStyle(beltHalfW * 2 + 8, 0x475569, 0.98);
+      roadbedG.lineBetween(a.x, a.y, b.x, b.y);
+      roadbedG.lineStyle(beltHalfW * 2 + 4, 0xf59e0b, 0.72);
+      roadbedG.lineBetween(a.x, a.y, b.x, b.y);
+      roadbedG.lineStyle(beltHalfW * 2 - 2, 0x0b1120, 0.98);
+      roadbedG.lineBetween(a.x, a.y, b.x, b.y);
+    }
+
+    // (2d) Parallel Glass Plasma Pipeline running alongside the Conveyor Causeway
+    const pipePts: Phaser.Math.Vector2[] = [];
+    for (let i = 0; i < densePts.length; i++) {
+      const prev = densePts[Math.max(0, i - 1)];
+      const next = densePts[Math.min(densePts.length - 1, i + 1)];
+      const dx = next.x - prev.x;
+      const dy = next.y - prev.y;
+      const len = Math.max(0.001, Math.hypot(dx, dy));
+      const nx = -dy / len;
+      const ny = dx / len;
+      pipePts.push(
+        new Phaser.Math.Vector2(
+          densePts[i].x + nx * (beltHalfW + 10),
+          densePts[i].y + ny * (beltHalfW * 0.75 + 7)
+        )
+      );
+    }
+
+    for (let i = 0; i < pipePts.length - 1; i++) {
+      const pa = pipePts[i];
+      const pb = pipePts[i + 1];
+      roadbedG.lineStyle(11, 0x020617, 0.78);
+      roadbedG.lineBetween(pa.x, pa.y + 5, pb.x, pb.y + 5);
+      roadbedG.lineStyle(9, 0x0e7490, 0.75);
+      roadbedG.lineBetween(pa.x, pa.y, pb.x, pb.y);
+      roadbedG.lineStyle(4.5, 0x22d3ee, 0.85);
+      roadbedG.lineBetween(pa.x, pa.y, pb.x, pb.y);
+      roadbedG.lineStyle(1.5, 0xe0f2fe, 0.9);
+      roadbedG.lineBetween(pa.x, pa.y - 2, pb.x, pb.y - 2);
+    }
+
+    for (let i = 4; i < pipePts.length - 4; i += 8) {
+      const p = pipePts[i];
+      roadbedG.fillStyle(0x334155, 0.98);
+      roadbedG.fillCircle(p.x, p.y, 5.5);
+      roadbedG.lineStyle(1.5, 0xf59e0b, 0.95);
+      roadbedG.strokeCircle(p.x, p.y, 5.5);
+    }
+
+    // Overhead Curved Glass Hyper-Tube Shortcut Conduits (`+5` Wormhole Archways)
     for (const pad of this.boardPads) {
       if (pad.special === 'WORMHOLE' && typeof pad.wormholeTargetIndex === 'number') {
         const dst = this.boardPads[pad.wormholeTargetIndex];
         if (dst) {
           const midX = (pad.x + dst.x) / 2;
-          const midY = Math.min(pad.y, dst.y) - 44;
+          const midY = Math.min(pad.y, dst.y) - 52;
           const curve = new Phaser.Curves.QuadraticBezier(
-            new Phaser.Math.Vector2(pad.x, pad.y),
+            new Phaser.Math.Vector2(pad.x, pad.y - 12),
             new Phaser.Math.Vector2(midX, midY),
-            new Phaser.Math.Vector2(dst.x, dst.y)
+            new Phaser.Math.Vector2(dst.x, dst.y - 12)
           );
-          const pts = curve.getPoints(28);
-          bridgeG.lineStyle(11, 0x22d3ee, 0.25);
-          bridgeG.strokePoints(pts, false);
-          bridgeG.lineStyle(4, 0xa855f7, 0.88);
-          bridgeG.strokePoints(pts, false);
-          bridgeG.lineStyle(1.5, 0xffffff, 0.92);
-          bridgeG.strokePoints(pts, false);
+          const pts = curve.getPoints(32);
+          roadbedG.lineStyle(14, 0x020617, 0.45);
+          roadbedG.strokePoints(pts, false);
+          roadbedG.lineStyle(10, 0x22d3ee, 0.35);
+          roadbedG.strokePoints(pts, false);
+          roadbedG.lineStyle(4.5, 0xc084fc, 0.92);
+          roadbedG.strokePoints(pts, false);
+          roadbedG.lineStyle(1.5, 0xffffff, 0.95);
+          roadbedG.strokePoints(pts, false);
         }
       }
     }
-    this.boardContainer.add(bridgeG);
+    this.boardContainer.add(roadbedG);
 
-    // Animated directional light pulses flowing along the energy bridge toward the Citadel
-    for (let p = 0; p < 6; p++) {
-      const pulseOrb = this.add
-        .image(this.boardPads[0].x, this.boardPads[0].y, 'starship-flare-dot')
-        .setTint(p % 2 === 0 ? 0x38bdf8 : 0xf59e0b)
+    // (2e) Animated Cyan, Purple & Amber Energy Spheres flowing through the Parallel Glass Plasma Pipe!
+    const sphereColors = [0x22d3ee, 0xc084fc, 0xfbbf24];
+    const pipeSpline = new Phaser.Curves.Spline(pipePts);
+    for (let s = 0; s < 12; s++) {
+      const col = sphereColors[s % sphereColors.length];
+      const sphere = this.add
+        .image(pipePts[0].x, pipePts[0].y, 'starship-flare-dot')
+        .setTint(col)
         .setBlendMode(Phaser.BlendModes.ADD)
-        .setScale(0.28)
-        .setAlpha(0.8);
-      this.boardContainer.add(pulseOrb);
+        .setScale(0.26)
+        .setAlpha(0.95);
+      this.boardContainer.add(sphere);
 
-      const flowState = { prog: p / 6 };
+      const flowState = { prog: s / 12 };
       this.tweens.add({
         targets: flowState,
         prog: flowState.prog + 1,
-        duration: 9500,
+        duration: 8200,
         repeat: -1,
         onUpdate: () => {
           const wrapped = flowState.prog % 1;
-          const pt = spline.getPoint(wrapped);
-          pulseOrb.setPosition(pt.x, pt.y);
+          const pt = pipeSpline.getPoint(wrapped);
+          sphere.setPosition(pt.x, pt.y);
         }
       });
     }
 
-    // 3. Render Every Board Tile as a 3D-Extruded Isometric Landing Platform
-    const baseRadius = totalPads === 25 ? 27 : 20;
-    for (const pad of this.boardPads) {
+    // 3. Flush Contiguous 30° Isometric Parallelogram/Diamond Conveyor Belt Segments (`PAD 0` .. `PAD 25/50`)
+    // Every segment `i` (`1..totalPads`) shares its exact back wall `[left0, right0]` with segment `i-1`'s front wall!
+    for (let i = 0; i < this.boardPads.length; i++) {
+      const pad = this.boardPads[i];
       const padNode = this.add.container(pad.x, pad.y);
       const pg = this.add.graphics();
       const cSpec = PAD_COLOR_HEX[pad.padColor];
-
       const isSpecial = pad.special !== 'NONE';
-      const r = isSpecial ? baseRadius * 1.16 : baseRadius;
-      const extrudeDepth = totalPads === 25 ? 10 : 7;
 
-      // Ground drop shadow ellipse beneath the 3D platform
-      pg.fillStyle(0x010409, 0.82);
-      pg.fillEllipse(0, extrudeDepth + 6, r * 2.15, r * 1.25);
+      if (i === 0) {
+        // PAD 0: Heavy Isometric Launchpad Staging Bay Platform at the base of the bottom-left rocket gantry!
+        const rx = 34;
+        const ry = 21;
+        const pad0Poly = [
+          new Phaser.Geom.Point(0, -ry),
+          new Phaser.Geom.Point(rx, 0),
+          new Phaser.Geom.Point(0, ry),
+          new Phaser.Geom.Point(-rx, 0)
+        ];
+        const pad0Extrude = [
+          new Phaser.Geom.Point(-rx, 0),
+          new Phaser.Geom.Point(0, ry),
+          new Phaser.Geom.Point(rx, 0),
+          new Phaser.Geom.Point(rx, 9),
+          new Phaser.Geom.Point(0, ry + 9),
+          new Phaser.Geom.Point(-rx, 9)
+        ];
 
-      // 3D Extruded Isometric Side Walls (lower bevel column)
-      const topPts = this.getIsometricHexPoints(0, 0, r);
-      const botPts = this.getIsometricHexPoints(0, extrudeDepth, r);
+        pg.fillStyle(0x090f1d, 0.98);
+        pg.fillPoints(pad0Extrude, true);
+        pg.fillStyle(0x0f172a, 0.98);
+        pg.fillPoints(pad0Poly, true);
+        pg.fillStyle(0x1e3a8a, 0.92);
+        pg.fillPoints(
+          [
+            new Phaser.Geom.Point(0, -(ry - 3)),
+            new Phaser.Geom.Point(rx - 4, 0),
+            new Phaser.Geom.Point(0, ry - 3),
+            new Phaser.Geom.Point(-(rx - 4), 0)
+          ],
+          true
+        );
+        pg.lineStyle(3, 0x38bdf8, 0.98);
+        pg.strokePoints(pad0Poly, true);
+        padNode.add(pg);
 
-      // Draw lower 3D walls connecting bottom hex edges (indices 0->1, 1->2, 2->3)
-      const wallColors = [cSpec.bevelMid, cSpec.bevelDark, 0x090f1d];
-      for (let side = 0; side < 3; side++) {
-        const iA = side;
-        const iB = (side + 1) % 6;
-        pg.fillStyle(wallColors[side], 0.98);
-        pg.fillPoints([topPts[iA], topPts[iB], botPts[iB], botPts[iA]], true);
-        pg.lineStyle(1, 0x334155, 0.7);
-        pg.strokePoints([topPts[iA], topPts[iB], botPts[iB], botPts[iA]], true);
-      }
+        const activeRimG = this.add.graphics();
+        activeRimG.lineStyle(4.5, 0xfef08a, 1);
+        activeRimG.strokePoints(pad0Poly, true);
+        activeRimG.fillStyle(0x38bdf8, 0.25);
+        activeRimG.fillPoints(pad0Poly, true);
+        activeRimG.setAlpha(0);
+        padNode.add(activeRimG);
+        this.padRimGlowMap.set(0, activeRimG);
 
-      // Outer Brushed Gunmetal Platform Collar
-      pg.fillStyle(0x1e293b, 0.98);
-      pg.fillPoints(topPts, true);
-      pg.lineStyle(isSpecial ? 3.5 : 2.2, cSpec.rim, 0.96);
-      pg.strokePoints(topPts, true);
-
-      // Inner Carbon-Fiber Colored Deck Plate
-      const innerPts = this.getIsometricHexPoints(0, -1, r * 0.8);
-      pg.fillStyle(cSpec.fill, 0.96);
-      pg.fillPoints(innerPts, true);
-      pg.lineStyle(1.2, 0xffffff, 0.45);
-      pg.strokePoints(innerPts, true);
-
-      padNode.add(pg);
-
-      // Animated Rotating Hologram Ring on Special Pads
-      if (isSpecial) {
-        const holoRing = this.add.graphics();
-        holoRing.lineStyle(2, cSpec.rim, 0.75);
-        for (let a = 0; a < 4; a++) {
-          const startAngle = Phaser.Math.DegToRad(a * 90 + 12);
-          const endAngle = Phaser.Math.DegToRad(a * 90 + 62);
-          holoRing.beginPath();
-          holoRing.arc(0, 0, r + 5, startAngle, endAngle, false);
-          holoRing.strokePath();
-        }
-        padNode.add(holoRing);
-        this.tweens.add({
-          targets: holoRing,
-          angle: 360,
-          scaleY: { from: 0.72, to: 0.82 },
-          duration: 4200,
-          repeat: -1,
-          ease: 'Linear'
-        });
-      }
-
-      // Pad Icon & Telemetry Label
-      if (pad.special === 'LAUNCHPAD') {
-        const lbl = this.add
-          .text(0, -2, '🚀 1', {
-            fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-            fontSize: totalPads === 25 ? '13px' : '10.5px',
+        const stencil0 = this.add
+          .text(0, -2, 'PAD 0', {
+            fontFamily: '"Consolas", "Segoe UI", monospace',
+            fontSize: '11px',
             fontStyle: 'bold',
-            color: '#ffffff'
+            color: '#fef08a',
+            stroke: '#020617',
+            strokeThickness: 3
           })
           .setOrigin(0.5);
-        const tag = this.add
-          .text(0, r * 0.78 + extrudeDepth + 8, 'STARBASE PAD 1', {
+        const launchTag = this.add
+          .text(0, ry + 13, '🚀 LAUNCHPAD BAY 0', {
             fontFamily: '"Segoe UI", "Fredoka", sans-serif',
             fontSize: '9.5px',
             fontStyle: 'bold',
@@ -1486,259 +1578,340 @@ export class StarshipUnicornScene extends Phaser.Scene {
             strokeThickness: 3
           })
           .setOrigin(0.5);
-        padNode.add([lbl, tag]);
-      } else if (pad.special === 'CITADEL') {
+        padNode.add([stencil0, launchTag]);
+        this.boardContainer.add(padNode);
+        continue;
+      }
+
+      // Contiguous Conveyor Belt Segment `i` (`1..totalPads`) spanning `t0` to `t1` seamlessly!
+      const t0 = Math.max(0.018, (i - 0.5) / denom);
+      const tMid = i / denom;
+      const t1 = Math.min(1.0, (i + 0.5) / denom);
+
+      const cs0 = getBeltCrossSection(t0);
+      const csMid = getBeltCrossSection(tMid);
+      const cs1 = getBeltCrossSection(t1);
+
+      // Convert world quad vertices into `padNode`-local coordinates (so wall `N` touches wall `N+1` seamlessly!)
+      const segQuad = [
+        new Phaser.Geom.Point(cs0.left.x - pad.x, cs0.left.y - pad.y),
+        new Phaser.Geom.Point(cs0.right.x - pad.x, cs0.right.y - pad.y),
+        new Phaser.Geom.Point(csMid.right.x - pad.x, csMid.right.y - pad.y),
+        new Phaser.Geom.Point(cs1.right.x - pad.x, cs1.right.y - pad.y),
+        new Phaser.Geom.Point(cs1.left.x - pad.x, cs1.left.y - pad.y),
+        new Phaser.Geom.Point(csMid.left.x - pad.x, csMid.left.y - pad.y)
+      ];
+
+      const shrink = 0.84;
+      const innerQuad = segQuad.map(
+        (pt) => new Phaser.Geom.Point(pt.x * shrink, pt.y * shrink)
+      );
+
+      // Outer contiguous steel belt frame
+      pg.fillStyle(0x0f172a, 0.98);
+      pg.fillPoints(segQuad, true);
+
+      // Colored recessed industrial conveyor belt segment plate
+      pg.fillStyle(cSpec.fill, 0.95);
+      pg.fillPoints(innerQuad, true);
+
+      // Transverse conveyor belt metal slat ribs across the segment
+      pg.lineStyle(1.2, 0x020617, 0.62);
+      pg.lineBetween(
+        (cs0.left.x - pad.x) * 0.82,
+        (cs0.left.y - pad.y) * 0.82,
+        (cs0.right.x - pad.x) * 0.82,
+        (cs0.right.y - pad.y) * 0.82
+      );
+      pg.lineBetween(
+        (csMid.left.x - pad.x) * 0.82,
+        (csMid.left.y - pad.y) * 0.82,
+        (csMid.right.x - pad.x) * 0.82,
+        (csMid.right.y - pad.y) * 0.82
+      );
+
+      // Seamless contiguous neon rim along the conveyor belt segment
+      pg.lineStyle(isSpecial ? 2.6 : 1.6, cSpec.rim, 0.94);
+      pg.strokePoints(segQuad, true);
+      padNode.add(pg);
+
+      // Dynamic Neon Rim Illumination Graphics (brightens when approached or landed on!)
+      const activeRimG = this.add.graphics();
+      activeRimG.lineStyle(4, 0xfef08a, 1);
+      activeRimG.strokePoints(segQuad, true);
+      activeRimG.fillStyle(cSpec.rim, 0.3);
+      activeRimG.fillPoints(segQuad, true);
+      activeRimG.setAlpha(0);
+      padNode.add(activeRimG);
+      this.padRimGlowMap.set(pad.index, activeRimG);
+
+      // Animated Scrolling `>>>` Directional Chevron Arrows on the Conveyor Belt Surface
+      const dirAngle = csMid.angle;
+      const chevronTxt = this.add
+        .text(0, 0, '>>>', {
+          fontFamily: '"Consolas", "Segoe UI", sans-serif',
+          fontSize: totalPads === 25 ? '9.5px' : '7.5px',
+          fontStyle: 'bold',
+          color: cSpec.hex
+        })
+        .setOrigin(0.5)
+        .setRotation(dirAngle)
+        .setAlpha(0.55);
+      padNode.add(chevronTxt);
+
+      const ux = Math.cos(dirAngle) * 5.5;
+      const uy = Math.sin(dirAngle) * 4.0;
+      this.tweens.add({
+        targets: chevronTxt,
+        x: { from: -ux, to: ux },
+        y: { from: -uy, to: uy },
+        alpha: { from: 0.22, to: 0.78 },
+        duration: 760,
+        repeat: -1,
+        ease: 'Linear'
+      });
+
+      // Recessed Stenciled Pad Number (`01`..`25` or `01`..`50`)
+      const stencilNum = String(pad.numberLabel).padStart(2, '0');
+      const numTxt = this.add
+        .text(0, -1, stencilNum, {
+          fontFamily: '"Consolas", "Segoe UI", monospace',
+          fontSize: totalPads === 25 ? '11.5px' : '9px',
+          fontStyle: 'bold',
+          color: '#f8fafc',
+          stroke: '#020617',
+          strokeThickness: 3
+        })
+        .setOrigin(0.5);
+      padNode.add(numTxt);
+
+      // 4. Physical 3D Isometric Factory Structures Astride Special Conveyor Segments
+      const rx = beltHalfW + 3;
+      const ry = Math.round(beltHalfW * 0.68);
+      const jG = this.add.graphics();
+
+      if (pad.special === 'CITADEL') {
         const citadelGlow = this.add
-          .image(0, -6, 'starship-smooth-glow')
-          .setDisplaySize(135, 135)
+          .image(0, -8, 'starship-smooth-glow')
+          .setDisplaySize(124, 124)
           .setBlendMode(Phaser.BlendModes.ADD)
-          .setAlpha(0.8);
-        const lbl = this.add
-          .text(0, -3, '🦄🏆', {
-            fontSize: totalPads === 25 ? '20px' : '16px'
-          })
-          .setOrigin(0.5);
+          .setAlpha(0.85);
+        jG.lineStyle(3.5, 0xfde047, 1);
+        jG.strokeEllipse(0, -8, 56, 22);
+        // Positioned at `y: +26` below Pad 25 so it never overlaps `SECTOR 5: UNICORN CITADEL SUMMIT` at top-right!
         const tag = this.add
-          .text(0, -r - 12, '★ UNICORN CITADEL ★', {
+          .text(0, 26, '★ UNICORN CITADEL ★', {
             fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-            fontSize: '11px',
+            fontSize: '10.5px',
             fontStyle: 'bold',
             color: '#fde047',
             stroke: '#020617',
             strokeThickness: 3
           })
           .setOrigin(0.5);
-        padNode.add([citadelGlow, lbl, tag]);
+        padNode.add([citadelGlow, jG, tag]);
       } else if (pad.special === 'WORMHOLE') {
-        const lbl = this.add
-          .text(0, -4, '🌀', { fontSize: totalPads === 25 ? '15px' : '12px' })
-          .setOrigin(0.5);
-        const sub = this.add
-          .text(0, 9, '+5 WARP', {
+        jG.fillStyle(0x334155, 0.98);
+        jG.fillRect(-rx - 3, -24, 6, 24);
+        jG.fillRect(rx - 3, -24, 6, 24);
+        jG.lineStyle(4, 0x22d3ee, 0.96);
+        jG.beginPath();
+        jG.arc(0, -10, rx, Math.PI, 0, false);
+        jG.strokePath();
+        jG.lineStyle(2, 0xffffff, 0.9);
+        jG.beginPath();
+        jG.arc(0, -10, rx - 3, Math.PI, 0, false);
+        jG.strokePath();
+        const tag = this.add
+          .text(0, -rx - 14, '🌀 +5 HYPER-TUBE', {
             fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-            fontSize: '8px',
+            fontSize: '8.5px',
             fontStyle: 'bold',
             color: '#67e8f9',
             stroke: '#020617',
-            strokeThickness: 2
+            strokeThickness: 3
           })
           .setOrigin(0.5);
-        padNode.add([lbl, sub]);
+        padNode.add([jG, tag]);
       } else if (pad.special === 'OVERCLOCK') {
-        const lbl = this.add
-          .text(0, -4, '⚡', { fontSize: totalPads === 25 ? '15px' : '12px' })
-          .setOrigin(0.5);
-        const sub = this.add
-          .text(0, 9, '+3 BOOST', {
+        jG.fillStyle(0x78350f, 0.98);
+        jG.fillRect(-rx - 4, -22, 8, 22);
+        jG.fillRect(rx - 4, -22, 8, 22);
+        jG.fillStyle(0xf59e0b, 1);
+        jG.fillCircle(-rx, -24, 5.5);
+        jG.fillCircle(rx, -24, 5.5);
+        jG.lineStyle(2.2, 0xfde047, 0.95);
+        jG.lineBetween(-rx, -24, -6, -30);
+        jG.lineBetween(-6, -30, 6, -20);
+        jG.lineBetween(6, -20, rx, -24);
+        const tag = this.add
+          .text(0, -34, '⚡ +3 TURBO COIL', {
             fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-            fontSize: '8px',
+            fontSize: '8.5px',
             fontStyle: 'bold',
             color: '#fde047',
             stroke: '#020617',
-            strokeThickness: 2
+            strokeThickness: 3
           })
           .setOrigin(0.5);
-        padNode.add([lbl, sub]);
+        padNode.add([jG, tag]);
       } else if (pad.special === 'ASTEROID') {
-        const lbl = this.add
-          .text(0, -4, '☄️', { fontSize: totalPads === 25 ? '14px' : '11px' })
-          .setOrigin(0.5);
-        const sub = this.add
-          .text(0, 9, '-2 WELL', {
+        jG.fillStyle(0x3f3f46, 0.98);
+        jG.fillRect(-rx - 4, -18, 8, 18);
+        jG.fillRect(rx - 4, -18, 8, 18);
+        jG.fillStyle(0xef4444, 0.95);
+        jG.fillEllipse(-rx, -18, 9, 5);
+        jG.fillEllipse(rx, -18, 9, 5);
+        jG.lineStyle(2, 0xfca5a5, 0.9);
+        jG.strokePoints(segQuad, true);
+        const tag = this.add
+          .text(0, ry + 11, '☣️ -2 CRYO VENT', {
             fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-            fontSize: '8px',
+            fontSize: '8.5px',
             fontStyle: 'bold',
             color: '#fca5a5',
             stroke: '#020617',
-            strokeThickness: 2
+            strokeThickness: 3
           })
           .setOrigin(0.5);
-        padNode.add([lbl, sub]);
+        padNode.add([jG, tag]);
       } else if (pad.special === 'RAINBOW_STARSHIP') {
-        const lbl = this.add
-          .text(0, -4, '🦄', { fontSize: totalPads === 25 ? '15px' : '12px' })
-          .setOrigin(0.5);
-        const sub = this.add
-          .text(0, 9, 'RAINBOW', {
+        jG.lineStyle(3, 0xf472b6, 0.96);
+        jG.lineBetween(-rx, 4, -rx * 0.4, -22);
+        jG.lineBetween(rx, 4, rx * 0.4, -22);
+        jG.lineStyle(2.5, 0x38bdf8, 0.96);
+        jG.lineBetween(-rx * 0.4, -22, rx * 0.4, -22);
+        const tag = this.add
+          .text(0, -29, '🌈 PRISM CATAPULT', {
             fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-            fontSize: '8px',
+            fontSize: '8.5px',
             fontStyle: 'bold',
             color: '#f5d0fe',
             stroke: '#020617',
-            strokeThickness: 2
+            strokeThickness: 3
           })
           .setOrigin(0.5);
-        padNode.add([lbl, sub]);
-      } else {
-        const numTxt = this.add
-          .text(0, -1, `${pad.numberLabel}`, {
-            fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-            fontSize: totalPads === 25 ? '12.5px' : '10px',
-            fontStyle: 'bold',
-            color: '#f8fafc',
-            stroke: '#020617',
-            strokeThickness: 2
-          })
-          .setOrigin(0.5);
-        padNode.add(numTxt);
+        padNode.add([jG, tag]);
       }
 
       this.boardContainer.add(padNode);
     }
   }
 
-  private getIsometricHexPoints(cx: number, cy: number, radius: number): Phaser.Geom.Point[] {
-    const pts: Phaser.Geom.Point[] = [];
-    for (let i = 0; i < 6; i++) {
-      const angleRad = Phaser.Math.DegToRad(60 * i);
-      pts.push(
-        new Phaser.Geom.Point(
-          cx + radius * Math.cos(angleRad),
-          cy + radius * Math.sin(angleRad) * 0.68 // Isometric foreshortening
-        )
-      );
-    }
-    return pts;
-  }
-
   /**
-   * Renders the 5 Visually Distinct Named Sectors with floating glassmorphic sector landmarks
-   * and animated environmental props (rotating radar dish, spinning FICSIT refinery turbine,
-   * drifting crystal meteors, and prismatic nebula relay rings).
+   * Renders Living Factory Environmental FX anchored to the isometric terrain landmarks:
+   * 1. Rising tri-color (cyan, emerald, amber) industrial smoke plumes from the 3 tall
+   *    Smelter Factory smokestacks at top-left (`(196, 76)`, `(232, 68)`, `(268, 76)`).
+   * 2. Venting white cryogenic liquid-oxygen (`LOX`) steam clouds billowing around the base
+   *    of the vertical SpaceX rockets on their launch gantries (`(96, 596)` & `(995, 546)`).
+   * 3. Compact glassmorphic sector plaques for the 5 isometric landmarks.
    */
   private render5SectorBiomeLandmarksAndProps(): void {
-    // 1. Sector 1 Animated Rotating Radar Dish & Amber Floodlight (`x: 72, y: 375`)
-    const radarDish = this.add.container(72, 372);
-    const radarG = this.add.graphics();
-    radarG.fillStyle(0x1e293b, 0.9);
-    radarG.fillCircle(0, 0, 22);
-    radarG.lineStyle(2, 0xf59e0b, 0.85);
-    radarG.strokeCircle(0, 0, 22);
-    radarG.lineStyle(2, 0x38bdf8, 0.9);
-    radarG.lineBetween(0, 0, 18, -10);
-    radarG.fillStyle(0xf59e0b, 1);
-    radarG.fillCircle(0, 0, 4);
-    radarDish.add(radarG);
-    this.biomePropsContainer.add(radarDish);
-    this.tweens.add({
-      targets: radarDish,
-      angle: 360,
-      duration: 6000,
-      repeat: -1,
-      ease: 'Linear'
-    });
-
-    // 2. Sector 2 Animated FICSIT Orange Plasma Turbine (`x: 1212, y: 446`)
-    const turbine = this.add.container(1212, 446);
-    const turbG = this.add.graphics();
-    turbG.fillStyle(0x451a03, 0.9);
-    turbG.fillCircle(0, 0, 24);
-    turbG.lineStyle(2.5, 0xf97316, 0.95);
-    turbG.strokeCircle(0, 0, 24);
-    for (let b = 0; b < 6; b++) {
-      const rad = Phaser.Math.DegToRad(b * 60);
-      turbG.lineStyle(3, 0xfbbf24, 0.85);
-      turbG.lineBetween(0, 0, Math.cos(rad) * 20, Math.sin(rad) * 20);
-    }
-    turbine.add(turbG);
-    this.biomePropsContainer.add(turbine);
-    this.tweens.add({
-      targets: turbine,
-      angle: -360,
-      duration: 4500,
-      repeat: -1,
-      ease: 'Linear'
-    });
-
-    // 3. Sector 3 Drifting Bioluminescent Crystal Meteors
-    const meteorCoords = [
-      { x: 580, y: 238, col: 0xa855f7 },
-      { x: 930, y: 226, col: 0x22d3ee },
-      { x: 395, y: 222, col: 0xf472b6 }
+    // 1. Top-Left FICSIT Smelter Factory: Rising Tri-Color Smoke Plumes from the 3 Smokestacks
+    const smokestacks: Array<{ x: number; y: number; tint: number }> = [
+      { x: 196, y: 76, tint: 0x22d3ee }, // Cyan stack
+      { x: 232, y: 68, tint: 0x10b981 }, // Emerald stack
+      { x: 268, y: 76, tint: 0xf59e0b }  // Amber stack
     ];
-    meteorCoords.forEach((mc, idx) => {
-      const mG = this.add.graphics();
-      mG.fillStyle(mc.col, 0.35);
-      mG.fillCircle(0, 0, 14);
-      mG.fillStyle(0x1e1b4b, 0.95);
-      mG.fillTriangle(-10, 6, 0, -12, 11, 5);
-      mG.lineStyle(2, mc.col, 0.95);
-      mG.strokeTriangle(-10, 6, 0, -12, 11, 5);
-      mG.setPosition(mc.x, mc.y);
-      this.biomePropsContainer.add(mG);
 
-      this.tweens.add({
-        targets: mG,
-        y: mc.y - 10,
-        angle: { from: -8, to: 8 },
-        duration: 2200 + idx * 400,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-      });
+    smokestacks.forEach((stack, sIdx) => {
+      for (let p = 0; p < 5; p++) {
+        const puff = this.add
+          .image(stack.x, stack.y, 'starship-smoke-puff')
+          .setTint(stack.tint)
+          .setBlendMode(Phaser.BlendModes.SCREEN)
+          .setScale(0.18)
+          .setAlpha(0.0);
+        this.biomePropsContainer.add(puff);
+
+        this.tweens.add({
+          targets: puff,
+          x: stack.x + Phaser.Math.Between(-16, 22),
+          y: stack.y - Phaser.Math.Between(36, 58),
+          scaleX: { from: 0.16, to: 0.56 },
+          scaleY: { from: 0.16, to: 0.48 },
+          alpha: { from: 0.62, to: 0.0 },
+          duration: 2600 + p * 220,
+          delay: p * 520 + sIdx * 170,
+          repeat: -1,
+          ease: 'Sine.easeOut'
+        });
+      }
     });
 
-    // 4. Sector 4 Shimmering Rainbow Nebula Curtain & Holographic Relay Ring (`x: 92, y: 145`)
-    const nebulaRelay = this.add.container(92, 145);
-    const relayG = this.add.graphics();
-    relayG.lineStyle(2.5, 0x38bdf8, 0.85);
-    relayG.strokeEllipse(0, 0, 54, 24);
-    relayG.lineStyle(2, 0xf472b6, 0.75);
-    relayG.strokeEllipse(0, 0, 38, 16);
-    nebulaRelay.add(relayG);
-    this.biomePropsContainer.add(nebulaRelay);
-    this.tweens.add({
-      targets: nebulaRelay,
-      angle: 360,
-      scaleX: { from: 0.92, to: 1.08 },
-      duration: 5400,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut'
+    // 2. Vertical Rockets on Launch Gantries: Venting White Cryogenic LOX Steam Clouds
+    const rocketBases: Array<{ x: number; y: number; scale: number }> = [
+      { x: 102, y: 596, scale: 1.0 }, // Primary bottom-left SpaceX Starship Launchpad
+      { x: 998, y: 546, scale: 0.82 } // Secondary mid-right Booster Gantry
+    ];
+
+    rocketBases.forEach((rb, rIdx) => {
+      for (let c = 0; c < 6; c++) {
+        const dir = c % 2 === 0 ? -1 : 1;
+        const steam = this.add
+          .image(rb.x, rb.y, 'starship-smoke-puff')
+          .setTint(0xf8fafc)
+          .setScale(0.2 * rb.scale)
+          .setAlpha(0.0);
+        this.biomePropsContainer.add(steam);
+
+        this.tweens.add({
+          targets: steam,
+          x: rb.x + dir * Phaser.Math.Between(18, 46) * rb.scale,
+          y: rb.y - Phaser.Math.Between(10, 32) * rb.scale,
+          scaleX: { from: 0.18 * rb.scale, to: 0.62 * rb.scale },
+          scaleY: { from: 0.14 * rb.scale, to: 0.42 * rb.scale },
+          alpha: { from: 0.68, to: 0.0 },
+          duration: 1900 + c * 180,
+          delay: c * 310 + rIdx * 200,
+          repeat: -1,
+          ease: 'Quad.easeOut'
+        });
+      }
     });
 
-    // 5. Sector 5 Iridescent Unicorn Citadel Spire Beacon (`x: 1212, y: 108`)
+    // 3. Top-Right Unicorn Citadel Pulsing Starlight Aura
     const citadelBeacon = this.add
-      .image(1212, 108, 'starship-smooth-glow')
-      .setDisplaySize(140, 140)
+      .image(1142, 138, 'starship-smooth-glow')
+      .setDisplaySize(130, 130)
       .setTint(0xf472b6)
       .setBlendMode(Phaser.BlendModes.ADD)
-      .setAlpha(0.55);
+      .setAlpha(0.5);
     this.biomePropsContainer.add(citadelBeacon);
     this.tweens.add({
       targets: citadelBeacon,
-      alpha: { from: 0.35, to: 0.78 },
-      scaleX: { from: 0.5, to: 0.72 },
-      scaleY: { from: 0.5, to: 0.72 },
-      duration: 1800,
+      alpha: { from: 0.3, to: 0.72 },
+      scaleX: { from: 0.48, to: 0.68 },
+      scaleY: { from: 0.48, to: 0.68 },
+      duration: 1900,
       yoyo: true,
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
 
-    // 6. Floating Glassmorphic Sector Landmark Plaques (Sectors 1..5)
+    // 4. Compact Glassmorphic Sector Landmark Plaques (Sectors 1..5)
     SECTOR_LANDMARKS.forEach((sec) => {
       const badge = this.add.container(sec.x, sec.y);
-      const w = 232;
-      const h = 30;
+      const w = 224;
+      const h = 28;
       const g = this.add.graphics();
-      g.fillStyle(0x060c1a, 0.84);
+      g.fillStyle(0x060c1a, 0.82);
       g.fillRoundedRect(-w / 2, -h / 2, w, h, 8);
-      g.lineStyle(1.5, sec.accentColor, 0.78);
+      g.lineStyle(1.5, sec.accentColor, 0.82);
       g.strokeRoundedRect(-w / 2, -h / 2, w, h, 8);
 
       const title = this.add
         .text(0, -4, `${sec.icon} ${sec.title}`, {
           fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-          fontSize: '9.5px',
+          fontSize: '9px',
           fontStyle: 'bold',
           color: sec.hexColor
         })
         .setOrigin(0.5);
       const sub = this.add
-        .text(0, 7, sec.subtitle, {
+        .text(0, 6.5, sec.subtitle, {
           fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-          fontSize: '8px',
+          fontSize: '7.5px',
           color: '#cbd5e1'
         })
         .setOrigin(0.5);
@@ -1749,33 +1922,41 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   // ===========================================================================
-  // UPGRADE 5: ACTUAL STANDING 3D-STYLED PLAYER FIGURINE PIECES
+  // UPGRADE 5: UPRIGHT 3D-STYLED ASTRONAUT MINIATURES ON ISOMETRIC PEDESTALS
   // ===========================================================================
 
-  /**
-   * Builds tall, sculpted 3D-styled Astronaut Miniature Figurines standing on
-   * Metallic Thruster Pedestals with upright armored exosuit shields, glowing
-   * 3D antenna/crown crests, and dual jetpack flame emitters underneath!
-   */
+  private getPerspectiveScaleForY(y: number): number {
+    const baseScale = this.missionTotalPads === 25 ? 0.96 : 0.84;
+    const depthFactor = 0.88 + 0.16 * Phaser.Math.Clamp(y / 720, 0, 1);
+    return baseScale * depthFactor;
+  }
+
   private spawnPlayerBoardTokens(): void {
     this.tokensContainer.removeAll(true);
 
     this.activeHighlightRing = this.add.graphics();
     this.tokensContainer.add(this.activeHighlightRing);
 
-    const scaleFactor = this.missionTotalPads === 25 ? 1.0 : 0.86;
-
     this.players.forEach((player, idx) => {
       const pos = this.computeTokenWorldPosition(player.padIndex, idx);
-      const root = this.add.container(pos.x, pos.y).setScale(scaleFactor);
+      const perspScale = this.getPerspectiveScaleForY(pos.y);
+      const root = this.add.container(pos.x, pos.y).setScale(perspScale);
 
-      // 1. Ground Drop Shadow Ellipse right on the landing pad deck
+      // 1. Isometric Diamond Ground Drop Shadow right on the conveyor deck plate
       const shadowG = this.add.graphics();
-      shadowG.fillStyle(0x010409, 0.78);
-      shadowG.fillEllipse(0, 4, 48, 18);
+      shadowG.fillStyle(0x010409, 0.8);
+      shadowG.fillPoints(
+        [
+          new Phaser.Geom.Point(0, -8),
+          new Phaser.Geom.Point(24, 2),
+          new Phaser.Geom.Point(0, 12),
+          new Phaser.Geom.Point(-24, 2)
+        ],
+        true
+      );
       root.add(shadowG);
 
-      // 2. Sculpted Figurine Body Container (hovers & leans dynamically during jetpack hops!)
+      // 2. Sculpted Figurine Body Container (hovers & leans dynamically during conveyor hops!)
       const figurineBody = this.add.container(0, 0);
       root.add(figurineBody);
 
@@ -1801,19 +1982,30 @@ export class StarshipUnicornScene extends Phaser.Scene {
         repeat: -1
       });
 
-      // 3. 3D Tiered Metallic Thruster Pedestal Base + Upright Armored Exosuit Shield Frame
+      // 3. Perspective-Matched Isometric Pedestal Base + Upright Armored Exosuit Figurine Frame
       const pedG = this.add.graphics();
-      // Lower 3D metallic thruster skirt
+      // Lower 3D isometric diamond pedestal skirt
+      const isoBaseBot = [
+        new Phaser.Geom.Point(0, -9),
+        new Phaser.Geom.Point(22, 0),
+        new Phaser.Geom.Point(0, 9),
+        new Phaser.Geom.Point(-22, 0)
+      ];
+      const isoBaseTop = [
+        new Phaser.Geom.Point(0, -14),
+        new Phaser.Geom.Point(19, -5),
+        new Phaser.Geom.Point(0, 4),
+        new Phaser.Geom.Point(-19, -5)
+      ];
       pedG.fillStyle(0x0f172a, 0.98);
-      pedG.fillEllipse(0, -1, 44, 15);
-      pedG.lineStyle(2, player.bay.color, 0.95);
-      pedG.strokeEllipse(0, -1, 44, 15);
+      pedG.fillPoints(isoBaseBot, true);
+      pedG.lineStyle(2, player.bay.color, 0.98);
+      pedG.strokePoints(isoBaseBot, true);
 
-      // Upper 3D pedestal collar
       pedG.fillStyle(0x334155, 0.98);
-      pedG.fillEllipse(0, -6, 36, 12);
-      pedG.lineStyle(1.5, 0xffffff, 0.65);
-      pedG.strokeEllipse(0, -6, 36, 12);
+      pedG.fillPoints(isoBaseTop, true);
+      pedG.lineStyle(1.4, 0xffffff, 0.7);
+      pedG.strokePoints(isoBaseTop, true);
 
       // Upright 3D Exosuit Shoulder Pauldrons & Torso Shield Backing (`y: -6` up to `-56`)
       pedG.fillStyle(0x090f1d, 0.96);
@@ -1857,7 +2049,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
         .setOrigin(0.5);
       figurineBody.add([tagG, tagTxt]);
 
-      // Gentle idle hover bob so every standing figurine feels alive on the board
+      // Gentle idle hover bob so every standing figurine feels alive on the conveyor belt
       this.tweens.add({
         targets: figurineBody,
         y: { from: 0, to: -4 },
@@ -1867,15 +2059,18 @@ export class StarshipUnicornScene extends Phaser.Scene {
         ease: 'Sine.easeInOut'
       });
 
+      root.setDepth(100 + Math.floor(pos.y));
       player.tokenContainer = root;
       player.figurineBody = figurineBody;
       this.tokensContainer.add(root);
     });
+
+    this.tokensContainer.sort('y');
   }
 
   private computeTokenWorldPosition(padIndex: number, playerSlotIdx: number): { x: number; y: number } {
     const clampedIdx = Phaser.Math.Clamp(padIndex, 0, this.boardPads.length - 1);
-    const pad = this.boardPads[clampedIdx] ?? { x: 115, y: 430 };
+    const pad = this.boardPads[clampedIdx] ?? { x: 168, y: 604 };
 
     const occupants = this.players
       .map((p, idx) => ({ p, idx }))
@@ -1889,34 +2084,34 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
     const clusterOffsets: Record<number, Array<[number, number]>> = {
       2: [
-        [-26, -8],
-        [26, -8]
+        [-24, -7],
+        [24, 7]
       ],
       3: [
-        [-32, -18],
-        [32, -18],
-        [0, 16]
+        [-28, -14],
+        [28, -14],
+        [0, 14]
       ],
       4: [
-        [-30, -22],
-        [30, -22],
-        [-30, 16],
-        [30, 16]
+        [-28, -18],
+        [28, -18],
+        [-28, 14],
+        [28, 14]
       ],
       5: [
-        [-44, -22],
-        [0, -26],
-        [44, -22],
-        [-26, 18],
-        [26, 18]
+        [-40, -18],
+        [0, -22],
+        [40, -18],
+        [-24, 16],
+        [24, 16]
       ],
       6: [
-        [-46, -24],
-        [0, -28],
-        [46, -24],
-        [-46, 18],
-        [0, 22],
-        [46, 18]
+        [-42, -20],
+        [0, -24],
+        [42, -20],
+        [-42, 16],
+        [0, 20],
+        [42, 16]
       ]
     };
 
@@ -1931,33 +2126,62 @@ export class StarshipUnicornScene extends Phaser.Scene {
     }
 
     const angle = (myOrder / occupants.length) * Math.PI * 2 - Math.PI / 2;
-    const spreadRadius = 32;
+    const spreadRadius = 30;
     return {
       x: Math.round(pad.x + Math.cos(angle) * spreadRadius),
-      y: Math.round(pad.y - 4 + Math.sin(angle) * (spreadRadius * 0.75))
+      y: Math.round(pad.y - 4 + Math.sin(angle) * (spreadRadius * 0.72))
     };
   }
 
   private refreshAllTokenOffsets(): void {
+    // Illuminate occupied conveyor deck plates
+    this.padRimGlowMap.forEach((rimG, padIdx) => {
+      const isOccupied = this.players.some((p) => p.padIndex === padIdx);
+      rimG.setAlpha(isOccupied ? 0.85 : 0);
+    });
+
     this.players.forEach((p, idx) => {
       if (!p.tokenContainer) return;
       const target = this.computeTokenWorldPosition(p.padIndex, idx);
+      const targetScale = this.getPerspectiveScaleForY(target.y);
       this.tweens.add({
         targets: p.tokenContainer,
         x: target.x,
         y: target.y,
+        scaleX: targetScale,
+        scaleY: targetScale,
         duration: 240,
-        ease: 'Quad.easeOut'
+        ease: 'Quad.easeOut',
+        onUpdate: () => {
+          if (p.tokenContainer) {
+            p.tokenContainer.setDepth(100 + Math.floor(p.tokenContainer.y));
+          }
+        },
+        onComplete: () => {
+          if (p.tokenContainer) {
+            p.tokenContainer.setDepth(100 + Math.floor(p.tokenContainer.y));
+          }
+          this.tokensContainer.sort('y');
+        }
       });
-      // Sort depth by Y coordinate so figurines in front naturally overlap figurines behind
-      p.tokenContainer.setDepth(idx === this.activePlayerIndex ? 35 : 22 + idx);
+      p.tokenContainer.setDepth(100 + Math.floor(target.y));
     });
+
+    this.tokensContainer.sort('y');
 
     const activePlayer = this.players[this.activePlayerIndex];
     if (activePlayer && activePlayer.tokenContainer && this.activeHighlightRing) {
       this.activeHighlightRing.clear();
       this.activeHighlightRing.lineStyle(3, activePlayer.bay.color, 0.92);
-      this.activeHighlightRing.strokeEllipse(0, 0, 56, 22);
+      this.activeHighlightRing.strokePoints(
+        [
+          new Phaser.Geom.Point(0, -14),
+          new Phaser.Geom.Point(28, 0),
+          new Phaser.Geom.Point(0, 14),
+          new Phaser.Geom.Point(-28, 0)
+        ],
+        true
+      );
       this.activeHighlightRing.setPosition(
         activePlayer.tokenContainer.x,
         activePlayer.tokenContainer.y + 2
@@ -2035,15 +2259,21 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   /**
-   * Renders the FICSIT Telemetry Question Dock (`y: 472..598`) and the 4 Heavy Industrial
-   * 3D Beveled Switchgear Answer Pads (`y: 606..710`) with physical hydraulic press
-   * and 750ms sweeping amber scanner lock-in suspense!
+   * Renders the Motorized Sliding FICSIT Telemetry Trivia Drawer (`y: 472..710`).
+   * - During `TRIVIA` phase: smoothly slides up from off-screen (`y: 260 -> 0`, `350ms` Cubic.easeOut).
+   * - As soon as Answer Lock-In finishes: automatically retracts down off-screen (`y: 0 -> 260`, `400ms`)
+   *   so 100% of the 1280x720 isometric factory board is unobstructed during `ROLL` & `MOVE`!
    */
   private renderTelemetryTriviaDock(
     player: ActiveAstronautPlayer,
     question: TriviaQuestionItem
   ): void {
+    this.tweens.killTweensOf(this.dockContainer);
+    const wasRetracted = this.dockContainer.y > 10;
     this.dockContainer.removeAll(true);
+    this.dockContainer.setVisible(true).setAlpha(1).setDepth(860);
+    this.diceConsoleContainer.removeAll(true);
+    this.diceConsoleContainer.setPosition(0, 0);
 
     // 1. Upper Question Telemetry Console (`y: 472..598`)
     const dockG = this.add.graphics();
@@ -2060,6 +2290,22 @@ export class StarshipUnicornScene extends Phaser.Scene {
     dockG.fillStyle(0xf59e0b, 0.88);
     dockG.fillRoundedRect(28, 472, 165, 5, 2);
     this.dockContainer.add(dockG);
+
+    // Motorized Drawer Handle Tab on top center of the Trivia Console
+    const handleG = this.add.graphics();
+    handleG.fillStyle(0x1e293b, 0.96);
+    handleG.fillRoundedRect(540, 456, 200, 18, 8);
+    handleG.lineStyle(1.5, player.bay.color, 0.85);
+    handleG.strokeRoundedRect(540, 456, 200, 18, 8);
+    const handleTxt = this.add
+      .text(640, 465, '▲ MOTORIZED TELEMETRY DRAWER ▲', {
+        fontFamily: '"Segoe UI", "Fredoka", sans-serif',
+        fontSize: '8.5px',
+        fontStyle: 'bold',
+        color: '#94a3b8'
+      })
+      .setOrigin(0.5);
+    this.dockContainer.add([handleG, handleTxt]);
 
     // Left Crew Astronaut Portrait Frame (`x: 86, y: 534`)
     const portFrame = this.add.graphics();
@@ -2319,6 +2565,19 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
       this.dockContainer.add(switchRoot);
     });
+
+    // Guarantee `dockContainer` is at `y = 0` during `TRIVIA` (slides back up from `+240` after `ROLL`/`MOVE`)
+    if (wasRetracted) {
+      this.dockContainer.setPosition(0, 240);
+      this.tweens.add({
+        targets: this.dockContainer,
+        y: 0,
+        duration: 320,
+        ease: 'Cubic.easeOut'
+      });
+    } else {
+      this.dockContainer.setPosition(0, 0);
+    }
   }
 
   private createCockpitRockerSwitch(
@@ -2409,15 +2668,29 @@ export class StarshipUnicornScene extends Phaser.Scene {
       StarshipAudio.playVoice('standard_thruster');
     }
 
-    // Transition to the 3D Dice Ignition Console after a clear celebratory reveal
-    this.time.delayedCall(650, () => {
+    // Automatically retract/slide the heavy Trivia Drawer down off-screen (`y: 0 -> +240`, `360ms`)
+    // with a pneumatic retraction sound so 100% of the 1280x720 isometric board is unobstructed!
+    this.time.delayedCall(280, () => {
       if (!this.scene.isActive()) return;
-      this.renderOrbitalDiceRollDock(player, question, isCorrect);
+      StarshipAudio.playRockerSwitchClick(false);
+      this.tweens.killTweensOf(this.dockContainer);
+      this.tweens.add({
+        targets: this.dockContainer,
+        y: 240,
+        duration: 360,
+        ease: 'Cubic.easeIn',
+        onComplete: () => {
+          this.dockContainer.removeAll(true);
+          if (this.scene.isActive()) {
+            this.renderOrbitalDiceRollDock(player, question, isCorrect);
+          }
+        }
+      });
     });
   }
 
   // ===========================================================================
-  // UPGRADE 3: TACTILE 3D DICE IGNITION CONSOLE & HOLOGRAPHIC PATH PREVIEW
+  // UPGRADE 3: COMPACT FLOATING 3D DICE IGNITION POD (FULL-SCREEN BOARD VIEW!)
   // ===========================================================================
 
   private renderOrbitalDiceRollDock(
@@ -2427,50 +2700,51 @@ export class StarshipUnicornScene extends Phaser.Scene {
   ): void {
     this.scenePhase = 'DICE_ROLL';
     this.dockContainer.removeAll(true);
+    this.diceConsoleContainer.removeAll(true);
 
-    const correctAnswerText = question.options[question.correctIndex] ?? '';
     const bannerColor = wasCorrect ? 0x10b981 : 0x38bdf8;
+    const podW = 720;
+    const podH = 122;
+    const podX = 640;
+    const podY = 638;
 
+    const podRoot = this.add.container(podX, podY + 160);
+    this.diceConsoleContainer.add(podRoot);
+
+    // Compact Glassmorphic Floating Pod Housing (leaves left & right board corridors 100% visible!)
     const bg = this.add.graphics();
-    bg.fillStyle(0x020617, 0.98);
-    bg.fillRoundedRect(18, 478, 1244, 232, 16);
-    bg.fillStyle(0x070d1b, 0.96);
-    bg.fillRoundedRect(18, 472, 1244, 232, 16);
+    bg.fillStyle(0x020617, 0.94);
+    bg.fillRoundedRect(-podW / 2, -podH / 2 + 5, podW, podH, 18);
+    bg.fillStyle(0x070d1b, 0.92);
+    bg.fillRoundedRect(-podW / 2, -podH / 2, podW, podH, 18);
     bg.lineStyle(3, bannerColor, 0.96);
-    bg.strokeRoundedRect(18, 472, 1244, 232, 16);
-    this.dockContainer.add(bg);
+    bg.strokeRoundedRect(-podW / 2, -podH / 2, podW, podH, 18);
+    podRoot.add(bg);
 
-    // Left Status Telemetry Readout
+    // Top Floating Status Pill attached to Pod
     const statusTitle = wasCorrect
-      ? `⚡ OVERCLOCK ENGAGED! ${player.roster.name.toUpperCase()} UNLOCKED DOUBLE THRUSTER DICE + COLOR WARP!`
-      : `🚀 TELEMETRY SYNCED! ${player.roster.name.toUpperCase()} READY FOR SINGLE THRUSTER IGNITION!`;
+      ? `⚡ OVERCLOCK ENGAGED! ${player.roster.name}: 2x DICE + ${PAD_COLOR_HEX[this.getMatchedPadColor(question.correctIndex)].label} WARP`
+      : `🚀 TELEMETRY SYNCED! ${player.roster.name}: 1x THRUSTER DIE`;
 
-    const statusSub = wasCorrect
-      ? `Confirmed Answer: "${correctAnswerText}"  •  Roll TWO 3D Orbital Dice (2–12 Spaces) + Warp to matching ${PAD_COLOR_HEX[this.getMatchedPadColor(question.correctIndex)].label}!`
-      : `Correct Telemetry: "${correctAnswerText}"  •  Zero Penalty! Roll ONE 3D Orbital Die (1–6 Spaces) forward!`;
-
+    const statusBadgeG = this.add.graphics();
+    statusBadgeG.fillStyle(0x020617, 0.96);
+    statusBadgeG.fillRoundedRect(-270, -podH / 2 - 15, 540, 26, 8);
+    statusBadgeG.lineStyle(1.5, bannerColor, 0.95);
+    statusBadgeG.strokeRoundedRect(-270, -podH / 2 - 15, 540, 26, 8);
     const titleTxt = this.add
-      .text(44, 504, statusTitle, {
+      .text(0, -podH / 2 - 2, statusTitle, {
         fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-        fontSize: '18.5px',
+        fontSize: '12.5px',
         fontStyle: 'bold',
         color: wasCorrect ? '#6ee7b7' : '#7dd3fc'
       })
-      .setOrigin(0, 0.5);
+      .setOrigin(0.5);
+    podRoot.add([statusBadgeG, titleTxt]);
 
-    const subTxt = this.add
-      .text(44, 534, statusSub, {
-        fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-        fontSize: '14px',
-        color: '#e2e8f0'
-      })
-      .setOrigin(0, 0.5);
-
-    this.dockContainer.add([titleTxt, subTxt]);
-
-    // Centerpiece 3D Isometric Dice Cubes Display (`x: 340` and `x: 470`, `y: 622`)
-    const die1 = this.create3DIsometricDie(wasCorrect ? 320 : 385, 622, 6, 0x38bdf8);
-    this.dockContainer.add(die1.container);
+    // 3D Isometric Dice Cubes on Left Side of Compact Pod
+    const die1 = this.create3DIsometricDie(wasCorrect ? -255 : -205, 10, 6, 0x38bdf8);
+    die1.container.setScale(0.84);
+    podRoot.add(die1.container);
 
     let die2: {
       container: Phaser.GameObjects.Container;
@@ -2478,42 +2752,42 @@ export class StarshipUnicornScene extends Phaser.Scene {
     } | null = null;
 
     if (wasCorrect) {
-      die2 = this.create3DIsometricDie(455, 622, 6, 0xf59e0b);
-      this.dockContainer.add(die2.container);
+      die2 = this.create3DIsometricDie(-145, 10, 6, 0xf59e0b);
+      die2.container.setScale(0.84);
+      podRoot.add(die2.container);
     }
 
-    // Centerpiece Heavy Red/Amber `[ 🎲 SLAM TO IGNITE THRUSTER DICE ]` Plunger Console (`x: 885, y: 618`)
-    const plungerRoot = this.add.container(885, 618);
-    const btnW = 560;
-    const btnH = 104;
+    // Compact Heavy `[ 🎲 SLAM TO IGNITE THRUSTER DICE ]` Plunger on Right Side of Pod
+    const plungerRoot = this.add.container(105, 6);
+    const btnW = 440;
+    const btnH = 82;
 
-    // 3D Lower Plunger Housing Lip
     const plungerBaseG = this.add.graphics();
     plungerBaseG.fillStyle(0x020617, 0.98);
-    plungerBaseG.fillRoundedRect(-btnW / 2 - 4, -btnH / 2 + 10, btnW + 8, btnH + 4, 18);
+    plungerBaseG.fillRoundedRect(-btnW / 2 - 3, -btnH / 2 + 8, btnW + 6, btnH + 2, 14);
     plungerBaseG.fillStyle(wasCorrect ? 0x78350f : 0x0c4a6e, 1);
-    plungerBaseG.fillRoundedRect(-btnW / 2, -btnH / 2 + 8, btnW, btnH, 16);
+    plungerBaseG.fillRoundedRect(-btnW / 2, -btnH / 2 + 6, btnW, btnH, 14);
     plungerRoot.add(plungerBaseG);
 
     const plungerCap = this.add.container(0, 0);
     const capG = this.add.graphics();
     capG.fillStyle(wasCorrect ? 0xd97706 : 0x0284c7, 0.98);
-    capG.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 16);
+    capG.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 14);
     capG.fillStyle(0xffffff, 0.18);
-    capG.fillRoundedRect(-btnW / 2 + 10, -btnH / 2 + 8, btnW - 20, 28, 10);
-    capG.lineStyle(3.5, 0xfef08a, 1);
-    capG.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 16);
+    capG.fillRoundedRect(-btnW / 2 + 8, -btnH / 2 + 6, btnW - 16, 22, 8);
+    capG.lineStyle(3, 0xfef08a, 1);
+    capG.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 14);
 
     const plungerLabel = this.add
       .text(
         0,
-        -8,
+        -7,
         wasCorrect
-          ? '🎲  SLAM TO IGNITE 2x OVERCLOCK DICE!'
-          : '🎲  SLAM TO IGNITE THRUSTER DIE!',
+          ? '🎲 SLAM TO IGNITE 2x DICE!'
+          : '🎲 SLAM TO IGNITE THRUSTER DIE!',
         {
           fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-          fontSize: '23px',
+          fontSize: '19px',
           fontStyle: 'bold',
           color: '#ffffff',
           stroke: '#020617',
@@ -2523,9 +2797,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const plungerSub = this.add
-      .text(0, 24, 'PHYSICAL HYDRAULIC LAUNCH PLUNGER  •  TAP OR CLICK TO FIRE', {
+      .text(0, 18, 'TAP TO LAUNCH ALONG CONVEYOR TRACK', {
         fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-        fontSize: '12px',
+        fontSize: '11px',
         fontStyle: 'bold',
         color: '#fef08a'
       })
@@ -2534,7 +2808,6 @@ export class StarshipUnicornScene extends Phaser.Scene {
     plungerCap.add([capG, plungerLabel, plungerSub]);
     plungerRoot.add(plungerCap);
 
-    // Gentle attention pulse on the plunger cap
     const pulseTween = this.tweens.add({
       targets: plungerCap,
       scaleX: { from: 1.0, to: 1.025 },
@@ -2558,11 +2831,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
       pulseTween.stop();
       plungerCap.setScale(1);
 
-      // Physically depress the plunger cap
       this.tweens.add({
         targets: plungerCap,
-        y: 8,
-        duration: 90,
+        y: 6,
+        duration: 85,
         ease: 'Quad.easeOut'
       });
 
@@ -2573,11 +2845,20 @@ export class StarshipUnicornScene extends Phaser.Scene {
         die1,
         die2,
         plungerLabel,
-        plungerSub
+        plungerSub,
+        podRoot
       );
     });
 
-    this.dockContainer.add(plungerRoot);
+    podRoot.add(plungerRoot);
+
+    // Slide the compact Dice Ignition Pod smoothly into place
+    this.tweens.add({
+      targets: podRoot,
+      y: podY,
+      duration: 300,
+      ease: 'Cubic.easeOut'
+    });
   }
 
   /**
@@ -2683,7 +2964,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
     die1: { container: Phaser.GameObjects.Container; setValue: (v: number) => void },
     die2: { container: Phaser.GameObjects.Container; setValue: (v: number) => void } | null,
     plungerLabel: Phaser.GameObjects.Text,
-    plungerSub: Phaser.GameObjects.Text
+    plungerSub: Phaser.GameObjects.Text,
+    podRoot?: Phaser.GameObjects.Container
   ): void {
     // Play heavy mechanical turbine spin-up + metallic dice clatter
     StarshipAudio.playDiceTumbleBurst();
@@ -2693,34 +2975,17 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const totalRoll = finalD1 + finalD2;
 
     plungerLabel.setText('⚡ TURBINE DICE TUMBLING...');
-    plungerSub.setText('CALCULATING ORBITAL TRAJECTORY TELEMETRY');
+    plungerSub.setText('CALCULATING CONVEYOR TRAJECTORY TELEMETRY');
 
-    // Tumble the 3D dice with glowing shockwave rings
+    // Tumble the 3D dice
     const targets = die2 ? [die1.container, die2.container] : [die1.container];
     this.tweens.add({
       targets,
       angle: { from: -18, to: 18 },
-      y: '-=14',
+      y: '-=12',
       duration: 90,
       yoyo: true,
       repeat: 5
-    });
-
-    targets.forEach((dieNode, dIdx) => {
-      const ring = this.add.graphics();
-      ring.lineStyle(3, dIdx === 0 ? 0x38bdf8 : 0xf59e0b, 0.9);
-      ring.strokeEllipse(0, 0, 84, 52);
-      ring.setPosition(dieNode.x, dieNode.y);
-      this.dockContainer.add(ring);
-      this.tweens.add({
-        targets: ring,
-        scaleX: 1.75,
-        scaleY: 1.75,
-        alpha: 0,
-        duration: 540,
-        repeat: 1,
-        onComplete: () => ring.destroy()
-      });
     });
 
     let ticks = 0;
@@ -2743,15 +3008,25 @@ export class StarshipUnicornScene extends Phaser.Scene {
               ? `🚀 ROLLED ${finalD1} + ${finalD2} = ${totalRoll} PADS!`
               : `🚀 ROLLED ${finalD1} PADS FORWARD!`
           );
-          plungerSub.setText('LOCKING HOLOGRAPHIC PATH TRAJECTORY ON BOARD...');
+          plungerSub.setText('RETRACTING POD FOR FULL-SCREEN CONVEYOR LAUNCH...');
 
-          Juice.burstStars(this, die1.container.x + 40, die1.container.y, 20, [
-            0xfde047,
-            0x38bdf8,
-            0x10b981
-          ]);
+          Juice.burstStars(this, 640, 610, 20, [0xfde047, 0x38bdf8, 0x10b981]);
 
-          // Illuminate the exact target path of pads on the board for 650ms before hopping!
+          // Slide the compact Dice Ignition Pod down off-screen so 100% of the board is visible during hops!
+          if (podRoot) {
+            this.tweens.add({
+              targets: podRoot,
+              y: 820,
+              duration: 340,
+              delay: 280,
+              ease: 'Cubic.easeIn',
+              onComplete: () => {
+                this.diceConsoleContainer.removeAll(true);
+              }
+            });
+          }
+
+          // Illuminate the exact target path of conveyor deck plates for 650ms before hopping!
           this.showHolographicTrajectoryPreview(player, totalRoll, () => {
             this.scenePhase = 'MOVING';
             const matchedColor = isOverclockDouble
@@ -2768,8 +3043,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   /**
-   * Illuminates the exact target path of pads on the board with a glowing holographic
-   * laser trajectory line and pulsing target rings for 650ms before the figurine hops!
+   * Illuminates the exact target path of conveyor deck plates on the board with a glowing
+   * holographic laser trajectory line and neon deck-plate rims for 650ms before hopping!
    */
   private showHolographicTrajectoryPreview(
     player: ActiveAstronautPlayer,
@@ -2789,31 +3064,52 @@ export class StarshipUnicornScene extends Phaser.Scene {
       const pB = this.boardPads[idx + 1];
       if (!pA || !pB) continue;
 
-      // Outer laser aura
-      laserG.lineStyle(12, player.bay.color, 0.35);
-      laserG.lineBetween(pA.x, pA.y - 6, pB.x, pB.y - 6);
-      // Inner high-intensity laser beam
-      laserG.lineStyle(4, 0xfef08a, 0.96);
-      laserG.lineBetween(pA.x, pA.y - 6, pB.x, pB.y - 6);
+      // Illuminate target conveyor deck plate neon rim!
+      const rimGlow = this.padRimGlowMap.get(idx + 1);
+      if (rimGlow) {
+        rimGlow.setAlpha(1);
+      }
 
-      // Target ring on each step pad
+      // Outer laser aura
+      laserG.lineStyle(10, player.bay.color, 0.38);
+      laserG.lineBetween(pA.x, pA.y - 4, pB.x, pB.y - 4);
+      // Inner high-intensity laser beam
+      laserG.lineStyle(3.5, 0xfef08a, 0.96);
+      laserG.lineBetween(pA.x, pA.y - 4, pB.x, pB.y - 4);
+
+      // Isometric diamond target lock on each step pad
       const isFinalPad = idx + 1 === endIdx;
-      laserG.lineStyle(isFinalPad ? 4 : 2.5, isFinalPad ? 0xfef08a : player.bay.color, 0.95);
-      laserG.strokeEllipse(pB.x, pB.y, isFinalPad ? 62 : 44, isFinalPad ? 38 : 28);
+      const rx = isFinalPad ? 30 : 24;
+      const ry = isFinalPad ? 18 : 14;
+      laserG.lineStyle(isFinalPad ? 3.5 : 2, isFinalPad ? 0xfef08a : player.bay.color, 0.95);
+      laserG.strokePoints(
+        [
+          new Phaser.Geom.Point(pB.x, pB.y - ry),
+          new Phaser.Geom.Point(pB.x + rx, pB.y),
+          new Phaser.Geom.Point(pB.x, pB.y + ry),
+          new Phaser.Geom.Point(pB.x - rx, pB.y)
+        ],
+        true
+      );
     }
 
     // Floating Target Lock Badge above the destination pad
     const destPad = this.boardPads[endIdx];
     if (destPad) {
       const lockBadge = this.add
-        .text(destPad.x, destPad.y - 44, `🎯 TARGET PAD ${destPad.numberLabel}`, {
-          fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-          fontSize: '12px',
-          fontStyle: 'bold',
-          color: '#fef08a',
-          backgroundColor: '#020617',
-          padding: { x: 8, y: 4 }
-        })
+        .text(
+          destPad.x,
+          destPad.y - 42,
+          `🎯 TARGET PAD ${String(destPad.numberLabel).padStart(2, '0')}`,
+          {
+            fontFamily: '"Segoe UI", "Fredoka", sans-serif',
+            fontSize: '12px',
+            fontStyle: 'bold',
+            color: '#fef08a',
+            backgroundColor: '#020617',
+            padding: { x: 8, y: 4 }
+          }
+        )
         .setOrigin(0.5);
       this.trajectoryLaserContainer.add(lockBadge);
     }
@@ -2871,6 +3167,12 @@ export class StarshipUnicornScene extends Phaser.Scene {
     // Play hydraulic jump whoosh + musical ascending pitch chime + landing thud
     StarshipAudio.playTokenHop(stepPitchIndex);
 
+    // Illuminate approached conveyor deck plate rim
+    const nextRim = this.padRimGlowMap.get(nextPad.index);
+    if (nextRim) {
+      nextRim.setAlpha(1);
+    }
+
     const startX = token.x;
     const startY = token.y;
     const destPos = this.computeTokenWorldPosition(player.padIndex, this.activePlayerIndex);
@@ -2903,7 +3205,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       });
     }
 
-    // High parabolic arc (`y - 40px` peak) over `450ms`
+    // High parabolic arc (`y - 40px` peak) over `450ms` with live perspective scaling & Y-depth sorting
     const hopState = { t: 0 };
     this.tweens.add({
       targets: hopState,
@@ -2914,17 +3216,30 @@ export class StarshipUnicornScene extends Phaser.Scene {
         const curX = Phaser.Math.Linear(startX, destPos.x, hopState.t);
         const baseLinY = Phaser.Math.Linear(startY, destPos.y, hopState.t);
         const arcLift = Math.sin(hopState.t * Math.PI) * 40;
+        const perspScale = this.getPerspectiveScaleForY(baseLinY);
         token.setPosition(curX, baseLinY - arcLift);
+        token.setScale(perspScale);
+        token.setDepth(100 + Math.floor(baseLinY));
 
         if (this.activeHighlightRing) {
           this.activeHighlightRing.setPosition(curX, baseLinY + 2);
         }
       },
       onComplete: () => {
-        // Spawn glowing landing shockwave ring on the pad!
+        this.tokensContainer.sort('y');
+
+        // Spawn glowing isometric diamond landing shockwave on the conveyor deck plate!
         const shockG = this.add.graphics();
         shockG.lineStyle(3, player.bay.color, 0.95);
-        shockG.strokeEllipse(0, 0, 36, 18);
+        shockG.strokePoints(
+          [
+            new Phaser.Geom.Point(0, -14),
+            new Phaser.Geom.Point(24, 0),
+            new Phaser.Geom.Point(0, 14),
+            new Phaser.Geom.Point(-24, 0)
+          ],
+          true
+        );
         shockG.setPosition(nextPad.x, nextPad.y);
         this.tokensContainer.add(shockG);
         this.tweens.add({
@@ -3026,7 +3341,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       StarshipAudio.playVoice('tile_wormhole');
       this.playWidescreenCutsceneOverlay(
         '🌀 HYPERLOOP WORMHOLE CONDUIT!',
-        `${player.roster.name} enters the Plasma Tunnel and warps ahead to Pad ${targetIdx + 1}!`,
+        `${player.roster.name} enters the Plasma Tunnel and warps ahead to Pad ${targetIdx}!`,
         0x22d3ee,
         2900,
         () => {
@@ -3088,7 +3403,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       StarshipAudio.playVoice('tile_asteroid');
       this.playWidescreenCutsceneOverlay(
         '☄️ ASTEROID GRAVITY WELL!',
-        `Magnetic turbulence pulls ${player.roster.name} back 2 spaces to Pad ${targetIdx + 1}!`,
+        `Magnetic turbulence pulls ${player.roster.name} back 2 spaces to Pad ${targetIdx}!`,
         0xef4444,
         2800,
         () => {
@@ -3513,7 +3828,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const statsSummary = this.players
       .map(
         (p) =>
-          `${p.roster.name}: Pad ${p.padIndex + 1}/${this.missionTotalPads} (${p.correctCount} ⚡)`
+          `${p.roster.name}: Pad ${p.padIndex}/${this.missionTotalPads} (${p.correctCount} ⚡)`
       )
       .join('   •   ');
 

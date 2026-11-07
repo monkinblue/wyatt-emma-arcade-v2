@@ -151,8 +151,7 @@ const SHELF_ACTIVITY_CARDS: Record<'play' | 'create' | 'tv', ShelfActivityCardCo
       accentColor: 0x38bdf8,
       previewSfx: 'fanfare',
       unlocked: true,
-      targetScene: 'StarshipUnicornScene',
-      announceAudio: '/assets/audio/starship/voice/welcome_title.mp3'
+      targetScene: 'StarshipUnicornScene'
     },
     {
       id: 'animal-match-safari',
