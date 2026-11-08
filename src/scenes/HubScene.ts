@@ -418,24 +418,10 @@ export class HubScene extends Phaser.Scene {
     };
 
     const executeSafeUpdateCheck = async () => {
+      if (isBusy) return;
       isBusy = true;
-      drawProgress(1);
-      pillLabel.setText('⟳ CHECKING...');
 
-      let isLiveOnline = false;
-      if (typeof navigator !== 'undefined' && navigator.onLine) {
-        try {
-          const pingUrl = window.location.pathname + '?ping=' + Date.now();
-          const res = await fetch(pingUrl, { method: 'HEAD', cache: 'no-store' });
-          if (res.ok) {
-            isLiveOnline = true;
-          }
-        } catch {
-          isLiveOnline = false;
-        }
-      }
-
-      if (!isLiveOnline) {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
         // Airplane Mode / Offline: abort without touching any caches!
         drawProgress(0);
         drawPillBase('offline');
@@ -449,24 +435,37 @@ export class HubScene extends Phaser.Scene {
         return;
       }
 
-      // Live server confirmed reachable — safe to clear Service Workers & caches and reload!
-      drawProgress(0);
+      drawProgress(1);
       drawPillBase('updating');
       pillLabel.setText('⟳ UPDATING...');
       AudioBus.playSfx('fanfare');
 
       try {
-        if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map((r) => r.unregister()));
-        }
-        if ('caches' in window) {
-          const cacheKeys = await caches.keys();
-          await Promise.all(cacheKeys.map((k) => caches.delete(k)));
-        }
+        localStorage.removeItem('arcade_cache_heal_v3');
       } catch {
-        // Ignore cleanup errors and proceed with cache-busted reload
+        // Ignore storage errors
       }
+
+      const cleanupPromise = (async () => {
+        try {
+          if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((r) => r.unregister()));
+          }
+          if ('caches' in window) {
+            const cacheKeys = await caches.keys();
+            await Promise.all(cacheKeys.map((k) => caches.delete(k)));
+          }
+        } catch {
+          // Ignore cleanup errors and proceed with cache-busted reload
+        }
+      })();
+
+      // Never allow a wedged Service Worker or Cache Storage DB to deadlock the reload!
+      await Promise.race([
+        cleanupPromise,
+        new Promise<void>((resolve) => window.setTimeout(resolve, 1200))
+      ]);
 
       window.location.replace(window.location.pathname + '?v=' + Date.now());
     };
@@ -2123,8 +2122,12 @@ export class HubScene extends Phaser.Scene {
 
           if (card.unlocked && card.targetScene) {
             this.isLaunchingBook = true;
-            if (!AudioBus.getMuted() && this.cache.audio.exists('sfx-book-select')) {
-              this.sound.play('sfx-book-select', { volume: 0.9 });
+            if (!AudioBus.getMuted()) {
+              if (this.cache.audio.exists('sfx-book-select')) {
+                this.sound.play('sfx-book-select', { volume: 0.9 });
+              } else {
+                AudioBus.playLayerSfx('/assets/hub/audio/sfx-book-select.mp3', 0.9);
+              }
             }
             if (!AudioBus.getMuted() && card.announceAudio) {
               AudioBus.playLayerSfx(card.announceAudio, 0.8);

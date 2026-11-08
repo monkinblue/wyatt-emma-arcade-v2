@@ -13,7 +13,11 @@ import { AudioBus } from '../core/AudioBus';
 import { StarshipAudio } from '../core/StarshipAudioEngine';
 
 export class BootScene extends Phaser.Scene {
-  private hasFinishedBoot = false;
+  private bootCompleted = false;
+  private loadingRoot: Phaser.GameObjects.Container | null = null;
+  private shimmerTween: Phaser.Tweens.Tween | null = null;
+  private ninetyFiveTimerId: number | null = null;
+  private ninetyNineTimerId: number | null = null;
 
   constructor() {
     super({ key: 'BootScene' });
@@ -26,7 +30,7 @@ export class BootScene extends Phaser.Scene {
    * on Frame 0 when entering `StoryEngineScene`!
    */
   public preload(): void {
-    this.hasFinishedBoot = false;
+    this.bootCompleted = false;
     this.mountHeirloomLoadingBar();
 
     // Never allow a single cached audio/image glitch on Android/Pixel Tablet to block boot completion!
@@ -60,8 +64,7 @@ export class BootScene extends Phaser.Scene {
     this.load.image('hub-toy-train', '/assets/hub/arcade/hub-toy-train.png?v=tr1');
     this.load.image('hub-toy-starship-unicorn', '/assets/hub/arcade/hub-toy-starship-unicorn.png?v=su1');
 
-    // 0a-1b. Starship Unicorn: Orbital Trivia (`StarshipUnicornScene.ts`) 1080p/4K HD Assets, ElevenLabs SFX & Emily E. PA Voices
-    StarshipAudio.preloadAllSfx();
+    // 0a-1b. Starship Unicorn: Orbital Trivia (`StarshipUnicornScene.ts`) 1080p/4K HD Assets
     this.load.image(
       'board-isometric-conveyor-world',
       '/assets/starship/board-isometric-conveyor-world.png?v=iso4'
@@ -665,8 +668,6 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 267,
       frameHeight: 262
     });
-    this.load.audio('p3_ambient_arcade_loop', '/assets/audio/colorado/sfx/p3_ambient_arcade_loop.mp3');
-    this.load.audio('p3_ambient_crowd_chatter', '/assets/audio/colorado/sfx/p3_ambient_crowd_chatter.mp3');
 
     // Book 2 — Page 4 ("Eleven Mile Canyon & South Platte River") Multi-Frame 1x4 Spritesheets & Canyon Mask
     this.load.spritesheet('p4_bighorn', '/assets/stories/colorado/sprites/p4/p4_bighorn.png?v=p4v1', {
@@ -690,7 +691,6 @@ export class BootScene extends Phaser.Scene {
       frameHeight: 210
     });
     this.load.image('p4_canyon_foreground_mask', '/assets/stories/colorado/sprites/p4/p4_canyon_foreground_mask.png?v=p4v1');
-    this.load.audio('p4_ambient_stream', '/assets/audio/colorado/sfx/p4_ambient_stream.mp3');
 
     // Book 2 — Page 5 ("Royal Gorge Bridge & Aerial Gondola") Multi-Frame 1x4 Spritesheets & Cliff Mask
     this.load.spritesheet('p5_gondola_sparky', '/assets/stories/colorado/sprites/p5/p5_gondola_sparky.png?v=p5v1', {
@@ -714,9 +714,6 @@ export class BootScene extends Phaser.Scene {
       frameHeight: 154
     });
     this.load.image('p5_bridge_cables_mask', '/assets/stories/colorado/sprites/p5/p5_bridge_cables_mask.png?v=p5v2');
-    this.load.audio('p5_ambient_gorge_wind', '/assets/audio/colorado/sfx/p5_ambient_gorge_wind.mp3');
-    this.load.audio('p5_gusting_canyon_wind', '/assets/audio/colorado/sfx/p5_gusting_canyon_wind.mp3');
-    this.load.audio('p5_gondola_cable_loop', '/assets/audio/colorado/sfx/p5_gondola_cable_loop.mp3');
 
     // Book 2 — Page 6 ("Royal Gorge Train Vista Car") Multi-Frame 1x4 Spritesheets & Handrail Mask
     this.load.spritesheet('p6_wyatt_horn', '/assets/stories/colorado/sprites/p6/p6_wyatt_horn.png?v=p6v1', {
@@ -740,11 +737,8 @@ export class BootScene extends Phaser.Scene {
       frameHeight: 199
     });
     this.load.image('p6_handrail_foreground_mask', '/assets/stories/colorado/sprites/p6/p6_handrail_foreground_mask.png?v=p6v1');
-    this.load.audio('sfx_train_chug', '/assets/audio/colorado/sfx/sfx_train_chug.mp3');
-    this.load.audio('sfx_train_horn', '/assets/audio/colorado/sfx/sfx_train_horn.mp3');
-    this.load.audio('p6_ambient_river_rapids', '/assets/audio/colorado/sfx/p6_ambient_river_rapids.mp3');
 
-    // Book 2 — Page 7 ("Garden of the Gods") Multi-Frame 1x4 Spritesheets & Page 7/8 Ambient Audio
+    // Book 2 — Page 7 ("Garden of the Gods") Multi-Frame 1x4 Spritesheets
     this.load.spritesheet('p7_grandparents_emma', '/assets/stories/colorado/sprites/p7/p7_grandparents_emma.png?v=p7v1', {
       frameWidth: 280,
       frameHeight: 350
@@ -765,10 +759,6 @@ export class BootScene extends Phaser.Scene {
       frameWidth: 250,
       frameHeight: 165
     });
-    this.load.audio('p7_ambient_nature_breeze', '/assets/audio/colorado/sfx/p7_ambient_nature_breeze.mp3');
-    this.load.audio('p7_ambient_meadow_birds', '/assets/audio/colorado/sfx/p7_ambient_meadow_birds.mp3');
-    this.load.audio('p8_pierogi_sizzle_loop', '/assets/audio/colorado/sfx/p8_pierogi_sizzle_loop.mp3');
-    this.load.audio('p8_cozy_kitchen_guitar', '/assets/audio/colorado/sfx/p8_cozy_kitchen_guitar.mp3');
 
     const coloradoSprites = [
       'spr-thule-box', 'spr-subaru-wheel', 'spr-hawk', 'spr-wyatt-emma-wave',
@@ -1131,14 +1121,8 @@ export class BootScene extends Phaser.Scene {
       frameHeight: 168
     });
 
-    // 11. Preload "The End" music-box chord SFX, Hub Bookshelf SFX & all Page 1..9 MP3 narration & SFX
-    this.load.audio('sfx-the-end', 'assets/stories/nana/audio/sfx-the-end.mp3');
-    this.load.audio('sfx-book-select', 'assets/hub/audio/sfx-book-select.mp3');
-    this.load.audio('sfx-book-locked', 'assets/hub/audio/sfx-book-locked.mp3');
-    AudioBus.registerSfx('sfx-the-end', ['/assets/stories/nana/audio/sfx-the-end.mp3'], 0.65);
-    AudioBus.registerSfx('sfx-book-select', ['/assets/hub/audio/sfx-book-select.mp3'], 0.9);
-    AudioBus.registerSfx('sfx-book-locked', ['/assets/hub/audio/sfx-book-locked.mp3'], 0.85);
-    AudioBus.preloadPage1Audio();
+    // Note: Zero `.mp3` files are loaded inside `BootScene.preload()` so Android Chrome's
+    // suspended AudioContext / decodeAudioData can NEVER stall Phaser's loader at 98%-100%!
   }
 
   /**
@@ -1161,6 +1145,7 @@ export class BootScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#120c08');
 
     const root = this.add.container(640, 360).setDepth(500);
+    this.loadingRoot = root;
 
     // Ornate Mahogany & Brass Cabinet Backing Plaque
     const plaque = this.add.graphics();
@@ -1244,6 +1229,7 @@ export class BootScene extends Phaser.Scene {
       repeat: -1,
       ease: 'Sine.easeInOut'
     });
+    this.shimmerTween = shimmerTween;
 
     const statusSubtitles = [
       'Polishing the brass gears...',
@@ -1263,52 +1249,108 @@ export class BootScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    root.add([plaque, titleText, percentText, barTrack, barFill, leadingShimmer, subtitleText]);
+    // Interactive Fail-Safe Hit Area on the loading box: tapping anywhere on the 100% box
+    // (or when progress >= 95%) immediately forces `finishBootAndStartHub()`!
+    let latestProgress = 0;
+    const loadingBoxHitArea = this.add
+      .zone(0, 0, 700, 290)
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    loadingBoxHitArea.on('pointerdown', () => {
+      if (latestProgress >= 0.95) {
+        try {
+          this.load.reset();
+        } catch {
+          // Ignore reset errors
+        }
+        this.finishBootAndStartHub();
+      }
+    });
+
+    root.add([
+      plaque,
+      titleText,
+      percentText,
+      barTrack,
+      barFill,
+      leadingShimmer,
+      subtitleText,
+      loadingBoxHitArea
+    ]);
 
     const drawProgress = (rawVal: number) => {
       const clamped = Phaser.Math.Clamp(rawVal, 0, 1);
+      latestProgress = Math.max(latestProgress, clamped);
       const pct = Math.round(clamped * 100);
-      percentText.setText(`${pct}%`);
+      if (percentText.scene) {
+        percentText.setText(`${pct}%`);
+      }
 
       const stageIdx = Math.min(
         statusSubtitles.length - 1,
         Math.floor(clamped * statusSubtitles.length)
       );
-      subtitleText.setText(statusSubtitles[stageIdx]);
+      if (subtitleText.scene) {
+        subtitleText.setText(statusSubtitles[stageIdx]);
+      }
 
       const pad = 5;
       const innerMaxW = barW - pad * 2;
       const fillW = Math.max(24, innerMaxW * clamped);
       const innerH = barH - pad * 2;
 
-      barFill.clear();
-      if (clamped > 0.005) {
-        // Warm golden starlight body fill
-        barFill.fillStyle(0xf59e0b, 1);
-        barFill.fillRoundedRect(barX + pad, barY + pad, fillW, innerH, 14);
-        // Upper starlight specular ribbon
-        barFill.fillStyle(0xfef08a, 0.85);
-        barFill.fillRoundedRect(barX + pad + 4, barY + pad + 3, Math.max(12, fillW - 8), innerH * 0.42, 7);
+      if (barFill.scene) {
+        barFill.clear();
+        if (clamped > 0.005) {
+          // Warm golden starlight body fill
+          barFill.fillStyle(0xf59e0b, 1);
+          barFill.fillRoundedRect(barX + pad, barY + pad, fillW, innerH, 14);
+          // Upper starlight specular ribbon
+          barFill.fillStyle(0xfef08a, 0.85);
+          barFill.fillRoundedRect(barX + pad + 4, barY + pad + 3, Math.max(12, fillW - 8), innerH * 0.42, 7);
+        }
       }
 
-      leadingShimmer.setPosition(barX + pad + fillW - 6, barY + barH / 2);
+      if (leadingShimmer.scene) {
+        leadingShimmer.setPosition(barX + pad + fillW - 6, barY + barH / 2);
+      }
     };
 
     drawProgress(0);
 
-    let watchdogScheduled = false;
-
     const onProgress = (value: number) => {
       drawProgress(value);
-      // Hard Watchdog Timer: once progress reaches >= 0.98, guarantee transition within 700ms
-      // so the game can NEVER freeze at 100% waiting on a suspended Android AudioContext or stalled cache entry!
-      if (value >= 0.98 && !watchdogScheduled) {
-        watchdogScheduled = true;
-        window.setTimeout(() => {
-          if (this.scene.isActive('BootScene')) {
+
+      // Watchdog 1: If the loader stalls at >= 0.95 for more than 2500ms without firing `create()`,
+      // call `this.load.reset()` and `this.finishBootAndStartHub()` so `BootScene.create()` logic ALWAYS executes cleanly!
+      if (value >= 0.95 && this.ninetyFiveTimerId === null) {
+        this.ninetyFiveTimerId = window.setTimeout(() => {
+          this.ninetyFiveTimerId = null;
+          if (!this.bootCompleted) {
+            try {
+              this.load.reset();
+            } catch {
+              // Ignore reset errors
+            }
             this.finishBootAndStartHub();
           }
-        }, 700);
+        }, 2500);
+      }
+
+      // Watchdog 2: If the "100% — Setting up the unicorn tea party..." screen is visible for more than
+      // 1.5 seconds (1500ms) at >= 99%, automatically transition into `finishBootAndStartHub()`.
+      if (value >= 0.99 && this.ninetyNineTimerId === null) {
+        this.ninetyNineTimerId = window.setTimeout(() => {
+          this.ninetyNineTimerId = null;
+          if (!this.bootCompleted) {
+            try {
+              this.load.reset();
+            } catch {
+              // Ignore reset errors
+            }
+            this.finishBootAndStartHub();
+          }
+        }, 1500);
       }
     };
 
@@ -1316,8 +1358,6 @@ export class BootScene extends Phaser.Scene {
     this.load.once('complete', () => {
       drawProgress(1);
       this.load.off('progress', onProgress);
-      shimmerTween.stop();
-      root.destroy(true);
     });
   }
 
@@ -1326,20 +1366,76 @@ export class BootScene extends Phaser.Scene {
   }
 
   private finishBootAndStartHub(): void {
-    if (this.hasFinishedBoot) return;
-    this.hasFinishedBoot = true;
+    if (this.bootCompleted) return;
+    this.bootCompleted = true;
+
+    if (this.ninetyFiveTimerId !== null) {
+      window.clearTimeout(this.ninetyFiveTimerId);
+      this.ninetyFiveTimerId = null;
+    }
+    if (this.ninetyNineTimerId !== null) {
+      window.clearTimeout(this.ninetyNineTimerId);
+      this.ninetyNineTimerId = null;
+    }
+
+    try {
+      this.load.off('progress');
+      this.load.off('complete');
+      if (this.load.isLoading()) {
+        this.load.reset();
+      }
+    } catch {
+      // Ignore loader cleanup errors
+    }
+
+    // Explicitly destroy/clear the 100% loading box graphics/text AND hide any DOM loading overlay
+    try {
+      if (this.shimmerTween) {
+        this.shimmerTween.stop();
+        this.shimmerTween = null;
+      }
+      if (this.loadingRoot) {
+        this.loadingRoot.destroy(true);
+        this.loadingRoot = null;
+      }
+      if (typeof document !== 'undefined') {
+        const htmlSplash = document.getElementById('heirloom-boot-splash');
+        if (htmlSplash) {
+          htmlSplash.style.display = 'none';
+          htmlSplash.remove();
+        }
+      }
+    } catch {
+      // Ignore UI cleanup errors
+    }
 
     try {
       this.generateSharedTextures();
-      this.applyPixelArtFilteringAndAnims();
-      AudioBus.startCozyLoop();
     } catch (err) {
-      console.warn('Non-fatal boot initialization warning:', err);
+      console.warn('Non-fatal procedural texture warning:', err);
     }
 
-    // Start HubScene immediately and let optional background probes finish asynchronously without blocking!
-    void this.preloadAvailableStoryBackgrounds();
+    try {
+      this.applyPixelArtFilteringAndAnims();
+    } catch (err) {
+      console.warn('Non-fatal texture filtering warning:', err);
+    }
+
     this.scene.start('HubScene');
+
+    // Defer Howler SFX registration & background audio prewarming until after HubScene is mounted
+    window.setTimeout(() => {
+      try {
+        AudioBus.registerSfx('sfx-the-end', ['/assets/stories/nana/audio/sfx-the-end.mp3'], 0.65);
+        AudioBus.registerSfx('sfx-book-select', ['/assets/hub/audio/sfx-book-select.mp3'], 0.9);
+        AudioBus.registerSfx('sfx-book-locked', ['/assets/hub/audio/sfx-book-locked.mp3'], 0.85);
+        AudioBus.startCozyLoop();
+        AudioBus.preloadPage1Audio();
+        StarshipAudio.preloadAllSfx();
+      } catch {
+        // Ignore background audio warm-up errors
+      }
+    }, 350);
   }
 
   private applyPixelArtFilteringAndAnims(): void {
@@ -1681,58 +1777,6 @@ export class BootScene extends Phaser.Scene {
         repeat: 3
       });
     }
-  }
-
-  /**
-   * Probes `public/assets/stories/nana/p{1..9}-bg.jpg` and `.png` on boot so any dropped-in
-   * 32-bit Hi-Bit Pixel Art illustrations are immediately in GPU memory on Frame 0!
-   */
-  private async preloadAvailableStoryBackgrounds(): Promise<void> {
-    const foundPages: { key: string; url: string }[] = [];
-
-    for (let p = 1; p <= 9; p++) {
-      const key = `story-bg-just-nana-and-us-p${p}`;
-      if (this.textures.exists(key)) continue;
-
-      const candidates = [
-        `/assets/stories/nana/p${p}-bg-clean.jpg`,
-        `/assets/stories/nana/p${p}-bg-clean.png`,
-        `/assets/stories/nana/p${p}-bg-clean.webp`,
-        `/assets/stories/nana/p${p}-bg.jpg`,
-        `/assets/stories/nana/p${p}-bg.png`,
-        `/assets/stories/nana/p${p}-bg.webp`
-      ];
-
-      for (const url of candidates) {
-        try {
-          const res = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-          const contentType = res.headers.get('content-type') ?? '';
-          if (res.ok && contentType.startsWith('image/')) {
-            foundPages.push({ key, url });
-            break;
-          }
-        } catch {
-          // Ignore offline errors
-        }
-      }
-    }
-
-    if (foundPages.length === 0) return;
-
-    await new Promise<void>((resolve) => {
-      foundPages.forEach(({ key, url }) => {
-        this.load.image(key, url);
-      });
-      this.load.once(Phaser.Loader.Events.COMPLETE, () => {
-        foundPages.forEach(({ key }) => {
-          if (this.textures.exists(key)) {
-            this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
-          }
-        });
-        resolve();
-      });
-      this.load.start();
-    });
   }
 
   private generateSharedTextures(): void {

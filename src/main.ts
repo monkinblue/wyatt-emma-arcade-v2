@@ -29,9 +29,9 @@ import { PWAInstallManager } from './core/PWAInstallManager';
 // Capture `beforeinstallprompt` and monitor offline PWA Service Worker readiness immediately
 PWAInstallManager.init();
 
-// In DEV mode, immediately unregister any stale Service Workers and purge old Workbox caches
-// so localhost never serves cached old artwork or 404s for newly staged sprites/audio!
-if (import.meta.env.DEV && typeof window !== 'undefined') {
+// Immediately unregister any stale Service Workers and purge old Workbox caches
+// so the browser/PWA never locks up on the 694+ file Workbox precache!
+if (typeof window !== 'undefined') {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .getRegistrations()
@@ -63,6 +63,10 @@ const config: Phaser.Types.Core.GameConfig = {
   width: 1280,
   height: 720,
   backgroundColor: '#0f0c24',
+  audio: {
+    disableWebAudio: false,
+    noAudio: false
+  },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

@@ -22,6 +22,43 @@
       rel="stylesheet"
     />
     <title>Wyatt &amp; Emma's Heirloom Arcade</title>
+    <script>
+      (function () {
+        try {
+          var urlParams = new URLSearchParams(window.location.search);
+          var forceReset = urlParams.get('reset') === '1';
+          var needsHeal = localStorage.getItem('arcade_cache_heal_v3') !== 'done' || forceReset;
+          if (needsHeal) {
+            localStorage.setItem('arcade_cache_heal_v3', 'done');
+            var swPromise =
+              'serviceWorker' in navigator
+                ? navigator.serviceWorker.getRegistrations().then(function (regs) {
+                    return Promise.all(
+                      regs.map(function (r) {
+                        return r.unregister();
+                      })
+                    );
+                  })
+                : Promise.resolve();
+            var cachePromise =
+              'caches' in window
+                ? caches.keys().then(function (keys) {
+                    return Promise.all(
+                      keys.map(function (k) {
+                        return caches.delete(k);
+                      })
+                    );
+                  })
+                : Promise.resolve();
+            Promise.all([swPromise, cachePromise]).finally(function () {
+              if (forceReset) {
+                window.location.replace(window.location.pathname + '?v=' + Date.now());
+              }
+            });
+          }
+        } catch (e) {}
+      })();
+    </script>
     <style>
       * {
         box-sizing: border-box;
@@ -145,38 +182,6 @@
       </div>
     </div>
     <div id="app"></div>
-    <script>
-      (function () {
-        try {
-          if (localStorage.getItem('sw_fix_v5') !== 'done') {
-            localStorage.setItem('sw_fix_v5', 'done');
-            var swPromise =
-              'serviceWorker' in navigator
-                ? navigator.serviceWorker.getRegistrations().then(function (regs) {
-                    return Promise.all(
-                      regs.map(function (r) {
-                        return r.unregister();
-                      })
-                    );
-                  })
-                : Promise.resolve();
-            var cachePromise =
-              'caches' in window
-                ? caches.keys().then(function (keys) {
-                    return Promise.all(
-                      keys.map(function (k) {
-                        return caches.delete(k);
-                      })
-                    );
-                  })
-                : Promise.resolve();
-            Promise.all([swPromise, cachePromise]).finally(function () {
-              window.location.reload();
-            });
-          }
-        } catch (e) {}
-      })();
-    </script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
