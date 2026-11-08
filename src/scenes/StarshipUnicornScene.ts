@@ -453,6 +453,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
   private bgContainer!: Phaser.GameObjects.Container;
   private biomePropsContainer!: Phaser.GameObjects.Container;
   private boardContainer!: Phaser.GameObjects.Container;
+  private tronBlackoutContainer!: Phaser.GameObjects.Container;
   private trajectoryLaserContainer!: Phaser.GameObjects.Container;
   private tokensContainer!: Phaser.GameObjects.Container;
   private topHudContainer!: Phaser.GameObjects.Container;
@@ -471,6 +472,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
   private kidReadAloudTimer: Phaser.Time.TimerEvent | null = null;
   private kidReadAloudResetVisuals: (() => void) | null = null;
   private orbitalChallengeDeck: OrbitalChallengeType[] = [];
+  private dreadbotMoveDeck: number[] = [];
   private boundOnPopState: (() => void) | null = null;
 
   constructor() {
@@ -570,6 +572,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.bgContainer = this.add.container(0, 0).setDepth(1);
     this.biomePropsContainer = this.add.container(0, 0).setDepth(5);
     this.boardContainer = this.add.container(0, 0).setDepth(10);
+    this.tronBlackoutContainer = this.add.container(0, 0).setDepth(14);
     this.trajectoryLaserContainer = this.add.container(0, 0).setDepth(18);
     this.tokensContainer = this.add.container(0, 0).setDepth(100);
     this.redAlertVignetteContainer = this.add.container(0, 0).setDepth(840);
@@ -654,6 +657,18 @@ export class StarshipUnicornScene extends Phaser.Scene {
       ]);
     }
     return this.orbitalChallengeDeck.pop() ?? 'chrono';
+  }
+
+  /**
+   * Draws the next thruster roll for Autonomous Dread-Bot X-99 from a Fisher-Yates shuffled
+   * cycle of `[1, 2, 3, 4]` so Dread-Bot relentlessly advances 1, 2, 3, or 4 pads every single turn
+   * without ever rolling 0 or 6!
+   */
+  private drawNextDreadbotRoll(): number {
+    if (this.dreadbotMoveDeck.length === 0) {
+      this.dreadbotMoveDeck = this.fisherYatesShuffle<number>([1, 2, 3, 4]);
+    }
+    return this.dreadbotMoveDeck.pop() ?? 2;
   }
 
   /**
@@ -759,6 +774,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.victoryContainer.removeAll(true);
     this.victoryContainer.setVisible(false);
     this.cutsceneContainer.removeAll(true);
+    this.tronBlackoutContainer.removeAll(true);
     this.trajectoryLaserContainer.removeAll(true);
     this.diceConsoleContainer.removeAll(true);
     this.dockContainer.removeAll(true);
@@ -1383,6 +1399,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       this.dockContainer.removeAll(true);
       this.diceConsoleContainer.removeAll(true);
       this.cutsceneContainer.removeAll(true);
+      this.tronBlackoutContainer.removeAll(true);
       this.trajectoryLaserContainer.removeAll(true);
     }
 
@@ -1898,6 +1915,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       this.dockContainer.removeAll(true);
       this.diceConsoleContainer.removeAll(true);
       this.cutsceneContainer.removeAll(true);
+      this.tronBlackoutContainer.removeAll(true);
       this.trajectoryLaserContainer.removeAll(true);
       this.renderTopMissionHeader();
       this.refreshAllTokenOffsets();
@@ -1992,6 +2010,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.victoryContainer.removeAll(true);
     this.victoryContainer.setVisible(false);
     this.cutsceneContainer.removeAll(true);
+    this.tronBlackoutContainer.removeAll(true);
     this.trajectoryLaserContainer.removeAll(true);
     this.diceConsoleContainer.removeAll(true);
 
@@ -2005,6 +2024,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     // Fisher-Yates shuffle the selected crew roster at mission launch so play order (`1ST`, `2ND`, `3RD`...) is randomized every game!
     this.selectedAstronautIds = this.fisherYatesShuffle(this.selectedAstronautIds);
     this.orbitalChallengeDeck = [];
+    this.dreadbotMoveDeck = [];
 
     this.players = this.selectedAstronautIds.map((id, idx) => {
       const roster = ASTRONAUT_ROSTER.find((r) => r.id === id) ?? ASTRONAUT_ROSTER[0];
@@ -2920,6 +2940,13 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.dockContainer.setPosition(0, 260).setVisible(false);
     this.diceConsoleContainer.removeAll(true);
     this.cutsceneContainer.removeAll(true);
+    this.tronBlackoutContainer.removeAll(true);
+    this.trajectoryLaserContainer.removeAll(true);
+    this.players.forEach((p) => {
+      if (p.tokenContainer) {
+        p.tokenContainer.setAlpha(1);
+      }
+    });
 
     this.renderTopMissionHeader();
     this.refreshAllTokenOffsets();
@@ -3064,7 +3091,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     deckRoot.add(hexRimG);
 
     const tierInfo = isAIPlayer
-      ? '🤖 AUTONOMOUS NEMESIS PROTOCOL ACTIVE • HANDS OFF CONTROLS!'
+      ? '🤖 AUTONOMOUS NEMESIS PROTOCOL • RELENTLESS 1–4 PAD THRUSTER ADVANCE!'
       : player.roster.tier === 'ADULT'
       ? '⚡ 15-SECOND TELEMETRY TIMER • CORRECT = ROLL 1x DIE (1–6 PADS)'
       : '🌟 ∞ NO TIME LIMIT • TAKE YOUR TIME & PICK THE RIGHT ANSWER!';
@@ -3080,7 +3107,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
     const proceedFromHandoffToTrivia = () => {
       if (this.scenePhase !== 'TURN_HANDOFF') return;
-      this.scenePhase = 'TRIVIA';
+      this.scenePhase = isAIPlayer ? 'DICE_ROLL' : 'TRIVIA';
       this.tweens.add({
         targets: [deckRoot, shade],
         alpha: 0,
@@ -3091,8 +3118,18 @@ export class StarshipUnicornScene extends Phaser.Scene {
           const activeQ =
             this.currentQuestion ?? this.drawNonRepeatingQuestion(player.roster.tier);
           this.currentQuestion = activeQ;
-          this.dockContainer.setPosition(0, 260).setVisible(true);
-          this.renderTelemetryTriviaDock(player, activeQ);
+          if (isAIPlayer) {
+            // Skip the Trivia Question Drawer completely for Autonomous Dread-Bot X-99
+            // and go straight to the 3D Thruster Die Overlay (1, 2, 3, or 4 spaces every turn)!
+            player.correctCount += 1;
+            player.overclockCount += 1;
+            this.dockContainer.removeAll(true);
+            this.dockContainer.setPosition(0, 260).setVisible(false);
+            this.renderOrbitalDiceRollDock(player, activeQ, true);
+          } else {
+            this.dockContainer.setPosition(0, 260).setVisible(true);
+            this.renderTelemetryTriviaDock(player, activeQ);
+          }
         }
       });
     };
@@ -4284,7 +4321,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.dockContainer.removeAll(true);
     this.diceConsoleContainer.removeAll(true);
 
-    const bannerColor = 0x10b981;
+    const isAIPlayer = Boolean(player.roster.isAI);
+    const bannerColor = isAIPlayer ? 0xff2255 : 0x10b981;
     const podW = 380;
     const podH = 165;
     const podX = 1060;
@@ -4307,8 +4345,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
     bg.strokeRoundedRect(-podW / 2, -podH / 2, podW, podH, 16);
     podRoot.add(bg);
 
-    // 1. Top Header Strip: Sleek Status Badge (`⚡ PRIMARY THRUSTER ONLINE: 1x DIE (1–6 PADS)`)
-    const statusTitle = '⚡ PRIMARY THRUSTER ONLINE: 1x DIE (1–6 PADS)';
+    // 1. Top Header Strip: Sleek Status Badge (`⚡ PRIMARY THRUSTER ONLINE: 1x DIE (1–6 PADS)` or Rogue Thrusters for Dread-Bot)
+    const statusTitle = isAIPlayer
+      ? '🤖 DREAD-BOT ENGAGING ROGUE THRUSTERS...'
+      : '⚡ PRIMARY THRUSTER ONLINE: 1x DIE (1–6 PADS)';
 
     const statusBadgeG = this.add.graphics();
     statusBadgeG.fillStyle(0x020617, 0.96);
@@ -4319,7 +4359,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       .text(0, -podH / 2 + 21, statusTitle, {
         fontSize: '10.5px',
         fontStyle: 'bold',
-        color: '#6ee7b7'
+        color: isAIPlayer ? '#fda4af' : '#6ee7b7'
       })
       .setOrigin(0.5);
     this.fitTextToWidth(titleTxt, podW - 36);
@@ -4346,7 +4386,12 @@ export class StarshipUnicornScene extends Phaser.Scene {
     containmentRingG.strokeEllipse(ringX, ringY + 14, 126, 46);
     podRoot.add(containmentRingG);
 
-    const die1 = this.create3DIsometricDie(ringX, ringY - 2, 6, 0x38bdf8);
+    const die1 = this.create3DIsometricDie(
+      ringX,
+      ringY - 2,
+      isAIPlayer ? 4 : 6,
+      isAIPlayer ? 0xff2255 : 0x38bdf8
+    );
     die1.container.setScale(0.66);
     podRoot.add(die1.container);
 
@@ -4359,7 +4404,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const socketG = this.add.graphics();
     socketG.fillStyle(0x020617, 0.92);
     socketG.fillEllipse(0, 12, 132, 48);
-    socketG.lineStyle(2, 0x10b981, 0.78);
+    socketG.lineStyle(2, bannerColor, 0.78);
     socketG.strokeEllipse(0, 12, 132, 48);
     plungerRoot.add(socketG);
 
@@ -4383,12 +4428,12 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const labelPlateG = this.add.graphics();
     labelPlateG.fillStyle(0x020617, 0.94);
     labelPlateG.fillRoundedRect(-78, 30, 156, 32, 7);
-    labelPlateG.lineStyle(1.5, 0xfef08a, 0.92);
+    labelPlateG.lineStyle(1.5, isAIPlayer ? 0xff2255 : 0xfef08a, 0.92);
     labelPlateG.strokeRoundedRect(-78, 30, 156, 32, 7);
     plungerRoot.add(labelPlateG);
 
     const plungerLabel = this.add
-      .text(0, 41, 'IGNITE THRUSTER DIE', {
+      .text(0, 41, isAIPlayer ? '🤖 DREAD-BOT ENGAGING ROGUE THRUSTERS...' : 'IGNITE THRUSTER DIE', {
         fontSize: '11.5px',
         fontStyle: 'bold',
         color: '#ffffff',
@@ -4399,10 +4444,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.fitTextToWidth(plungerLabel, 144);
 
     const plungerSub = this.add
-      .text(0, 54, 'ROLL 1–6 PADS', {
+      .text(0, 54, isAIPlayer ? 'LOCKING 1–4 PAD BURN' : 'ROLL 1–6 PADS', {
         fontSize: '8.5px',
         fontStyle: 'bold',
-        color: '#fef08a'
+        color: isAIPlayer ? '#fda4af' : '#fef08a'
       })
       .setOrigin(0.5);
     this.fitTextToWidth(plungerSub, 144);
@@ -4444,7 +4489,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       // Expanding Cyan/Amber Shockwave Ring around the plunger
       const shockRing = this.add.graphics();
       shockRing.setBlendMode(Phaser.BlendModes.ADD);
-      shockRing.lineStyle(4, 0x10b981, 1);
+      shockRing.lineStyle(4, bannerColor, 1);
       shockRing.strokeEllipse(0, 6, 92, 42);
       shockRing.lineStyle(2, 0xffffff, 0.9);
       shockRing.strokeEllipse(0, 6, 68, 30);
@@ -4471,11 +4516,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
       );
     };
 
-    if (player.roster.isAI) {
+    if (isAIPlayer) {
       hit.disableInteractive();
-      plungerLabel.setText('🤖 AUTO-IGNITING...');
-      this.fitTextToWidth(plungerLabel, 144);
-      this.time.delayedCall(1200, () => {
+      this.time.delayedCall(950, () => {
         if (this.scene.isActive() && this.scenePhase === 'DICE_ROLL') {
           triggerPlungerIgnition();
         }
@@ -4604,10 +4647,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
     // Play heavy mechanical turbine spin-up + metallic dice clatter
     StarshipAudio.playDiceTumbleBurst();
 
-    const finalD1 = Phaser.Math.Between(1, 6);
+    const isAIPlayer = Boolean(player.roster.isAI);
+    const finalD1 = isAIPlayer ? this.drawNextDreadbotRoll() : Phaser.Math.Between(1, 6);
     const totalRoll = finalD1;
 
-    plungerLabel.setText('⚡ TUMBLING...');
+    plungerLabel.setText(isAIPlayer ? '🤖 ROGUE THRUSTERS...' : '⚡ TUMBLING...');
     this.fitTextToWidth(plungerLabel, 144);
     plungerSub.setText('LOCKING TRAJECTORY');
     this.fitTextToWidth(plungerSub, 144);
@@ -4630,7 +4674,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       callback: () => {
         ticks++;
         if (ticks <= 7) {
-          die1.setValue(Phaser.Math.Between(1, 6));
+          die1.setValue(isAIPlayer ? Phaser.Math.Between(1, 4) : Phaser.Math.Between(1, 6));
           if (die2) die2.setValue(Phaser.Math.Between(1, 6));
         } else {
           die1.setValue(finalD1);
@@ -4638,40 +4682,60 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
           plungerLabel.setText(`🚀 ROLLED ${finalD1} ${finalD1 === 1 ? 'PAD' : 'PADS'}!`);
           this.fitTextToWidth(plungerLabel, 144);
-          plungerSub.setText('LAUNCHING THRUSTERS...');
+          plungerSub.setText('LOCKING TRON PATH...');
           this.fitTextToWidth(plungerSub, 144);
 
-          Juice.burstStars(this, 1060, 600, 20, [0xfde047, 0x38bdf8, 0x10b981]);
+          Juice.burstStars(
+            this,
+            1060,
+            600,
+            20,
+            isAIPlayer ? [0xff2255, 0xfde047, 0x38bdf8] : [0xfde047, 0x38bdf8, 0x10b981]
+          );
 
-          // Slide the compact Dice Ignition Pod down off-screen so 100% of the board is visible during hops!
+          const startTronPathSequence = () => {
+            if (!this.scene.isActive()) return;
+            this.diceConsoleContainer.removeAll(true);
+            this.showHolographicTrajectoryPreview(player, totalRoll, () => {
+              this.scenePhase = 'MOVING';
+              this.hopPlayerTokenSteps(player, totalRoll, () => {
+                this.onPrimaryMovementComplete(player);
+              });
+            });
+          };
+
+          // Slide the compact Dice Ignition Pod down off-screen, then snap on the Tron Tactical Blackout!
           if (podRoot) {
             this.tweens.add({
               targets: podRoot,
               y: 820,
-              duration: 340,
-              delay: 280,
+              duration: 280,
+              delay: 260,
               ease: 'Cubic.easeIn',
               onComplete: () => {
-                this.diceConsoleContainer.removeAll(true);
+                startTronPathSequence();
               }
             });
-          }
-
-          // Illuminate the exact target path of conveyor deck plates for 650ms before hopping!
-          this.showHolographicTrajectoryPreview(player, totalRoll, () => {
-            this.scenePhase = 'MOVING';
-            this.hopPlayerTokenSteps(player, totalRoll, () => {
-              this.onPrimaryMovementComplete(player);
+          } else {
+            this.time.delayedCall(260, () => {
+              startTronPathSequence();
             });
-          });
+          }
         }
       }
     });
   }
 
   /**
-   * Illuminates the exact target path of conveyor deck plates on the board with a glowing
-   * holographic laser trajectory line and neon deck-plate rims for 650ms before hopping!
+   * TRON TACTICAL BLACKOUT & SEQUENTIAL PATH-LOCK SEQUENCE:
+   * 1. Board Blackout Shroud (`0x02040a`, alpha `0.84` at depth `14` — above board/track/non-active pads,
+   *    below active player figurine & sequential path-highlight glow graphics at depth `18` & `100`)
+   *    fast-fades on in `120ms` so the board goes pitch-dark like Tron except for the active player's starting pad.
+   * 2. Sequential Neon Path Ignition (`CLACK -> CLACK -> CLACK`, `240ms` per pad):
+   *    Steps through `currentPad + 1` .. `targetPad` one by one, igniting a super-bright glowing
+   *    Tron Cyan/Gold neon ring + pad spotlight + connecting light-beam segment synced with mechanical clack SFX!
+   * 3. Final Mechanical Clack (`380ms` pause after final pad, then `150ms` shroud snap-off + latch SFX):
+   *    Restores full board lighting right as the player's figurine begins hopping along the illuminated pads!
    */
   private showHolographicTrajectoryPreview(
     player: ActiveAstronautPlayer,
@@ -4679,84 +4743,232 @@ export class StarshipUnicornScene extends Phaser.Scene {
     onDone: () => void
   ): void {
     this.scenePhase = 'PATH_PREVIEW';
+    this.tronBlackoutContainer.removeAll(true);
     this.trajectoryLaserContainer.removeAll(true);
-    StarshipAudio.playTrajectoryLaserLock(steps);
 
     const startIdx = player.padIndex;
-    const endIdx = Math.min(this.boardPads.length - 1, startIdx + steps);
+    const endIdx = Math.min(this.boardPads.length - 1, startIdx + Math.max(1, steps));
+    const actualSteps = Math.max(0, endIdx - startIdx);
+    const tronPrimaryHex = player.roster.isAI ? 0xff2255 : 0x00f5d4;
 
-    const laserG = this.add.graphics();
-    for (let idx = startIdx; idx < endIdx; idx++) {
-      const pA = this.boardPads[idx];
-      const pB = this.boardPads[idx + 1];
-      if (!pA || !pB) continue;
+    // 1. Create the Full-Board Tron Blackout Shroud (`0x02040a`, alpha `0.84`) at depth `14`
+    const blackoutShroud = this.add
+      .rectangle(640, 360, 1280, 720, 0x02040a, 0.84)
+      .setAlpha(0);
+    this.tronBlackoutContainer.add(blackoutShroud);
 
-      // Illuminate target conveyor deck plate neon rim!
-      const rimGlow = this.padRimGlowMap.get(idx + 1);
-      if (rimGlow) {
-        rimGlow.setAlpha(1);
+    // Dim non-active player figurines while the Tron Blackout is active so ONLY the active player's pad & figurine shine
+    this.players.forEach((p) => {
+      if (p !== player && p.tokenContainer) {
+        this.tweens.add({
+          targets: p.tokenContainer,
+          alpha: 0.24,
+          duration: 120,
+          ease: 'Quad.easeOut'
+        });
+      } else if (p === player && p.tokenContainer) {
+        p.tokenContainer.setAlpha(1);
       }
+    });
 
-      // Outer laser aura
-      laserG.lineStyle(10, player.bay.color, 0.38);
-      laserG.lineBetween(pA.x, pA.y - 4, pB.x, pB.y - 4);
-      // Inner high-intensity laser beam
-      laserG.lineStyle(3.5, 0xfef08a, 0.96);
-      laserG.lineBetween(pA.x, pA.y - 4, pB.x, pB.y - 4);
-
-      // Isometric diamond target lock on each step pad
-      const isFinalPad = idx + 1 === endIdx;
-      const rx = isFinalPad ? 30 : 24;
-      const ry = isFinalPad ? 18 : 14;
-      laserG.lineStyle(isFinalPad ? 3.5 : 2, isFinalPad ? 0xfef08a : player.bay.color, 0.95);
-      laserG.strokePoints(
+    // Illuminate the active player's starting pad above the blackout shroud (`depth: 18`)
+    const startPad = this.boardPads[startIdx];
+    if (startPad) {
+      const startSpot = this.add
+        .image(startPad.x, startPad.y, 'starship-smooth-glow')
+        .setDisplaySize(124, 82)
+        .setTint(player.bay.color)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0.78);
+      const startRingG = this.add.graphics();
+      startRingG.lineStyle(3.2, 0x00f5d4, 0.96);
+      startRingG.strokePoints(
         [
-          new Phaser.Geom.Point(pB.x, pB.y - ry),
-          new Phaser.Geom.Point(pB.x + rx, pB.y),
-          new Phaser.Geom.Point(pB.x, pB.y + ry),
-          new Phaser.Geom.Point(pB.x - rx, pB.y)
+          new Phaser.Geom.Point(startPad.x, startPad.y - 17),
+          new Phaser.Geom.Point(startPad.x + 28, startPad.y),
+          new Phaser.Geom.Point(startPad.x, startPad.y + 17),
+          new Phaser.Geom.Point(startPad.x - 28, startPad.y)
         ],
         true
       );
+      startRingG.lineStyle(2, 0xfde047, 0.92);
+      startRingG.strokePoints(
+        [
+          new Phaser.Geom.Point(startPad.x, startPad.y - 13),
+          new Phaser.Geom.Point(startPad.x + 21, startPad.y),
+          new Phaser.Geom.Point(startPad.x, startPad.y + 13),
+          new Phaser.Geom.Point(startPad.x - 21, startPad.y)
+        ],
+        true
+      );
+      this.trajectoryLaserContainer.add([startSpot, startRingG]);
     }
 
-    // Floating Target Lock Badge above the destination pad
-    const destPad = this.boardPads[endIdx];
-    if (destPad) {
-      const lockBadge = this.add
-        .text(
-          destPad.x,
-          destPad.y - 42,
-          `🎯 TARGET PAD ${String(destPad.numberLabel).padStart(2, '0')}`,
-          {
-            fontFamily: '"Segoe UI", "Fredoka", sans-serif',
-            fontSize: '12px',
-            fontStyle: 'bold',
-            color: '#fef08a',
-            backgroundColor: '#020617',
-            padding: { x: 8, y: 4 }
-          }
-        )
-        .setOrigin(0.5);
-      this.trajectoryLaserContainer.add(lockBadge);
-    }
-
-    this.trajectoryLaserContainer.add(laserG);
+    // Fast-fade (`120ms`) the blackout shroud on
     this.tweens.add({
-      targets: laserG,
-      alpha: { from: 1, to: 0.45 },
-      duration: 160,
-      yoyo: true,
-      repeat: 3
+      targets: blackoutShroud,
+      alpha: 1,
+      duration: 120,
+      ease: 'Quad.easeOut'
     });
 
-    this.time.delayedCall(650, () => {
+    // 2. Sequential Neon Path Ignition (`CLACK -> CLACK -> CLACK`, `240ms` per pad)
+    const stepIntervalMs = 240;
+    const blackoutLeadInMs = 120;
+
+    for (let step = 1; step <= actualSteps; step++) {
+      const padIdx = startIdx + step;
+      const isFinalPad = padIdx === endIdx;
+      const stepDelay = blackoutLeadInMs + (step - 1) * stepIntervalMs;
+
+      this.time.delayedCall(stepDelay, () => {
+        if (!this.scene.isActive() || this.scenePhase !== 'PATH_PREVIEW') return;
+
+        const pA = this.boardPads[padIdx - 1];
+        const pB = this.boardPads[padIdx];
+        if (!pA || !pB) return;
+
+        // Crisp ascending mechanical path-lock / clack SFX for this pad!
+        StarshipAudio.playTronPathStepClack(step - 1);
+
+        // Illuminate the conveyor deck plate neon rim
+        const rimGlow = this.padRimGlowMap.get(padIdx);
+        if (rimGlow) {
+          rimGlow.setAlpha(1);
+        }
+
+        // Pad Spotlight (`BlendModes.ADD`, depth `18` above blackout shroud)
+        const outerSpot = this.add
+          .image(pB.x, pB.y, 'starship-smooth-glow')
+          .setDisplaySize(isFinalPad ? 156 : 118, isFinalPad ? 102 : 76)
+          .setTint(tronPrimaryHex)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setAlpha(0.86);
+        const innerGoldSpot = this.add
+          .image(pB.x, pB.y, 'starship-smooth-glow')
+          .setDisplaySize(isFinalPad ? 92 : 68, isFinalPad ? 60 : 44)
+          .setTint(0xfde047)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setAlpha(0.75);
+
+        // Connecting Light-Beam Segment (`pA -> pB`)
+        const beamG = this.add.graphics();
+        beamG.setBlendMode(Phaser.BlendModes.ADD);
+        // Wide outer Tron neon aura
+        beamG.lineStyle(14, tronPrimaryHex, 0.52);
+        beamG.lineBetween(pA.x, pA.y - 4, pB.x, pB.y - 4);
+        // High-intensity Tron Cyan light-beam
+        beamG.lineStyle(6.5, 0x00f5d4, 0.95);
+        beamG.lineBetween(pA.x, pA.y - 4, pB.x, pB.y - 4);
+        // Super-bright Gold/White core laser
+        beamG.lineStyle(3, 0xfef08a, 1);
+        beamG.lineBetween(pA.x, pA.y - 4, pB.x, pB.y - 4);
+
+        // Super-Bright Glowing Tron Cyan/Gold Neon Ring on Pad `pB`
+        const ringContainer = this.add.container(pB.x, pB.y).setScale(0.72);
+        const ringG = this.add.graphics();
+        ringG.setBlendMode(Phaser.BlendModes.ADD);
+        const rx = isFinalPad ? 35 : 28;
+        const ry = isFinalPad ? 22 : 17;
+        ringG.lineStyle(isFinalPad ? 4.2 : 3.2, 0x00f5d4, 1);
+        ringG.strokePoints(
+          [
+            new Phaser.Geom.Point(0, -ry),
+            new Phaser.Geom.Point(rx, 0),
+            new Phaser.Geom.Point(0, ry),
+            new Phaser.Geom.Point(-rx, 0)
+          ],
+          true
+        );
+        const rxInner = isFinalPad ? 27 : 21;
+        const ryInner = isFinalPad ? 16.5 : 12.5;
+        ringG.lineStyle(isFinalPad ? 3 : 2.2, 0xfde047, 0.98);
+        ringG.strokePoints(
+          [
+            new Phaser.Geom.Point(0, -ryInner),
+            new Phaser.Geom.Point(rxInner, 0),
+            new Phaser.Geom.Point(0, ryInner),
+            new Phaser.Geom.Point(-rxInner, 0)
+          ],
+          true
+        );
+        ringG.fillStyle(0xfef08a, 1);
+        ringG.fillCircle(0, 0, isFinalPad ? 4.5 : 3.2);
+        ringContainer.add(ringG);
+
+        this.trajectoryLaserContainer.add([outerSpot, innerGoldSpot, beamG, ringContainer]);
+
+        this.tweens.add({
+          targets: ringContainer,
+          scaleX: 1,
+          scaleY: 1,
+          duration: 140,
+          ease: 'Back.easeOut'
+        });
+
+        if (isFinalPad) {
+          const lockBadge = this.add
+            .text(
+              pB.x,
+              pB.y - 44,
+              `🎯 TARGET PAD ${String(pB.numberLabel).padStart(2, '0')}`,
+              {
+                fontSize: '12px',
+                fontStyle: 'bold',
+                color: '#fef08a',
+                backgroundColor: '#020617',
+                padding: { x: 8, y: 4 }
+              }
+            )
+            .setOrigin(0.5);
+          this.trajectoryLaserContainer.add(lockBadge);
+        }
+      });
+    }
+
+    // 3. Final Mechanical Clack — Wait `380ms` after final destination pad locks in,
+    //    then play final mechanical latch SFX and snap off the blackout shroud (`150ms`)
+    //    right as the player's figurine begins hopping along the illuminated pads!
+    const lastPadLockMs =
+      blackoutLeadInMs + Math.max(0, actualSteps - 1) * stepIntervalMs;
+    const restoreLightsDelayMs = lastPadLockMs + 380;
+
+    this.time.delayedCall(restoreLightsDelayMs, () => {
       if (!this.scene.isActive()) return;
-      this.time.delayedCall(steps * 610 + 400, () => {
+
+      // Play one final crisp mechanical clack/latch SFX as the blackout shroud snaps off!
+      StarshipAudio.playTronBlackoutRestoreClack();
+
+      // Restore non-active player token visibility
+      this.players.forEach((p) => {
+        if (p.tokenContainer) {
+          this.tweens.add({
+            targets: p.tokenContainer,
+            alpha: 1,
+            duration: 150,
+            ease: 'Quad.easeOut'
+          });
+        }
+      });
+
+      // Snap/fade off the blackout shroud (`150ms`)
+      this.tweens.add({
+        targets: blackoutShroud,
+        alpha: 0,
+        duration: 150,
+        ease: 'Quad.easeOut',
+        onComplete: () => {
+          this.tronBlackoutContainer.removeAll(true);
+        }
+      });
+
+      // Keep the neon path illuminated while the figurine hops along the pads, then clear
+      this.time.delayedCall(actualSteps * 610 + 400, () => {
         if (this.scene.isActive()) {
           this.trajectoryLaserContainer.removeAll(true);
         }
       });
+
       onDone();
     });
   }
@@ -4775,6 +4987,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
       this.refreshAllTokenOffsets();
       this.renderTopMissionHeader();
       this.saveActiveMissionToStorage();
+      if (player.roster.isAI && player.padIndex < this.boardPads.length - 1) {
+        onComplete();
+        return;
+      }
       // Wait 800ms after landing on the final pad before triggering cutscenes or advancing turn!
       this.time.delayedCall(800, () => {
         if (this.scene.isActive()) onComplete();
@@ -4916,6 +5132,13 @@ export class StarshipUnicornScene extends Phaser.Scene {
   private evaluateLandedSpecialTile(player: ActiveAstronautPlayer): void {
     if (player.padIndex >= this.boardPads.length - 1) {
       this.triggerCitadelVictory(player);
+      return;
+    }
+
+    // When Autonomous Dread-Bot X-99 finishes hopping to its destination pad,
+    // skip the Orbital Challenge mini-game modal and advance to the next player's turn after a 900ms beat!
+    if (player.roster.isAI) {
+      this.finishTurnAndAdvancePlayer(900);
       return;
     }
 
@@ -6483,9 +6706,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
     }
   }
 
-  private finishTurnAndAdvancePlayer(): void {
-    // Deliberate 1400ms pause between turns so the family can see the board state clearly
-    this.time.delayedCall(1400, () => {
+  private finishTurnAndAdvancePlayer(delayMs = 1400): void {
+    // Deliberate pause between turns (1400ms for humans, 900ms beat for Dread-Bot) so the family can see the board state clearly
+    this.time.delayedCall(delayMs, () => {
       if (!this.scene.isActive() || this.scenePhase === 'VICTORY') return;
       const nextIdx = (this.activePlayerIndex + 1) % this.players.length;
       this.startPlayerTurn(nextIdx);
@@ -6506,6 +6729,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.dockContainer.removeAll(true);
     this.diceConsoleContainer.removeAll(true);
     this.cutsceneContainer.removeAll(true);
+    this.tronBlackoutContainer.removeAll(true);
     this.trajectoryLaserContainer.removeAll(true);
     this.pauseModalContainer.removeAll(true);
     this.pauseModalContainer.setVisible(false);

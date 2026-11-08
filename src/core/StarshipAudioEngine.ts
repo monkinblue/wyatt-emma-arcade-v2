@@ -460,6 +460,25 @@ class StarshipAudioEngineImpl {
     this.playIndustrialSfx('sfx_trajectory_lock', 0.68, 1.12);
   }
 
+  /**
+   * Plays a crisp ascending mechanical path-lock clack (`CLACK -> CLACK -> CLACK`)
+   * as each pad along the Tron neon trajectory ignites over the blacked-out board.
+   */
+  public playTronPathStepClack(stepIndex: number): void {
+    const rate = 1.0 + Math.min(6, Math.max(0, stepIndex)) * 0.055;
+    this.playIndustrialSfx('sfx_trajectory_lock', 0.78, rate);
+    this.playIndustrialSfx('sfx_lobby_latch', 0.55, 1.15 + Math.min(6, Math.max(0, stepIndex)) * 0.04);
+  }
+
+  /**
+   * Plays the final heavy mechanical clack/latch (`CLACK!`) when the Tron blackout shroud
+   * snaps off and restores full board lighting right as the figurine begins hopping.
+   */
+  public playTronBlackoutRestoreClack(): void {
+    this.playIndustrialSfx('sfx_switchgear_slam', 0.88, 1.12);
+    this.playIndustrialSfx('sfx_lobby_latch', 0.85, 0.96);
+  }
+
   public playShieldDeflect(): void {
     this.playIndustrialSfx('sfx_shield_deflect', 0.94, 1.0);
   }
