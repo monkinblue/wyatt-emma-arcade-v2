@@ -30,11 +30,14 @@
  */
 
 import Phaser from 'phaser';
-import triviaBankRaw from '../data/starshipTrivia.json';
 import { ArcadeState } from '../core/ArcadeState';
 import { AudioBus } from '../core/AudioBus';
 import { Juice } from '../core/Juice';
 import { StarshipAudio, StarshipVoiceKey } from '../core/StarshipAudioEngine';
+import {
+  ActiveTriviaQuestion,
+  drawNextStarshipQuestion
+} from '../data/starshipQuestionBank';
 
 export type AstronautId =
   | 'robert'
@@ -45,80 +48,12 @@ export type AstronautId =
   | 'nana'
   | 'grandpa'
   | 'babci'
-  | 'guest';
+  | 'guest'
+  | 'dreadbot';
 
 export type TriviaProfileTier = 'ADULT' | 'WYATT_4YO' | 'EMMA_3YO';
 
-export interface TriviaQuestionItem {
-  id: string;
-  tier: TriviaProfileTier;
-  category: string;
-  prompt: string;
-  options: [string, string, string, string];
-  correctIndex: number;
-}
-
-interface TriviaBankData {
-  version: string;
-  counts?: {
-    adult: number;
-    wyatt4yo: number;
-    emma3yo: number;
-    total: number;
-  };
-  questions:
-    | TriviaQuestionItem[]
-    | {
-        ADULT?: TriviaQuestionItem[];
-        WYATT_4YO?: TriviaQuestionItem[];
-        EMMA_3YO?: TriviaQuestionItem[];
-      };
-}
-
-const TRIVIA_BANK = triviaBankRaw as unknown as TriviaBankData;
-
-const FALLBACK_QUESTIONS: Record<TriviaProfileTier, TriviaQuestionItem> = {
-  ADULT: {
-    id: 'fallback_adult',
-    tier: 'ADULT',
-    category: 'Space & Aerospace',
-    prompt: 'What are the giant mechanical catching arms on SpaceX Starbase launch tower nicknamed?',
-    options: ['Cyber Tongs', 'Mechazilla (The Chopsticks)', 'Star Catcher 9000', 'Kraken Claws'],
-    correctIndex: 1
-  },
-  WYATT_4YO: {
-    id: 'fallback_wyatt',
-    tier: 'WYATT_4YO',
-    category: 'Space & Rockets',
-    prompt: 'What counts down "3, 2, 1, BLAST OFF!" and flies up to the Moon?',
-    options: ['🚀 A Rocket Ship', '🚲 A Bicycle', '🛒 A Shopping Cart', '🛋️ A Couch'],
-    correctIndex: 0
-  },
-  EMMA_3YO: {
-    id: 'fallback_emma',
-    tier: 'EMMA_3YO',
-    category: 'Unicorns & Magic',
-    prompt: 'Tap the magical UNICORN with a sparkly horn!',
-    options: ['🦄 Unicorn', '🐸 Frog', '🚜 Tractor', '🥦 Broccoli'],
-    correctIndex: 0
-  }
-};
-
-function getQuestionPoolForTier(tier: TriviaProfileTier): TriviaQuestionItem[] {
-  const rawQ = TRIVIA_BANK?.questions;
-  if (Array.isArray(rawQ)) {
-    const filtered = rawQ.filter(
-      (q) => q && q.tier === tier && Array.isArray(q.options) && q.options.length === 4
-    );
-    if (filtered.length > 0) return filtered;
-  } else if (rawQ && typeof rawQ === 'object') {
-    const tierList = rawQ[tier];
-    if (Array.isArray(tierList) && tierList.length > 0) {
-      return tierList;
-    }
-  }
-  return [FALLBACK_QUESTIONS[tier] ?? FALLBACK_QUESTIONS.ADULT];
-}
+export type TriviaQuestionItem = ActiveTriviaQuestion;
 
 export interface AstronautRosterSpec {
   id: AstronautId;
@@ -126,6 +61,7 @@ export interface AstronautRosterSpec {
   callsign: string;
   roleTitle: string;
   tier: TriviaProfileTier;
+  isAI?: boolean;
   suitColorHex: string;
   suitColorNum: number;
   turnVoice: StarshipVoiceKey;
@@ -230,6 +166,18 @@ export const ASTRONAUT_ROSTER: AstronautRosterSpec[] = [
     suitColorHex: '#facc15',
     suitColorNum: 0xfacc15,
     turnVoice: 'vo_turn_guest',
+    victoryVoice: 'vo_victory'
+  },
+  {
+    id: 'dreadbot',
+    name: 'DREAD-BOT X-99',
+    callsign: 'ROGUE A.I. DREAD-BOT X-99',
+    roleTitle: 'ROGUE A.I. NEMESIS',
+    tier: 'ADULT',
+    isAI: true,
+    suitColorHex: '#ff2255',
+    suitColorNum: 0xff2255,
+    turnVoice: 'vo_turn_dreadbot',
     victoryVoice: 'vo_victory'
   }
 ];
@@ -435,6 +383,28 @@ const SECTOR_LANDMARKS: SectorLandmarkSpec[] = [
   }
 ];
 
+type OrbitalChallengeType =
+  | 'chrono'
+  | 'swarm'
+  | 'phaselock'
+  | 'asteroids'
+  | 'memory'
+  | 'anomaly';
+
+const ACTIVE_MISSION_STORAGE_KEY = 'starship_active_mission_v1';
+
+interface SavedStarshipMissionState {
+  missionActive: true;
+  totalPads: 25 | 50;
+  currentPlayerIndex: number;
+  activePlayers: Array<{
+    id: AstronautId;
+    currentPad: number;
+    overclockCount: number;
+    correctCount: number;
+  }>;
+}
+
 export class StarshipUnicornScene extends Phaser.Scene {
   // Mission Configuration State
   private selectedAstronautIds: AstronautId[] = ['wyatt', 'emma', 'robert', 'rita'];
@@ -497,6 +467,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
   private padRimGlowMap: Map<number, Phaser.GameObjects.Graphics> = new Map();
   private triviaCountdownEvent: Phaser.Time.TimerEvent | null = null;
   private triviaCountdownTween: Phaser.Tweens.Tween | null = null;
+  private kidReadAloudToken = 0;
+  private kidReadAloudTimer: Phaser.Time.TimerEvent | null = null;
+  private kidReadAloudResetVisuals: (() => void) | null = null;
+  private orbitalChallengeDeck: OrbitalChallengeType[] = [];
+  private boundOnPopState: (() => void) | null = null;
 
   constructor() {
     super({ key: 'StarshipUnicornScene' });
@@ -558,6 +533,27 @@ export class StarshipUnicornScene extends Phaser.Scene {
         { frameWidth: 256, frameHeight: 256 }
       );
     }
+    if (!this.textures.exists('starship-crew-dreadbot')) {
+      this.load.image('starship-crew-dreadbot', '/assets/starship/crew-dreadbot.png');
+    }
+    if (!this.textures.exists('starship-astro-dreadbot')) {
+      this.load.image(
+        'starship-astro-dreadbot',
+        '/assets/games/starship-unicorn/portraits/astro_dreadbot.png?v=su1'
+      );
+    }
+    if (!this.textures.exists('starship-card-dreadbot')) {
+      this.load.image(
+        'starship-card-dreadbot',
+        '/assets/games/starship-unicorn/cards/card_dreadbot.png?v=su2'
+      );
+    }
+    if (!this.textures.exists('starship-token-dreadbot')) {
+      this.load.image(
+        'starship-token-dreadbot',
+        '/assets/games/starship-unicorn/tokens/token_dreadbot.png?v=su1'
+      );
+    }
   }
 
   public create(): void {
@@ -590,13 +586,205 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.renderTopMissionHeader();
     this.openPreFlightLobby(true);
 
+    // Block accidental Android / Pixel Tablet back-edge swipes: push a history guard state
+    // and pop open the in-game `[ ⏸ PAUSE ]` modal instead of closing the app!
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.pushState({ starshipBackGuard: true }, '');
+      } catch {
+        // Ignore history state restrictions
+      }
+      this.boundOnPopState = () => {
+        try {
+          window.history.pushState({ starshipBackGuard: true }, '');
+        } catch {
+          // Ignore
+        }
+        if (this.scene.isActive() && this.missionActive && this.scenePhase !== 'LOBBY' && this.scenePhase !== 'VICTORY') {
+          if (!this.pauseModalContainer.visible) {
+            this.openTacticalPauseModal();
+          }
+        }
+      };
+      window.addEventListener('popstate', this.boundOnPopState);
+    }
+
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      if (typeof window !== 'undefined' && this.boundOnPopState) {
+        window.removeEventListener('popstate', this.boundOnPopState);
+        this.boundOnPopState = null;
+      }
       this.stopTriviaCountdownTimer();
       StarshipAudio.stopAllVoice();
       StarshipAudio.stopAmbientStarbasePad();
     });
 
     this.cameras.main.fadeIn(320, 4, 8, 22);
+  }
+
+  /**
+   * Unbiased Fisher-Yates shuffle helper for randomizing crew play order,
+   * the 6-challenge Orbital Challenge deck, and Drone Swarm answer buttons.
+   */
+  private fisherYatesShuffle<T>(items: T[]): T[] {
+    const copy = [...items];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = tmp;
+    }
+    return copy;
+  }
+
+  /**
+   * Draws the next mini-game from a shuffled deck of all 6 Orbital Challenge types,
+   * reshuffling automatically when all 6 have been played so challenges are 100% randomized
+   * and never tied to a specific board square!
+   */
+  private drawNextOrbitalChallenge(): OrbitalChallengeType {
+    if (this.orbitalChallengeDeck.length === 0) {
+      this.orbitalChallengeDeck = this.fisherYatesShuffle<OrbitalChallengeType>([
+        'chrono',
+        'swarm',
+        'phaselock',
+        'asteroids',
+        'memory',
+        'anomaly'
+      ]);
+    }
+    return this.orbitalChallengeDeck.pop() ?? 'chrono';
+  }
+
+  /**
+   * Requests Android / Pixel Tablet Sticky Immersive Fullscreen (`navigationUI: 'hide'`)
+   * so system edge-bars require two deliberate bezel swipes to reveal.
+   */
+  private requestImmersiveFullscreen(): void {
+    if (typeof document === 'undefined') return;
+    try {
+      if (!document.fullscreenElement) {
+        const docEl = document.documentElement as HTMLElement & {
+          requestFullscreen?: (options?: { navigationUI?: 'hide' | 'show' | 'auto' }) => Promise<void>;
+        };
+        docEl.requestFullscreen?.({ navigationUI: 'hide' })?.catch(() => {});
+      }
+    } catch {
+      // Ignore fullscreen permission errors
+    }
+  }
+
+  private toggleImmersiveFullscreen(): void {
+    if (typeof document === 'undefined') return;
+    try {
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      } else {
+        this.requestImmersiveFullscreen();
+      }
+    } catch {
+      // Ignore fullscreen toggle errors
+    }
+  }
+
+  /**
+   * Live Mission Auto-Save (`localStorage` key `'starship_active_mission_v1'`).
+   */
+  private saveActiveMissionToStorage(): void {
+    if (!this.missionActive || this.players.length < 2) return;
+    try {
+      const state: SavedStarshipMissionState = {
+        missionActive: true,
+        totalPads: this.missionTotalPads,
+        currentPlayerIndex: this.activePlayerIndex % this.players.length,
+        activePlayers: this.players.map((p) => ({
+          id: p.roster.id,
+          currentPad: p.padIndex,
+          overclockCount: p.overclockCount,
+          correctCount: p.correctCount
+        }))
+      };
+      window.localStorage.setItem(ACTIVE_MISSION_STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Ignore localStorage quota/privacy errors
+    }
+  }
+
+  private clearActiveMissionStorage(): void {
+    try {
+      window.localStorage.removeItem(ACTIVE_MISSION_STORAGE_KEY);
+    } catch {
+      // Ignore
+    }
+  }
+
+  private loadSavedMissionFromStorage(): SavedStarshipMissionState | null {
+    try {
+      const raw = window.localStorage.getItem(ACTIVE_MISSION_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as SavedStarshipMissionState;
+      if (
+        parsed &&
+        parsed.missionActive === true &&
+        (parsed.totalPads === 25 || parsed.totalPads === 50) &&
+        Array.isArray(parsed.activePlayers) &&
+        parsed.activePlayers.length >= 2
+      ) {
+        return parsed;
+      }
+    } catch {
+      // Ignore corrupt JSON
+    }
+    return null;
+  }
+
+  private resumeSavedMissionFromStorage(saved: SavedStarshipMissionState): void {
+    this.requestImmersiveFullscreen();
+    this.stopTriviaCountdownTimer();
+    if (this.introRevealTimer) {
+      this.introRevealTimer.remove(false);
+      this.introRevealTimer = null;
+    }
+
+    this.missionActive = true;
+    this.hasRolledThisTurn = false;
+    this.pausedTweensSnapshot = [];
+    this.missionTotalPads = saved.totalPads === 50 ? 50 : 25;
+    this.selectedAstronautIds = saved.activePlayers.map((ap) => ap.id);
+
+    this.lobbyContainer.removeAll(true);
+    this.lobbyContainer.setVisible(false);
+    this.pauseModalContainer.removeAll(true);
+    this.pauseModalContainer.setVisible(false);
+    this.victoryContainer.removeAll(true);
+    this.victoryContainer.setVisible(false);
+    this.cutsceneContainer.removeAll(true);
+    this.trajectoryLaserContainer.removeAll(true);
+    this.diceConsoleContainer.removeAll(true);
+    this.dockContainer.removeAll(true);
+    this.dockContainer.setPosition(0, 260).setVisible(false);
+
+    this.buildAndRenderOrbitalBoard(this.missionTotalPads);
+    const maxPadIdx = Math.max(1, this.boardPads.length - 1);
+
+    this.players = saved.activePlayers.map((ap, idx) => {
+      const roster = ASTRONAUT_ROSTER.find((r) => r.id === ap.id) ?? ASTRONAUT_ROSTER[0];
+      const bay = PLAYER_BAY_COLORS[idx % PLAYER_BAY_COLORS.length];
+      return {
+        roster,
+        bay,
+        padIndex: Phaser.Math.Clamp(ap.currentPad || 0, 0, maxPadIdx - 1),
+        overclockCount: ap.overclockCount || 0,
+        correctCount: ap.correctCount || 0
+      };
+    });
+
+    this.activePlayerIndex =
+      Phaser.Math.Clamp(saved.currentPlayerIndex || 0, 0, Math.max(0, this.players.length - 1));
+    this.spawnPlayerBoardTokens(false);
+    this.refreshAllTokenOffsets();
+    this.renderTopMissionHeader();
+    this.startPlayerTurn(this.activePlayerIndex);
   }
 
   /**
@@ -634,6 +822,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     if (this.triviaCountdownTween && this.triviaCountdownTween.isPlaying()) {
       this.triviaCountdownTween.pause();
     }
+    this.cancelKidReadAloudSequence();
     StarshipAudio.stopRedAlertKlaxon();
 
     this.pausedTweensSnapshot = this.tweens
@@ -715,6 +904,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       'ui-startrek-top-pill',
       'sprite-3d-supply-pods',
       'starship-board-bg',
+      'starship-crew-dreadbot',
       'hub-toy-starship-unicorn',
       'mode-tv'
     ];
@@ -869,10 +1059,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
       });
 
       const rankBadges = ['🥇 1ST', '🥈 2ND', '🥉 3RD', '4TH', '5TH', '6TH'];
-      const pillW = this.players.length <= 4 ? 154 : this.players.length === 5 ? 124 : 104;
+      const pillW = this.players.length <= 4 ? 142 : this.players.length === 5 ? 116 : 98;
       const spacing = pillW + 4;
       const totalWidth = this.players.length * spacing - 4;
-      const startX = 618 - totalWidth / 2 + pillW / 2;
+      const startX = 564 - totalWidth / 2 + pillW / 2;
       const maxPadIdx = Math.max(1, this.boardPads.length - 1);
 
       this.players.forEach((p, idx) => {
@@ -943,21 +1133,35 @@ export class StarshipUnicornScene extends Phaser.Scene {
       });
     }
 
-    // 4. Top-Right `[ ⏸ PAUSE ]`, `[ ⚙ CREW LOBBY ]` & `[ 🔊 ]` Buttons
-    const pauseBtn = this.createSleekHeaderButton(998, 26, 98, 36, '⏸ PAUSE', 0x00f5d4, () => {
+    // 4. Top-Right `[ ⛶ FULLSCREEN ]`, `[ ⏸ PAUSE ]`, `[ ⚙ CREW LOBBY ]` & `[ 🔊 ]` Buttons
+    const fullscreenBtn = this.createSleekHeaderButton(
+      910,
+      26,
+      96,
+      36,
+      '⛶ FULLSCREEN',
+      0x38bdf8,
+      () => {
+        StarshipAudio.playRockerSwitchClick(true);
+        this.toggleImmersiveFullscreen();
+      }
+    );
+    this.topHudContainer.add(fullscreenBtn);
+
+    const pauseBtn = this.createSleekHeaderButton(1008, 26, 86, 36, '⏸ PAUSE', 0x00f5d4, () => {
       StarshipAudio.playRockerSwitchClick(true);
       this.openTacticalPauseModal();
     });
     this.topHudContainer.add(pauseBtn);
 
-    const lobbyBtn = this.createSleekHeaderButton(1124, 26, 138, 36, '⚙ CREW LOBBY', 0xf59e0b, () => {
+    const lobbyBtn = this.createSleekHeaderButton(1124, 26, 130, 36, '⚙ CREW LOBBY', 0xf59e0b, () => {
       StarshipAudio.playRockerSwitchClick(true);
       this.openPreFlightLobby(false);
     });
     this.topHudContainer.add(lobbyBtn);
 
     const muteBtn = this.createSleekHeaderButton(
-      1232,
+      1226,
       26,
       52,
       36,
@@ -1070,6 +1274,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       '🔄  RESTART MISSION',
       0x38bdf8,
       () => {
+        this.clearActiveMissionStorage();
         this.pauseModalContainer.removeAll(true);
         this.pauseModalContainer.setVisible(false);
         this.pausedTweensSnapshot = [];
@@ -1165,6 +1370,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
   private openPreFlightLobby(isInitialBoot: boolean, isReRenderWithinLobby = false): void {
     const isMidGame = this.missionActive && !isInitialBoot;
+    const savedMission = !isMidGame ? this.loadSavedMissionFromStorage() : null;
 
     if (isMidGame) {
       if (!isReRenderWithinLobby && this.scenePhase !== 'LOBBY') {
@@ -1223,8 +1429,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
     frameG.strokeRoundedRect(panelX + 14, panelY + 14, panelW - 28, 66, 12);
     this.lobbyContainer.add(frameG);
 
-    const headerCenterX = isMidGame ? 516 : 640;
-    const headerMaxW = isMidGame ? 910 : 1140;
+    const hasTopRightBtn = isMidGame || Boolean(savedMission);
+    const headerCenterX = isMidGame ? 516 : savedMission ? 446 : 640;
+    const headerMaxW = isMidGame ? 910 : savedMission ? 760 : 1140;
 
     const lobbyTitle = this.add
       .text(
@@ -1259,7 +1466,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.fitTextToWidth(lobbySubtitle, headerMaxW);
     this.lobbyContainer.add([lobbyTitle, lobbySubtitle]);
 
-    // High-visibility top-right `[ ✕ RESUME MISSION ]` button when mid-game!
+    // High-visibility top-right `[ ✕ RESUME MISSION ]` button when mid-game, or
+    // prominent glowing emerald `[ 🚀 RESUME SAVED MISSION (IN PROGRESS) ]` button when a saved mission exists!
     if (isMidGame) {
       const resumeTopBtn = this.createCockpitRockerSwitch(
         panelX + panelW - 134,
@@ -1285,10 +1493,32 @@ export class StarshipUnicornScene extends Phaser.Scene {
         }
       );
       this.lobbyContainer.add(resumeTopBtn);
+    } else if (savedMission && hasTopRightBtn) {
+      const resumeSavedBtn = this.createCockpitRockerSwitch(
+        panelX + panelW - 208,
+        panelY + 47,
+        376,
+        48,
+        '[ 🚀 RESUME SAVED MISSION (IN PROGRESS) ]',
+        0x10b981,
+        () => {
+          this.resumeSavedMissionFromStorage(savedMission);
+        }
+      );
+      this.tweens.add({
+        targets: resumeSavedBtn,
+        scaleX: { from: 1.0, to: 1.03 },
+        scaleY: { from: 1.0, to: 1.03 },
+        duration: 680,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut'
+      });
+      this.lobbyContainer.add(resumeSavedBtn);
     }
 
     const row1Specs = ASTRONAUT_ROSTER.slice(0, 5);
-    const row2Specs = ASTRONAUT_ROSTER.slice(5, 9);
+    const row2Specs = ASTRONAUT_ROSTER.slice(5, 10);
 
     const renderRosterCard = (spec: AstronautRosterSpec, cx: number, cy: number) => {
       const slotIdx = this.selectedAstronautIds.indexOf(spec.id);
@@ -1306,9 +1536,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
         bgG.lineStyle(3.2, baySpec.color, 1);
         bgG.strokeRoundedRect(-cardW / 2 - 2, -cardH / 2 - 2, cardW + 4, cardH + 4, 15);
       } else {
-        bgG.fillStyle(0x0f172a, 0.72);
+        bgG.fillStyle(spec.isAI ? 0x1f0612 : 0x0f172a, 0.82);
         bgG.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 14);
-        bgG.lineStyle(1.5, 0x475569, 0.65);
+        bgG.lineStyle(spec.isAI ? 2.2 : 1.5, spec.isAI ? 0xff2255 : 0x475569, spec.isAI ? 0.9 : 0.65);
         bgG.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 14);
       }
       cardContainer.add(bgG);
@@ -1326,28 +1556,53 @@ export class StarshipUnicornScene extends Phaser.Scene {
         cardContainer.add(cardImg);
       }
 
-      const tierLabel =
-        spec.tier === 'WYATT_4YO'
-          ? 'AGE 4 ASTRO-RANGER'
-          : spec.tier === 'EMMA_3YO'
-          ? 'AGE 3 SPACE PRINCESS'
-          : spec.id === 'nana'
-          ? "SHIP'S COUNSELOR"
-          : 'COMMANDER TRIVIA';
+      const tierLabel = spec.isAI
+        ? '🤖 ROGUE AUTO-A.I.'
+        : spec.tier === 'WYATT_4YO'
+        ? 'AGE 4 ASTRO-RANGER'
+        : spec.tier === 'EMMA_3YO'
+        ? 'AGE 3 SPACE PRINCESS'
+        : spec.id === 'nana'
+        ? "SHIP'S COUNSELOR"
+        : 'COMMANDER TRIVIA';
       const tierPill = this.add.graphics();
       tierPill.fillStyle(0x090f1d, 0.94);
       tierPill.fillRoundedRect(-84, 79, 168, 22, 8);
-      tierPill.lineStyle(1.4, isSelected && baySpec ? baySpec.color : 0x64748b, 0.9);
+      tierPill.lineStyle(
+        1.4,
+        isSelected && baySpec ? baySpec.color : spec.isAI ? 0xff2255 : 0x64748b,
+        0.9
+      );
       tierPill.strokeRoundedRect(-84, 79, 168, 22, 8);
       const tierTxt = this.add
         .text(0, 90, tierLabel, {
           fontSize: '9.5px',
           fontStyle: 'bold',
-          color: isSelected && baySpec ? baySpec.hex : '#94a3b8'
+          color: isSelected && baySpec ? baySpec.hex : spec.isAI ? '#ff6b8b' : '#94a3b8'
         })
         .setOrigin(0.5);
       this.fitTextToWidth(tierTxt, 154);
       cardContainer.add([tierPill, tierTxt]);
+
+      // Glowing `[ 🤖 AUTO-AI ]` top-left badge on Dread-Bot's card
+      if (spec.isAI) {
+        const aiBadge = this.add.container(-52, -84);
+        const aiG = this.add.graphics();
+        aiG.fillStyle(0x881337, 0.96);
+        aiG.fillRoundedRect(-42, -12, 84, 24, 7);
+        aiG.lineStyle(1.8, 0xff2255, 1);
+        aiG.strokeRoundedRect(-42, -12, 84, 24, 7);
+        const aiTxt = this.add
+          .text(0, 0, '🤖 AUTO-AI', {
+            fontSize: '9.5px',
+            fontStyle: 'bold',
+            color: '#ffe4e6'
+          })
+          .setOrigin(0.5);
+        this.fitTextToWidth(aiTxt, 76);
+        aiBadge.add([aiG, aiTxt]);
+        cardContainer.add(aiBadge);
+      }
 
       if (isSelected && baySpec) {
         const bayBadge = this.add.container(64, -84);
@@ -1427,7 +1682,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       renderRosterCard(spec, row1Xs[idx], panelY + 198);
     });
 
-    const row2Xs = [307, 529, 751, 973];
+    const row2Xs = [196, 418, 640, 862, 1084];
     row2Specs.forEach((spec, idx) => {
       renderRosterCard(spec, row2Xs[idx], panelY + 422);
     });
@@ -1487,6 +1742,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
         '🔄 RESTART NEW MISSION',
         0xf59e0b,
         () => {
+          this.clearActiveMissionStorage();
           this.pausedTweensSnapshot = [];
           this.stopTriviaCountdownTimer();
           this.initiateMissionLaunch();
@@ -1531,7 +1787,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
         14,
         isMidGame
           ? 'HOT-SWAP CREW & KEEP CURRENT PAD POSITIONS'
-          : `DEPLOY ${this.selectedAstronautIds.length} ASTRONAUT FIGURINES TO PAD 0 LAUNCHPAD`,
+          : `RANDOMIZE ORDER & DEPLOY ${this.selectedAstronautIds.length} ASTRONAUTS TO PAD 0`,
         {
           fontSize: '10.5px',
           fontStyle: 'bold',
@@ -1610,6 +1866,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     });
 
     this.players = updatedPlayers;
+    this.saveActiveMissionToStorage();
     this.spawnPlayerBoardTokens(false);
     this.refreshAllTokenOffsets();
 
@@ -1715,6 +1972,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   private initiateMissionLaunch(): void {
+    // Request Android / Pixel Tablet immersive fullscreen so system gesture bars stay hidden
+    this.requestImmersiveFullscreen();
+
     this.missionActive = true;
     this.hasRolledThisTurn = false;
     this.pausedTweensSnapshot = [];
@@ -1742,6 +2002,10 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.dockContainer.removeAll(true);
     this.dockContainer.setPosition(0, 260).setVisible(false);
 
+    // Fisher-Yates shuffle the selected crew roster at mission launch so play order (`1ST`, `2ND`, `3RD`...) is randomized every game!
+    this.selectedAstronautIds = this.fisherYatesShuffle(this.selectedAstronautIds);
+    this.orbitalChallengeDeck = [];
+
     this.players = this.selectedAstronautIds.map((id, idx) => {
       const roster = ASTRONAUT_ROSTER.find((r) => r.id === id) ?? ASTRONAUT_ROSTER[0];
       const bay = PLAYER_BAY_COLORS[idx % PLAYER_BAY_COLORS.length];
@@ -1759,6 +2023,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.buildAndRenderOrbitalBoard(this.missionTotalPads);
     this.spawnPlayerBoardTokens(true);
     this.renderTopMissionHeader();
+    this.saveActiveMissionToStorage();
 
     // 3. Play `sfx_space_elevator_launch.mp3` + Emily E. Starbase PA Launch Announcement (`vo_mission_launch.mp3`)
     StarshipAudio.playLaunchIgnition();
@@ -1787,8 +2052,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.fitTextToWidth(rbTitle, 840);
 
+    const orderPreview = this.players.map((p, i) => `${i + 1}. ${p.roster.name}`).join(' • ');
     const rbSub = this.add
-      .text(0, 13, 'ALL 5 ISOMETRIC CONVEYOR SECTORS ACTIVE • INITIALIZING TURN 1 TELEMETRY...', {
+      .text(0, 13, `RANDOMIZED CREW ORDER: ${orderPreview}`, {
         fontSize: '11px',
         fontStyle: 'bold',
         color: '#38bdf8'
@@ -1904,8 +2170,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
       let padColor: PadColorType = padIdx === 0 ? 'BLUE' : colorCycle[(padIdx - 1) % 4];
 
       let special: SpecialTileType = 'NONE';
-      const challengePads25 = [3, 5, 8, 11, 15, 18, 21];
-      const challengePads50 = [3, 6, 10, 15, 19, 23, 28, 32, 37, 41, 46];
+      // Double the Orbital Challenge frequency: 12 squares on 25-pad board (every 2nd pad!), 24 squares on 50-pad board
+      const challengePads25 = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 23];
+      const challengePads50 = [
+        2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48
+      ];
 
       if (totalPads === 25) {
         if (padIdx === 25) {
@@ -2136,7 +2405,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
         padNode.add([citadelGlow, citadelPill]);
       } else if (pad.special === 'ORBITAL_CHALLENGE') {
         // 🛸 ORBITAL CHALLENGE: Spinning cyan-gold Star Trek tactical target ring (`BlendModes.ADD`)
-        //    on the pad + bold floating `🛸 ORBITAL CHALLENGE` pill badge!
+        //    directly on the pad surface (no floating text labels so board art stays 100% clean!).
         const challengeGlow = this.add
           .image(0, 0, 'starship-smooth-glow')
           .setDisplaySize(82, 58)
@@ -2189,25 +2458,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
           repeat: -1
         });
 
-        const pillOffsetY = pad.index === 8 || pad.index === 21 ? 26 : -28;
-        const challengePill = createSpecialFloatingPill(
-          '🛸 ORBITAL CHALLENGE',
-          pillOffsetY,
-          0x082f49,
-          0x00f5d4,
-          '#fde047'
-        );
-        this.tweens.add({
-          targets: challengePill,
-          y: { from: pillOffsetY, to: pillOffsetY + (pillOffsetY < 0 ? -5 : 5) },
-          scaleX: { from: 1.0, to: 1.07 },
-          scaleY: { from: 1.0, to: 1.07 },
-          duration: 580,
-          yoyo: true,
-          repeat: -1,
-          ease: 'Sine.easeInOut'
-        });
-        padNode.add([challengeGlow, outerTarget, innerTarget, challengePill]);
+        padNode.add([challengeGlow, outerTarget, innerTarget]);
       }
 
       this.boardContainer.add(padNode);
@@ -2661,6 +2912,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.hasRolledThisTurn = false;
     this.lastAnswerWasOverclock = false;
     this.currentQuestion = this.drawNonRepeatingQuestion(player.roster.tier);
+    this.saveActiveMissionToStorage();
 
     // Keep the Trivia Question Drawer retracted off-screen until the player taps `[ 🖖 ENGAGE TELEMETRY QUESTION ]`!
     this.tweens.killTweensOf(this.dockContainer);
@@ -2726,15 +2978,24 @@ export class StarshipUnicornScene extends Phaser.Scene {
       deckRoot.add(fallbackG);
     }
 
-    // Header: `🛸 COMMAND PAD HANDOFF: [PLAYER ROLE & NAME]`
+    const isAIPlayer = Boolean(player.roster.isAI);
+
+    // Header: `🛸 COMMAND PAD HANDOFF: [PLAYER ROLE & NAME]` (or Rogue A.I. Override for Dread-Bot)
     const handoffTitle = this.add
-      .text(0, -176, `🛸 COMMAND PAD HANDOFF: ${player.roster.callsign}`, {
-        fontSize: '23px',
-        fontStyle: 'bold',
-        color: '#fde047',
-        stroke: '#020617',
-        strokeThickness: 5
-      })
+      .text(
+        0,
+        -176,
+        isAIPlayer
+          ? `⚠️ ROGUE A.I. OVERRIDE: ${player.roster.callsign}`
+          : `🛸 COMMAND PAD HANDOFF: ${player.roster.callsign}`,
+        {
+          fontSize: '23px',
+          fontStyle: 'bold',
+          color: isAIPlayer ? '#ff2255' : '#fde047',
+          stroke: '#020617',
+          strokeThickness: 5
+        }
+      )
       .setOrigin(0.5);
     this.fitTextToWidth(handoffTitle, 760);
 
@@ -2771,7 +3032,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const hexGlow = this.add
       .image(0, hexY, 'starship-smooth-glow')
       .setDisplaySize(210, 195)
-      .setTint(player.bay.color)
+      .setTint(isAIPlayer ? 0xff2255 : player.bay.color)
       .setBlendMode(Phaser.BlendModes.ADD)
       .setAlpha(0.55);
     deckRoot.add(hexGlow);
@@ -2793,7 +3054,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     }
 
     const hexRimG = this.add.graphics();
-    hexRimG.lineStyle(4, player.bay.color, 1);
+    hexRimG.lineStyle(4, isAIPlayer ? 0xff2255 : player.bay.color, 1);
     hexRimG.strokePoints(hexPts, true);
     const innerHexPts = hexPts.map(
       (pt) => new Phaser.Geom.Point(pt.x * 0.92, hexY + (pt.y - hexY) * 0.92)
@@ -2802,48 +3063,73 @@ export class StarshipUnicornScene extends Phaser.Scene {
     hexRimG.strokePoints(innerHexPts, true);
     deckRoot.add(hexRimG);
 
-    const tierInfo =
-      player.roster.tier === 'ADULT'
-        ? '⚡ 15-SECOND TELEMETRY TIMER • CORRECT = ROLL 1x DIE (1–6 PADS)'
-        : '🌟 ∞ NO TIME LIMIT • TAKE YOUR TIME & PICK THE RIGHT ANSWER!';
+    const tierInfo = isAIPlayer
+      ? '🤖 AUTONOMOUS NEMESIS PROTOCOL ACTIVE • HANDS OFF CONTROLS!'
+      : player.roster.tier === 'ADULT'
+      ? '⚡ 15-SECOND TELEMETRY TIMER • CORRECT = ROLL 1x DIE (1–6 PADS)'
+      : '🌟 ∞ NO TIME LIMIT • TAKE YOUR TIME & PICK THE RIGHT ANSWER!';
     const tierInfoTxt = this.add
       .text(0, 92, tierInfo, {
         fontSize: '13px',
         fontStyle: 'bold',
-        color: player.roster.tier === 'ADULT' ? '#7dd3fc' : '#6ee7b7'
+        color: isAIPlayer ? '#ff6b8b' : player.roster.tier === 'ADULT' ? '#7dd3fc' : '#6ee7b7'
       })
       .setOrigin(0.5);
     this.fitTextToWidth(tierInfoTxt, 740);
     deckRoot.add(tierInfoTxt);
 
+    const proceedFromHandoffToTrivia = () => {
+      if (this.scenePhase !== 'TURN_HANDOFF') return;
+      this.scenePhase = 'TRIVIA';
+      this.tweens.add({
+        targets: [deckRoot, shade],
+        alpha: 0,
+        duration: 180,
+        onComplete: () => {
+          this.cutsceneContainer.removeAll(true);
+          if (!this.scene.isActive()) return;
+          const activeQ =
+            this.currentQuestion ?? this.drawNonRepeatingQuestion(player.roster.tier);
+          this.currentQuestion = activeQ;
+          this.dockContainer.setPosition(0, 260).setVisible(true);
+          this.renderTelemetryTriviaDock(player, activeQ);
+        }
+      });
+    };
+
     // Large, Tactile Glowing Star Trek LCARS Button: `[ 🖖 ENGAGE TELEMETRY QUESTION ]`
+    // (or pulsing crimson status bar for Autonomous Dread-Bot that auto-advances after 3400ms so `vo_turn_dreadbot.mp3` finishes completely!)
     const readyBtn = this.createCockpitRockerSwitch(
       0,
       158,
-      560,
+      620,
       68,
-      '[ 🖖 ENGAGE TELEMETRY QUESTION ]',
-      0x10b981,
+      isAIPlayer
+        ? '🤖 DREAD-BOT X-99 OVERRIDING COMMAND BRIDGE...'
+        : '[ 🖖 ENGAGE TELEMETRY QUESTION ]',
+      isAIPlayer ? 0xff2255 : 0x10b981,
       () => {
-        if (this.scenePhase !== 'TURN_HANDOFF') return;
-        this.scenePhase = 'TRIVIA';
-        this.tweens.add({
-          targets: [deckRoot, shade],
-          alpha: 0,
-          duration: 180,
-          onComplete: () => {
-            this.cutsceneContainer.removeAll(true);
-            if (!this.scene.isActive()) return;
-            const activeQ =
-              this.currentQuestion ?? this.drawNonRepeatingQuestion(player.roster.tier);
-            this.currentQuestion = activeQ;
-            this.dockContainer.setPosition(0, 260).setVisible(true);
-            this.renderTelemetryTriviaDock(player, activeQ);
-          }
-        });
+        if (!isAIPlayer) {
+          proceedFromHandoffToTrivia();
+        }
       }
     );
     deckRoot.add(readyBtn);
+
+    if (isAIPlayer) {
+      this.tweens.add({
+        targets: readyBtn,
+        alpha: { from: 1.0, to: 0.55 },
+        duration: 320,
+        yoyo: true,
+        repeat: -1
+      });
+      this.time.delayedCall(3400, () => {
+        if (this.scene.isActive() && this.scenePhase === 'TURN_HANDOFF') {
+          proceedFromHandoffToTrivia();
+        }
+      });
+    }
 
     this.tweens.add({
       targets: deckRoot,
@@ -2856,23 +3142,36 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   private drawNonRepeatingQuestion(tier: TriviaProfileTier): TriviaQuestionItem {
-    const pool = getQuestionPoolForTier(tier);
-    let available = pool.filter((q) => !this.askedQuestionIds.has(q.id));
-    if (available.length === 0) {
-      for (const q of pool) {
-        this.askedQuestionIds.delete(q.id);
-      }
-      available = pool;
-    }
+    return drawNextStarshipQuestion(tier);
+  }
 
-    const chosen = Phaser.Utils.Array.GetRandom(available) as TriviaQuestionItem;
-    this.askedQuestionIds.add(chosen.id);
-    return chosen;
+  /**
+   * Cancels any active Kid Question/Option read-aloud sequence, stops voice playback immediately,
+   * clears pending highlight timers, and resets any highlighted card back to `scale: 1.0`.
+   */
+  private cancelKidReadAloudSequence(): void {
+    this.kidReadAloudToken += 1;
+    if (this.kidReadAloudTimer) {
+      this.kidReadAloudTimer.remove(false);
+      this.kidReadAloudTimer = null;
+    }
+    if (this.kidReadAloudResetVisuals) {
+      try {
+        this.kidReadAloudResetVisuals();
+      } catch {
+        // Ignore if display objects were already destroyed
+      }
+      this.kidReadAloudResetVisuals = null;
+    }
+    StarshipAudio.stopAllVoice();
   }
 
   /**
    * Renders the Motorized Sliding FICSIT Telemetry Trivia Drawer (`y: 472..710`).
    * - During `TRIVIA` phase: smoothly slides up from off-screen (`y: 260 -> 0`, `350ms` Cubic.easeOut).
+   * - For Kids (`wyatt` & `emma`): renders 2 Giant Side-by-Side Option Cards (`LEFT CARD` and `RIGHT CARD`)
+   *   with a `[ 🔊 REPLAY ]` button and synchronized Emily E. Question -> Left Card -> Right Card read-aloud & highlighting!
+   * - For Commanders (Adults): renders 4 Answer Cards with the 15-Second Red Alert Countdown.
    * - As soon as Answer Lock-In finishes: automatically retracts down off-screen (`y: 0 -> 260`, `400ms`)
    *   so 100% of the 1280x720 isometric factory board is unobstructed during `ROLL` & `MOVE`!
    */
@@ -2881,6 +3180,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     question: TriviaQuestionItem
   ): void {
     this.stopTriviaCountdownTimer();
+    this.cancelKidReadAloudSequence();
     this.tweens.killTweensOf(this.dockContainer);
     const wasRetracted = this.dockContainer.y > 10;
     this.dockContainer.removeAll(true);
@@ -2888,39 +3188,57 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.diceConsoleContainer.removeAll(true);
     this.diceConsoleContainer.setPosition(0, 0);
 
-    // 1. Upper Question Telemetry Console (`y: 472..598`)
+    const isKidsTier =
+      Boolean(question.isKidQuestion) ||
+      player.roster.id === 'wyatt' ||
+      player.roster.id === 'emma' ||
+      player.roster.tier !== 'ADULT';
+
+    // 1. Upper Question Telemetry Console (`y: 468..582` for Kids, `y: 472..598` for Commanders)
+    const consoleTopY = isKidsTier ? 464 : 472;
+    const consoleH = isKidsTier ? 118 : 124;
+
     const dockG = this.add.graphics();
     // 3D lower metallic chassis lip
     dockG.fillStyle(0x020617, 0.96);
-    dockG.fillRoundedRect(18, 476, 1244, 124, 14);
+    dockG.fillRoundedRect(18, consoleTopY + 4, 1244, consoleH, 14);
     // Main gunmetal glassmorphic console
     dockG.fillStyle(0x070d1b, 0.95);
-    dockG.fillRoundedRect(18, 472, 1244, 124, 14);
+    dockG.fillRoundedRect(18, consoleTopY, 1244, consoleH, 14);
     dockG.lineStyle(2.5, player.bay.color, 0.92);
-    dockG.strokeRoundedRect(18, 472, 1244, 124, 14);
+    dockG.strokeRoundedRect(18, consoleTopY, 1244, consoleH, 14);
     this.dockContainer.add(dockG);
 
-    // Crimson Red-Alert Border Overlay on the Trivia Drawer (flashes at <= 5s remaining)
+    // Subtle Cyan Glow Border around the Question Box during Step 1 Question Read-Aloud!
+    const questionBoxGlowG = this.add.graphics().setAlpha(0);
+    questionBoxGlowG.setBlendMode(Phaser.BlendModes.ADD);
+    questionBoxGlowG.fillStyle(0x00f5d4, 0.14);
+    questionBoxGlowG.fillRoundedRect(18, consoleTopY, 1244, consoleH, 14);
+    questionBoxGlowG.lineStyle(4.5, 0x00ffff, 1);
+    questionBoxGlowG.strokeRoundedRect(18, consoleTopY, 1244, consoleH, 14);
+    this.dockContainer.add(questionBoxGlowG);
+
+    // Crimson Red-Alert Border Overlay on the Trivia Drawer (flashes at <= 5s remaining for Commanders)
     const redAlertDockBorderG = this.add.graphics().setAlpha(0);
     redAlertDockBorderG.lineStyle(4.5, 0xef4444, 1);
-    redAlertDockBorderG.strokeRoundedRect(18, 472, 1244, 124, 14);
+    redAlertDockBorderG.strokeRoundedRect(18, consoleTopY, 1244, consoleH, 14);
     this.dockContainer.add(redAlertDockBorderG);
 
-    // Top Horizontal 15-Second Countdown Progress Bar (`x: 34..1246, y: 477`)
+    // Top Horizontal 15-Second Countdown Progress Bar (`x: 34..1246`)
     const reactorTrackW = 1212;
     const reactorTrackG = this.add.graphics();
     reactorTrackG.fillStyle(0x020617, 0.95);
-    reactorTrackG.fillRoundedRect(34, 475, reactorTrackW, 6, 3);
+    reactorTrackG.fillRoundedRect(34, consoleTopY + 3, reactorTrackW, 6, 3);
     const reactorBarFill = this.add
-      .rectangle(34, 478, reactorTrackW, 6, 0x00f5d4, 0.96)
+      .rectangle(34, consoleTopY + 6, reactorTrackW, 6, 0x00f5d4, 0.96)
       .setOrigin(0, 0.5);
     this.dockContainer.add([reactorTrackG, reactorBarFill]);
 
-    // Left Hexagonal Spacesuit Portrait (`x: 88, y: 525`) + Name Badge Underneath (`x: 88, y: 581`)
+    // Left Hexagonal Spacesuit Portrait + Name Badge Underneath
     const hexX = 88;
-    const hexY = 524;
-    const hexRx = 46;
-    const hexRy = 40;
+    const hexY = consoleTopY + 50;
+    const hexRx = 45;
+    const hexRy = 38;
     const hexPts: Phaser.Geom.Point[] = [
       new Phaser.Geom.Point(hexX, hexY - hexRy),
       new Phaser.Geom.Point(hexX + hexRx, hexY - hexRy * 0.5),
@@ -2942,22 +3260,23 @@ export class StarshipUnicornScene extends Phaser.Scene {
       this.textures.get(resolvedPortKey).setFilter(Phaser.Textures.FilterMode.LINEAR);
       const portImg = this.add
         .image(hexX, hexY, resolvedPortKey)
-        .setDisplaySize(74, 74);
+        .setDisplaySize(72, 72);
       this.dockContainer.add(portImg);
     }
 
+    const namePillY = consoleTopY + consoleH - 27;
     const portRimG = this.add.graphics();
     portRimG.lineStyle(2.8, player.bay.color, 1);
     portRimG.strokePoints(hexPts, true);
     // Name badge pill underneath hexagonal portrait
     portRimG.fillStyle(0x020617, 0.96);
-    portRimG.fillRoundedRect(hexX - 48, 569, 96, 22, 6);
+    portRimG.fillRoundedRect(hexX - 48, namePillY, 96, 21, 6);
     portRimG.lineStyle(1.8, player.bay.color, 0.95);
-    portRimG.strokeRoundedRect(hexX - 48, 569, 96, 22, 6);
+    portRimG.strokeRoundedRect(hexX - 48, namePillY, 96, 21, 6);
     this.dockContainer.add(portRimG);
 
     const nameBadgeTxt = this.add
-      .text(hexX, 580, player.roster.name, {
+      .text(hexX, namePillY + 10.5, player.roster.name, {
         fontSize: '11px',
         fontStyle: 'bold',
         color: player.bay.hex
@@ -2967,36 +3286,36 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.dockContainer.add(nameBadgeTxt);
 
     // Question Text: Vertically centered to the right of the portrait in large, ultra-crisp 22px–25px font!
-    const isKidsTier = player.roster.id === 'wyatt' || player.roster.id === 'emma' || player.roster.tier !== 'ADULT';
     const qFontSize =
       question.prompt.length > 95 ? '22px' : question.prompt.length > 65 ? '23.5px' : '25px';
     const promptTxt = this.add
-      .text(162, 536, question.prompt, {
+      .text(162, consoleTopY + consoleH * 0.54, question.prompt, {
         fontSize: qFontSize,
         fontStyle: 'bold',
         color: '#ffffff',
         stroke: '#020617',
         strokeThickness: 3,
-        lineSpacing: 6,
-        wordWrap: { width: isKidsTier ? 930 : 975 }
+        lineSpacing: 5,
+        wordWrap: { width: isKidsTier ? 810 : 975 }
       })
       .setOrigin(0, 0.5);
-    if (promptTxt.height > 96) {
-      promptTxt.setScale(96 / promptTxt.height);
+    if (promptTxt.height > 90) {
+      promptTxt.setScale(90 / promptTxt.height);
     }
     this.dockContainer.add(promptTxt);
 
     // Clean, Compact Top-Right Timer Readout (`15s` for Commander Tier, `∞ NO TIME LIMIT` for Kids Tier)
-    const badgeW = isKidsTier ? 148 : 88;
-    const badgeX = isKidsTier ? 1174 : 1204;
-    const timerBadgeContainer = this.add.container(badgeX, 504);
+    const badgeW = isKidsTier ? 142 : 88;
+    const badgeX = isKidsTier ? 1178 : 1204;
+    const badgeY = consoleTopY + 30;
+    const timerBadgeContainer = this.add.container(badgeX, badgeY);
     const timerBadgeG = this.add.graphics();
     const drawTimerBadgeBox = (borderColor: number, bgFill = 0x020617) => {
       timerBadgeG.clear();
       timerBadgeG.fillStyle(bgFill, 0.96);
-      timerBadgeG.fillRoundedRect(-badgeW / 2, -16, badgeW, 32, 8);
+      timerBadgeG.fillRoundedRect(-badgeW / 2, -15, badgeW, 30, 8);
       timerBadgeG.lineStyle(2, borderColor, 0.96);
-      timerBadgeG.strokeRoundedRect(-badgeW / 2, -16, badgeW, 32, 8);
+      timerBadgeG.strokeRoundedRect(-badgeW / 2, -15, badgeW, 30, 8);
     };
     drawTimerBadgeBox(isKidsTier ? 0x10b981 : 0x00f5d4);
 
@@ -3006,7 +3325,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
     const timerBadgeTxt = this.add
       .text(0, 0, isKidsTier ? '∞ NO TIME LIMIT' : '15s', {
-        fontSize: isKidsTier ? '11.5px' : '15px',
+        fontSize: isKidsTier ? '11px' : '15px',
         fontStyle: 'bold',
         color: isKidsTier ? '#6ee7b7' : '#00f5d4'
       })
@@ -3015,8 +3334,310 @@ export class StarshipUnicornScene extends Phaser.Scene {
     timerBadgeContainer.add([timerBadgeG, timerBadgeTxt]);
     this.dockContainer.add(timerBadgeContainer);
 
-    // 2. Four Sleek, High-Contrast Star Trek / SpaceX Cockpit Answer Buttons (`y: 606..710`)
-    //    (ONLY the large, centered 22px–24px answer text & emoji icon inside — ZERO pill tags or indicator bars!)
+    if (isKidsTier) {
+      // =====================================================================
+      // KIDS TIER (`wyatt` & `emma`):
+      // 1. Compact `[ 🔊 REPLAY ]` button next to `∞ NO TIME LIMIT`
+      // 2. 2 Giant Side-by-Side Choice Cards (`LEFT CARD` & `RIGHT CARD`, ~576x118 each, 26px–28px text)
+      // 3. Synchronized Emily E. Question -> Left Card -> Right Card Read-Aloud & Golden-Cyan Highlighting!
+      // =====================================================================
+      const kidCards: Array<{
+        switchRoot: Phaser.GameObjects.Container;
+        highlightOverlay: Phaser.GameObjects.Container;
+      }> = [];
+
+      const kidThemes = [
+        { rimColor: 0x38bdf8, fillMid: 0x0c4a6e }, // Left Card: Starlight Cyan
+        { rimColor: 0xf472b6, fillMid: 0x4c1d95 }  // Right Card: Nebula Rose-Violet
+      ];
+
+      const kidOptions =
+        Array.isArray(question.options) && question.options.length >= 2
+          ? [question.options[0], question.options[1]]
+          : ['✨ Option 1', '🌟 Option 2'];
+
+      const padW = 576;
+      const padH = 118;
+      const padGap = 52;
+      const startX = 640 - (padW + padGap) / 2;
+      const baseY = 649;
+
+      kidOptions.forEach((optLabel, idx) => {
+        const cx = startX + idx * (padW + padGap);
+        const theme = kidThemes[idx % kidThemes.length];
+        const switchRoot = this.add.container(cx, baseY);
+
+        // 3D Lower Shadow / Bevel Lip
+        const baseLipG = this.add.graphics();
+        baseLipG.fillStyle(0x010409, 0.95);
+        baseLipG.fillRoundedRect(-padW / 2 - 2, -padH / 2 + 8, padW + 4, padH, 16);
+        baseLipG.fillStyle(0x020617, 1);
+        baseLipG.fillRoundedRect(-padW / 2, -padH / 2 + 6, padW, padH, 15);
+        baseLipG.lineStyle(2, 0x1e293b, 0.95);
+        baseLipG.strokeRoundedRect(-padW / 2, -padH / 2 + 6, padW, padH, 15);
+        switchRoot.add(baseLipG);
+
+        // Movable Upper Cockpit Button Cap
+        const capContainer = this.add.container(0, 0);
+        switchRoot.add(capContainer);
+
+        const capG = this.add.graphics();
+        capG.fillStyle(0x0f172a, 0.98);
+        capG.fillRoundedRect(-padW / 2, -padH / 2, padW, padH, 15);
+        capG.fillStyle(theme.fillMid, 0.42);
+        capG.fillRoundedRect(-padW / 2 + 4, -padH / 2 + 4, padW - 8, padH - 8, 12);
+        capG.fillStyle(0xffffff, 0.09);
+        capG.fillRoundedRect(-padW / 2 + 10, -padH / 2 + 6, padW - 20, 20, 6);
+        capG.lineStyle(3.2, theme.rimColor, 0.98);
+        capG.strokeRoundedRect(-padW / 2, -padH / 2, padW, padH, 15);
+        capContainer.add(capG);
+
+        // Bright Glowing Golden-Cyan Star Trek Read-Aloud Highlight Overlay (`0x00ffff` / `0xffd700`, `lineWidth: 5`)
+        const highlightOverlay = this.add.container(0, 0).setVisible(false);
+        const hlG = this.add.graphics();
+        hlG.fillStyle(0x00f5d4, 0.24);
+        hlG.fillRoundedRect(-padW / 2, -padH / 2, padW, padH, 15);
+        hlG.lineStyle(6, 0x00ffff, 0.98);
+        hlG.strokeRoundedRect(-padW / 2 - 2, -padH / 2 - 2, padW + 4, padH + 4, 16);
+        hlG.lineStyle(4, 0xffd700, 1);
+        hlG.strokeRoundedRect(-padW / 2 + 4, -padH / 2 + 4, padW - 8, padH - 8, 12);
+        highlightOverlay.add(hlG);
+        capContainer.add(highlightOverlay);
+
+        // Huge 26px–28px Bold Text + Large Emoji Icon
+        const optTxt = this.add
+          .text(0, 0, optLabel, {
+            fontSize: '27px',
+            fontStyle: 'bold',
+            color: '#ffffff',
+            stroke: '#020617',
+            strokeThickness: 4,
+            align: 'center',
+            wordWrap: { width: padW - 44 }
+          })
+          .setOrigin(0.5);
+        this.fitTextToWidth(optTxt, padW - 44);
+        if (optTxt.height * optTxt.scaleY > padH - 22) {
+          const s = (padH - 22) / optTxt.height;
+          optTxt.setScale(Math.min(optTxt.scaleX, s));
+        }
+
+        // Hidden Amber Telemetry Lock-In Scanner Overlay (activates for 750ms when tapped!)
+        const scannerOverlay = this.add.container(0, 0).setVisible(false);
+        const scanBorderG = this.add.graphics();
+        scanBorderG.lineStyle(4.5, 0xfbbf24, 1);
+        scanBorderG.strokeRoundedRect(-padW / 2 + 2, -padH / 2 + 2, padW - 4, padH - 4, 14);
+        const scanBeamG = this.add.graphics();
+        scanBeamG.fillStyle(0xfbbf24, 0.35);
+        scanBeamG.fillRoundedRect(-padW / 2 + 8, -14, padW - 16, 28, 5);
+        scannerOverlay.add([scanBorderG, scanBeamG]);
+
+        capContainer.add([optTxt, scannerOverlay]);
+
+        const hit = this.add
+          .rectangle(0, 0, padW, padH, 0x000000, 0.001)
+          .setInteractive({ useHandCursor: true });
+        switchRoot.add(hit);
+
+        hit.on('pointerover', () => {
+          if (this.scenePhase === 'TRIVIA') {
+            StarshipAudio.playHoverMicroClick();
+          }
+        });
+
+        hit.on('pointerdown', () => {
+          if (this.scenePhase !== 'TRIVIA') return;
+          this.scenePhase = 'LOCKING_ANSWER';
+          this.stopTriviaCountdownTimer();
+          this.cancelKidReadAloudSequence();
+
+          this.tweens.add({
+            targets: capContainer,
+            y: 5,
+            duration: 75,
+            ease: 'Quad.easeOut'
+          });
+
+          StarshipAudio.playPadLockIn(idx);
+
+          scannerOverlay.setVisible(true);
+          scanBeamG.y = -padH / 2 + 20;
+          this.tweens.add({
+            targets: scanBeamG,
+            y: padH / 2 - 20,
+            duration: 360,
+            yoyo: true,
+            repeat: 1,
+            ease: 'Sine.easeInOut'
+          });
+
+          this.time.delayedCall(750, () => {
+            if (!this.scene.isActive()) return;
+            this.handleTriviaSelection(idx, player, question, switchRoot);
+          });
+        });
+
+        this.dockContainer.add(switchRoot);
+        kidCards.push({ switchRoot, highlightOverlay });
+      });
+
+      const startSynchronizedKidReadAloud = () => {
+        if (!this.scene.isActive() || this.scenePhase !== 'TRIVIA') return;
+        this.cancelKidReadAloudSequence();
+        const myToken = this.kidReadAloudToken;
+
+        const setCardHighlight = (cardIdx: 0 | 1, active: boolean) => {
+          const item = kidCards[cardIdx];
+          if (!item || !item.switchRoot.scene) return;
+          this.tweens.killTweensOf(item.switchRoot);
+          item.highlightOverlay.setVisible(active);
+          this.tweens.add({
+            targets: item.switchRoot,
+            scaleX: active ? 1.05 : 1.0,
+            scaleY: active ? 1.05 : 1.0,
+            duration: 180,
+            ease: active ? 'Back.easeOut' : 'Sine.easeOut'
+          });
+        };
+
+        const resetAllVisuals = () => {
+          if (questionBoxGlowG && questionBoxGlowG.scene) {
+            this.tweens.killTweensOf(questionBoxGlowG);
+            questionBoxGlowG.setAlpha(0);
+          }
+          setCardHighlight(0, false);
+          setCardHighlight(1, false);
+        };
+        this.kidReadAloudResetVisuals = resetAllVisuals;
+
+        const qAudioUrl = question.questionAudioUrl ?? `/assets/sfx/starship/kids/${question.id}_q.mp3`;
+        const leftAudioUrl =
+          question.optionAudioUrls?.[0] ?? `/assets/sfx/starship/kids/${question.id}_a.mp3`;
+        const rightAudioUrl =
+          question.optionAudioUrls?.[1] ?? `/assets/sfx/starship/kids/${question.id}_b.mp3`;
+
+        // Step 1: Read Question Aloud (`kid_XX_q.mp3`) while pulsing cyan glow around Question Box
+        questionBoxGlowG.setAlpha(0.35);
+        this.tweens.add({
+          targets: questionBoxGlowG,
+          alpha: { from: 0.25, to: 0.92 },
+          duration: 460,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+
+        StarshipAudio.playKidClipUrl(qAudioUrl, () => {
+          if (!this.scene.isActive() || this.scenePhase !== 'TRIVIA' || this.kidReadAloudToken !== myToken) {
+            return;
+          }
+          this.tweens.killTweensOf(questionBoxGlowG);
+          questionBoxGlowG.setAlpha(0);
+
+          // Step 2: Highlight LEFT Card (`scale: 1.05`, Golden-Cyan border) & Read Left Option
+          setCardHighlight(0, true);
+          setCardHighlight(1, false);
+
+          StarshipAudio.playKidClipUrl(leftAudioUrl, () => {
+            if (!this.scene.isActive() || this.scenePhase !== 'TRIVIA' || this.kidReadAloudToken !== myToken) {
+              return;
+            }
+            // Restore Left Card after reading & pause 250ms before highlighting Right Card
+            setCardHighlight(0, false);
+
+            this.kidReadAloudTimer = this.time.delayedCall(250, () => {
+              this.kidReadAloudTimer = null;
+              if (!this.scene.isActive() || this.scenePhase !== 'TRIVIA' || this.kidReadAloudToken !== myToken) {
+                return;
+              }
+              // Step 3: Highlight RIGHT Card (`scale: 1.05`, Golden-Cyan border) & Read Right Option
+              setCardHighlight(1, true);
+
+              StarshipAudio.playKidClipUrl(rightAudioUrl, () => {
+                if (!this.scene.isActive() || this.kidReadAloudToken !== myToken) {
+                  return;
+                }
+                // Step 4: Restore both cards to normal interactive state
+                setCardHighlight(0, false);
+                setCardHighlight(1, false);
+              });
+            });
+          });
+        });
+      };
+
+      // Compact `[ 🔊 REPLAY ]` button inside the top-right of the Kid Question Box (next to `∞ NO TIME LIMIT`)
+      const replayBtn = this.createSleekHeaderButton(
+        1042,
+        badgeY,
+        114,
+        30,
+        '🔊 REPLAY',
+        0x00f5d4,
+        () => {
+          if (this.scenePhase === 'TRIVIA') {
+            startSynchronizedKidReadAloud();
+          }
+        }
+      );
+      this.dockContainer.add(replayBtn);
+
+      if (wasRetracted) {
+        StarshipAudio.playDrawerSlide(true);
+        this.dockContainer.setPosition(0, 260);
+        this.tweens.add({
+          targets: this.dockContainer,
+          y: 0,
+          duration: 360,
+          ease: 'Cubic.easeOut',
+          onComplete: () => {
+            if (this.scene.isActive() && this.scenePhase === 'TRIVIA') {
+              startSynchronizedKidReadAloud();
+            }
+          }
+        });
+      } else {
+        this.dockContainer.setPosition(0, 0);
+        startSynchronizedKidReadAloud();
+      }
+      return;
+    }
+
+    // 2. COMMANDER TIER (ADULTS & ROGUE A.I. DREAD-BOT): Four Sleek, High-Contrast Star Trek / SpaceX Cockpit Answer Buttons (`y: 606..710`)
+    const isAIPlayer = Boolean(player.roster.isAI);
+    if (isAIPlayer) {
+      // Pulsing Crimson Status Banner for Dread-Bot X-99
+      drawTimerBadgeBox(0xff2255, 0x4c0519);
+      timerBadgeTxt.setText('🤖 AUTO-AI');
+      timerBadgeTxt.setColor('#ffe4e6');
+      this.fitTextToWidth(timerBadgeTxt, badgeW - 10);
+      reactorBarFill.setFillStyle(0xff2255, 0.96);
+
+      const aiBanner = this.add.container(640, consoleTopY - 18);
+      const aiBannerG = this.add.graphics();
+      aiBannerG.fillStyle(0x4c0519, 0.96);
+      aiBannerG.fillRoundedRect(-260, -15, 520, 30, 8);
+      aiBannerG.lineStyle(2.5, 0xff2255, 1);
+      aiBannerG.strokeRoundedRect(-260, -15, 520, 30, 8);
+      const aiBannerTxt = this.add
+        .text(0, 0, '🤖 DREAD-BOT SCANNING TELEMETRY...', {
+          fontSize: '13.5px',
+          fontStyle: 'bold',
+          color: '#ffe4e6'
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(aiBannerTxt, 496);
+      aiBanner.add([aiBannerG, aiBannerTxt]);
+      this.dockContainer.add(aiBanner);
+      this.tweens.add({
+        targets: aiBanner,
+        alpha: { from: 1.0, to: 0.48 },
+        duration: 320,
+        yoyo: true,
+        repeat: -1
+      });
+    }
+
     const safeOptions =
       Array.isArray(question.options) && question.options.length >= 4
         ? question.options
@@ -3027,6 +3648,15 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const padGap = 16;
     const startX = 18 + padW / 2;
     const baseY = 654;
+
+    const commanderButtons: Array<{
+      switchRoot: Phaser.GameObjects.Container;
+      capContainer: Phaser.GameObjects.Container;
+      scannerOverlay: Phaser.GameObjects.Container;
+      scanBeamG: Phaser.GameObjects.Graphics;
+      aiTargetG: Phaser.GameObjects.Graphics;
+      lockInAnswer: () => void;
+    }> = [];
 
     OPTION_PAD_COLORS.forEach((theme, idx) => {
       const cx = startX + idx * (padW + padGap);
@@ -3060,6 +3690,14 @@ export class StarshipUnicornScene extends Phaser.Scene {
       capG.strokeRoundedRect(-padW / 2, -padH / 2, padW, padH, 12);
       capContainer.add(capG);
 
+      // Crimson AI Targeting Reticle Overlay (cycles across buttons during Dread-Bot's 1800ms scan)
+      const aiTargetG = this.add.graphics().setVisible(false);
+      aiTargetG.fillStyle(0xff2255, 0.28);
+      aiTargetG.fillRoundedRect(-padW / 2, -padH / 2, padW, padH, 12);
+      aiTargetG.lineStyle(5, 0xff2255, 1);
+      aiTargetG.strokeRoundedRect(-padW / 2 - 2, -padH / 2 - 2, padW + 4, padH + 4, 13);
+      capContainer.add(aiTargetG);
+
       // ONLY the Large, Centered Answer Text (and Emoji Icon) Inside (`22px–24px` bold)
       const optLabel = safeOptions[idx] ?? '';
       const optFontSize = optLabel.length > 22 ? '22px' : '24px';
@@ -3092,22 +3730,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
       capContainer.add([optTxt, scannerOverlay]);
 
-      // Interactive Hit Area
-      const hit = this.add
-        .rectangle(0, 0, padW, padH, 0x000000, 0.001)
-        .setInteractive({ useHandCursor: true });
-      switchRoot.add(hit);
-
-      hit.on('pointerover', () => {
-        if (this.scenePhase === 'TRIVIA') {
-          StarshipAudio.playHoverMicroClick();
-        }
-      });
-
-      hit.on('pointerdown', () => {
+      const lockInAnswer = () => {
         if (this.scenePhase !== 'TRIVIA') return;
         this.scenePhase = 'LOCKING_ANSWER';
         this.stopTriviaCountdownTimer();
+        commanderButtons.forEach((b) => b.aiTargetG.setVisible(false));
 
         // 1. Physical Hydraulic Press: depress switchgear cap `y + 5px` (collapsing its 3D lower bevel!)
         this.tweens.add({
@@ -3136,13 +3763,77 @@ export class StarshipUnicornScene extends Phaser.Scene {
           if (!this.scene.isActive()) return;
           this.handleTriviaSelection(idx, player, question, switchRoot);
         });
-      });
+      };
+
+      // Interactive Hit Area (disabled during Dread-Bot's autonomous turn!)
+      if (!isAIPlayer) {
+        const hit = this.add
+          .rectangle(0, 0, padW, padH, 0x000000, 0.001)
+          .setInteractive({ useHandCursor: true });
+        switchRoot.add(hit);
+
+        hit.on('pointerover', () => {
+          if (this.scenePhase === 'TRIVIA') {
+            StarshipAudio.playHoverMicroClick();
+          }
+        });
+
+        hit.on('pointerdown', () => {
+          lockInAnswer();
+        });
+      }
 
       this.dockContainer.add(switchRoot);
+      commanderButtons.push({
+        switchRoot,
+        capContainer,
+        scannerOverlay,
+        scanBeamG,
+        aiTargetG,
+        lockInAnswer
+      });
     });
 
+    const startDreadBotAutoScan = () => {
+      if (!this.scene.isActive() || this.scenePhase !== 'TRIVIA') return;
+      let cycleTick = 0;
+      const cycleEvent = this.time.addEvent({
+        delay: 220,
+        repeat: 9,
+        callback: () => {
+          if (!this.scene.isActive() || this.scenePhase !== 'TRIVIA') {
+            cycleEvent.remove(false);
+            return;
+          }
+          const highlightIdx = cycleTick % commanderButtons.length;
+          commanderButtons.forEach((btn, bIdx) => {
+            btn.aiTargetG.setVisible(bIdx === highlightIdx);
+          });
+          StarshipAudio.playHoverMicroClick();
+          cycleTick += 1;
+        }
+      });
+
+      this.time.delayedCall(2400, () => {
+        if (!this.scene.isActive() || this.scenePhase !== 'TRIVIA') return;
+        cycleEvent.remove(false);
+        // 55% chance Dread-Bot picks the correct answer, 45% chance of picking a random wrong answer
+        const pickCorrect = Math.random() < 0.55;
+        let chosenIdx = question.correctIndex;
+        if (!pickCorrect) {
+          const wrongIndices = [0, 1, 2, 3].filter((i) => i !== question.correctIndex);
+          chosenIdx = Phaser.Utils.Array.GetRandom(wrongIndices) ?? 0;
+        }
+        commanderButtons.forEach((btn, bIdx) => {
+          btn.aiTargetG.setVisible(bIdx === chosenIdx);
+        });
+        const targetBtn = commanderButtons[chosenIdx] ?? commanderButtons[0];
+        targetBtn?.lockInAnswer();
+      });
+    };
+
     // Guarantee `dockContainer` is at `y = 0` during `TRIVIA` (slides back up from `+260` after reveal or `ROLL`/`MOVE`)
-    // Only start the 15-Second Orbital Telemetry Countdown for Commander Tier (Kids Tier has ∞ NO TIME LIMIT)!
+    // Start the 15-Second Orbital Telemetry Countdown for Human Commander Tier, or Auto-Scan for Dread-Bot!
     if (wasRetracted) {
       StarshipAudio.playDrawerSlide(true);
       this.dockContainer.setPosition(0, 260);
@@ -3153,33 +3844,42 @@ export class StarshipUnicornScene extends Phaser.Scene {
         ease: 'Cubic.easeOut',
         onComplete: () => {
           if (this.scene.isActive() && this.scenePhase === 'TRIVIA' && !isKidsTier) {
-            this.startTriviaCountdownTimer(
-              player,
-              question,
-              reactorBarFill,
-              timerBadgeTxt,
-              drawTimerBadgeBox,
-              redAlertDockBorderG
-            );
+            if (isAIPlayer) {
+              startDreadBotAutoScan();
+            } else {
+              this.startTriviaCountdownTimer(
+                player,
+                question,
+                reactorBarFill,
+                timerBadgeTxt,
+                drawTimerBadgeBox,
+                redAlertDockBorderG
+              );
+            }
           }
         }
       });
     } else {
       this.dockContainer.setPosition(0, 0);
       if (!isKidsTier) {
-        this.startTriviaCountdownTimer(
-          player,
-          question,
-          reactorBarFill,
-          timerBadgeTxt,
-          drawTimerBadgeBox,
-          redAlertDockBorderG
-        );
+        if (isAIPlayer) {
+          startDreadBotAutoScan();
+        } else {
+          this.startTriviaCountdownTimer(
+            player,
+            question,
+            reactorBarFill,
+            timerBadgeTxt,
+            drawTimerBadgeBox,
+            redAlertDockBorderG
+          );
+        }
       }
     }
   }
 
   private stopTriviaCountdownTimer(): void {
+    this.cancelKidReadAloudSequence();
     if (this.triviaCountdownEvent) {
       this.triviaCountdownEvent.remove(false);
       this.triviaCountdownEvent = null;
@@ -3725,12 +4425,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     plungerRoot.add(hit);
 
     let rolled = false;
-    hit.on('pointerover', () => {
-      if (!rolled) {
-        StarshipAudio.playHoverMicroClick();
-      }
-    });
-    hit.on('pointerdown', () => {
+    const triggerPlungerIgnition = () => {
       if (rolled) return;
       rolled = true;
       hit.disableInteractive();
@@ -3774,7 +4469,27 @@ export class StarshipUnicornScene extends Phaser.Scene {
         plungerSub,
         podRoot
       );
-    });
+    };
+
+    if (player.roster.isAI) {
+      hit.disableInteractive();
+      plungerLabel.setText('🤖 AUTO-IGNITING...');
+      this.fitTextToWidth(plungerLabel, 144);
+      this.time.delayedCall(1200, () => {
+        if (this.scene.isActive() && this.scenePhase === 'DICE_ROLL') {
+          triggerPlungerIgnition();
+        }
+      });
+    } else {
+      hit.on('pointerover', () => {
+        if (!rolled) {
+          StarshipAudio.playHoverMicroClick();
+        }
+      });
+      hit.on('pointerdown', () => {
+        triggerPlungerIgnition();
+      });
+    }
 
     podRoot.add(plungerRoot);
 
@@ -4059,6 +4774,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     if (stepsRemaining <= 0 || player.padIndex >= this.boardPads.length - 1) {
       this.refreshAllTokenOffsets();
       this.renderTopMissionHeader();
+      this.saveActiveMissionToStorage();
       // Wait 800ms after landing on the final pad before triggering cutscenes or advancing turn!
       this.time.delayedCall(800, () => {
         if (this.scene.isActive()) onComplete();
@@ -4067,6 +4783,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     }
 
     player.padIndex = Math.min(this.boardPads.length - 1, player.padIndex + 1);
+    this.saveActiveMissionToStorage();
     const nextPad = this.boardPads[player.padIndex];
     const token = player.tokenContainer;
     const figurine = player.figurineBody;
@@ -4193,7 +4910,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   // ===========================================================================
-  // UPGRADE 7 & 8: UNIFIED ORBITAL CHALLENGE SQUARES & AGE-TUNED BRIDGE MINI-GAMES
+  // UPGRADE 7 & 8: UNIFIED ORBITAL CHALLENGE SQUARES & 6 AGE-TUNED BRIDGE MINI-GAMES
   // ===========================================================================
 
   private evaluateLandedSpecialTile(player: ActiveAstronautPlayer): void {
@@ -4222,8 +4939,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
     StarshipAudio.playCutsceneBannerSwoosh();
     StarshipAudio.playPaVoice('vo_airdrop_incoming');
 
-    // 1. Randomly select which of the 3 Orbital Challenges will be played FIRST, before showing the briefing!
-    const challengeRoll = Phaser.Math.Between(1, 3) as 1 | 2 | 3;
+    // 1. Draw the next Orbital Challenge from the shuffled 6-game deck BEFORE showing the rules briefing!
+    const challengeType = this.drawNextOrbitalChallenge();
 
     const shade = this.add
       .rectangle(640, 360, 1280, 720, 0x020617, 0.64)
@@ -4252,10 +4969,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
       ease: 'Back.easeOut'
     });
 
-    const isKidTier =
-      player.roster.tier !== 'ADULT' ||
-      player.roster.id === 'wyatt' ||
-      player.roster.id === 'emma';
+    const isEmmaTier = player.roster.id === 'emma' || player.roster.tier === 'EMMA_3YO';
+    const isWyattTier = player.roster.id === 'wyatt' || player.roster.tier === 'WYATT_4YO';
+    const isKidTier = isEmmaTier || isWyattTier || player.roster.tier !== 'ADULT';
 
     let briefingHeaderText = '';
     let briefingRulesText = '';
@@ -4263,7 +4979,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
     let startButtonLabel = '';
     let accentHex = 0x00f5d4;
 
-    if (challengeRoll === 1) {
+    if (challengeType === 'chrono') {
       briefingHeaderText = '⏱️ ORBITAL CHALLENGE: 2.00-SECOND CHRONO-BURN';
       briefingRulesText =
         'HOW TO PLAY: A digital warp timer will count upward from 0.00s. Tap [⚡ CUT THRUSTERS!] as close to 2.00 SECONDS as you can!';
@@ -4272,16 +4988,18 @@ export class StarshipUnicornScene extends Phaser.Scene {
         : '🎯 TARGET WINDOW: 1.88s – 2.12s (DIGITS CLOAK AFTER 1.30s!) • WIN +2 PADS';
       startButtonLabel = '[ 🖖 START 2.00s CHRONO-BURN ]';
       accentHex = 0xf59e0b;
-    } else if (challengeRoll === 2) {
+    } else if (challengeType === 'swarm') {
       briefingHeaderText = '🛸 ORBITAL CHALLENGE: QUANTUM DRONE COUNT';
       briefingRulesText =
         'HOW TO PLAY: Count ONLY the glowing CYAN plasma drones bouncing across the sensor grid before time runs out! (Ignore any red meteors!)';
-      briefingTargetBadge = isKidTier
-        ? '🎯 JUNIOR CADET SENSOR SWEEP: COUNT 3–6 BLUE DRONES (NO RED METEORS!) • WIN +2 PADS'
-        : '🎯 COMMANDER SENSOR SWEEP: 3.8s SCAN WITH RED DECOY METEORS • WIN +2 PADS';
+      briefingTargetBadge = isEmmaTier
+        ? '🎯 SPACE PRINCESS SCAN: COUNT 4–7 BLUE DRONES (4.2s) • WIN +2 PADS'
+        : isWyattTier
+        ? '🎯 ASTRO-RANGER SCAN: COUNT 6–11 BLUE DRONES + 2 RED METEORS (3.8s) • WIN +2 PADS'
+        : '🎯 COMMANDER SCAN: COUNT 11–18 HIGH-SPEED DRONES + 4 RED DECOYS (3.5s) • WIN +2 PADS';
       startButtonLabel = '[ 🖖 RELEASE THE DRONE SWARM ]';
       accentHex = 0x00f5d4;
-    } else {
+    } else if (challengeType === 'phaselock') {
       briefingHeaderText = '⚡ ORBITAL CHALLENGE: WARP CORE PHASE LOCK';
       briefingRulesText =
         'HOW TO PLAY: Watch the oscillating plasma needle sweep across the gauge. Tap [🔒 LOCK CONTAINMENT] right when it crosses the GOLDEN center zone!';
@@ -4290,6 +5008,39 @@ export class StarshipUnicornScene extends Phaser.Scene {
         : '🎯 COMMANDER GAUGE: HIGH-SPEED 1.4s SWEEP & NARROW 8% GOLD ZONE • WIN +2 PADS';
       startButtonLabel = '[ 🖖 START WARP PHASE LOCK ]';
       accentHex = 0x10b981;
+    } else if (challengeType === 'asteroids') {
+      briefingHeaderText = '☄️ ORBITAL CHALLENGE: ASTEROID SHIELD DEFLECTOR';
+      briefingRulesText =
+        'HOW TO PLAY: Tap all incoming RED METEORS to blast them with phasers before time runs out! DO NOT tap friendly GREEN ESCAPE PODS!';
+      briefingTargetBadge = isEmmaTier
+        ? '🎯 SPACE PRINCESS PHASERS: BLAST 5 RED METEORS IN 5.0s • WIN +2 PADS'
+        : isWyattTier
+        ? '🎯 ASTRO-RANGER PHASERS: BLAST 7 RED METEORS (AVOID 2 GREEN PODS!) • WIN +2 PADS'
+        : '🎯 COMMANDER PHASERS: BLAST 10 RAPID RED METEORS (AVOID 4 GREEN PODS!) • WIN +2 PADS';
+      startButtonLabel = '[ 🖖 ENGAGE PHASER ARRAY ]';
+      accentHex = 0xef4444;
+    } else if (challengeType === 'memory') {
+      briefingHeaderText = '🎹 ORBITAL CHALLENGE: SUBSPACE SIGNAL MEMORY';
+      briefingRulesText =
+        'HOW TO PLAY: Watch the 4 warp crystals light up and chime in sequence. Repeat the exact pattern by tapping the crystals in order!';
+      briefingTargetBadge = isEmmaTier
+        ? '🎯 SPACE PRINCESS MEMORY: REPEAT 3-CRYSTAL HARMONIC SEQUENCE • WIN +2 PADS'
+        : isWyattTier
+        ? '🎯 ASTRO-RANGER MEMORY: REPEAT 4-CRYSTAL HARMONIC SEQUENCE • WIN +2 PADS'
+        : '🎯 COMMANDER MEMORY: REPEAT 5-STEP HIGH-SPEED SUBSPACE SEQUENCE • WIN +2 PADS';
+      startButtonLabel = '[ 🖖 TRANSMIT SUBSPACE SEQUENCE ]';
+      accentHex = 0xa855f7;
+    } else {
+      briefingHeaderText = '🔍 ORBITAL CHALLENGE: HOLO-DECK ANOMALY SCAN';
+      briefingRulesText =
+        'HOW TO PLAY: Every cell in the grid shows the exact same sprite—except 1 ANOMALY SPRITE with a visual glitch (flipped, tilted, or phase-tinted)! Tap it fast!';
+      briefingTargetBadge = isEmmaTier
+        ? '🎯 SPACE PRINCESS SCAN: 3x2 SPRITE GRID (6 SPRITES • 5.0s) • WIN +2 PADS'
+        : isWyattTier
+        ? '🎯 ASTRO-RANGER SCAN: 3x3 SPRITE GRID (9 SPRITES • 3.8s) • WIN +2 PADS'
+        : '🎯 COMMANDER SCAN: 5x4 SPRITE GRID (20 SPRITES • 2.3s) • WIN +2 PADS';
+      startButtonLabel = '[ 🖖 INITIATE SENSOR SCAN ]';
+      accentHex = 0x38bdf8;
     }
 
     const gateHeader = this.add
@@ -4303,12 +5054,20 @@ export class StarshipUnicornScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.fitTextToWidth(gateHeader, 760);
 
+    const isAIPlayer = Boolean(player.roster.isAI);
     const gateSub = this.add
-      .text(0, -144, `PILOT AT CONTROLS: ${player.roster.callsign} • NOTHING STARTS UNTIL YOU TAP BELOW`, {
-        fontSize: '14px',
-        fontStyle: 'bold',
-        color: '#38bdf8'
-      })
+      .text(
+        0,
+        -144,
+        isAIPlayer
+          ? `⚠️ ROGUE A.I. ${player.roster.name} INTERCEPTING ORBITAL CHALLENGE...`
+          : `PILOT AT CONTROLS: ${player.roster.callsign} • NOTHING STARTS UNTIL YOU TAP BELOW`,
+        {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: isAIPlayer ? '#ff2255' : '#38bdf8'
+        }
+      )
       .setOrigin(0.5);
     this.fitTextToWidth(gateSub, 760);
 
@@ -4326,7 +5085,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       stageContainer.add(portImg);
     }
     const portRim = this.add.graphics();
-    portRim.lineStyle(3.5, player.bay.color, 1);
+    portRim.lineStyle(3.5, isAIPlayer ? 0xff2255 : player.bay.color, 1);
     portRim.strokeRoundedRect(portX - 80, portY - 88, 160, 176, 16);
     stageContainer.add(portRim);
 
@@ -4344,7 +5103,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       rulesBoxH,
       16
     );
-    rulesG.lineStyle(3, accentHex, 0.95);
+    rulesG.lineStyle(3, isAIPlayer ? 0xff2255 : accentHex, 0.95);
     rulesG.strokeRoundedRect(
       rulesBoxX - rulesBoxW / 2,
       rulesBoxY - rulesBoxH / 2,
@@ -4378,20 +5137,42 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
     stageContainer.add([rulesBodyTxt, targetBadgeTxt]);
 
+    let challengeStarted = false;
+    const startChallengeNow = () => {
+      if (challengeStarted || !this.scene.isActive() || !stageContainer.scene) return;
+      challengeStarted = true;
+      stageContainer.removeAll(true);
+      this.launchOrbitalTacticalChallenge(player, stageContainer, challengeType);
+    };
+
     // Large Glowing 3D-Styled Star Trek LCARS Start Button (`[ 🖖 START ... ]`)
     const engageBtn = this.createCockpitRockerSwitch(
       0,
       158,
-      540,
+      580,
       68,
-      startButtonLabel,
-      accentHex,
+      isAIPlayer ? '🤖 DREAD-BOT OVERRIDING ORBITAL CHALLENGE...' : startButtonLabel,
+      isAIPlayer ? 0xff2255 : accentHex,
       () => {
-        stageContainer.removeAll(true);
-        this.launchOrbitalTacticalChallenge(player, stageContainer, challengeRoll);
+        if (!isAIPlayer) {
+          startChallengeNow();
+        }
       }
     );
     stageContainer.add(engageBtn);
+
+    if (isAIPlayer) {
+      this.tweens.add({
+        targets: engageBtn,
+        alpha: { from: 1.0, to: 0.52 },
+        duration: 300,
+        yoyo: true,
+        repeat: -1
+      });
+      this.time.delayedCall(1400, () => {
+        startChallengeNow();
+      });
+    }
   }
 
   private completeMiniChallengeAndAdvance(
@@ -4417,20 +5198,122 @@ export class StarshipUnicornScene extends Phaser.Scene {
 
   /**
    * Launches the pre-selected Star Trek Bridge Orbital Challenge inside the Command Deck Frame,
-   * dynamically tuned for Kids Tier (`wyatt` / `emma`) vs Commander Tier (Adults).
+   * dynamically tuned for Emma (3yo), Wyatt (4yo), Commanders (Adults), and Autonomous Dread-Bot!
    * Winning any Orbital Challenge awards a `+2 OVERCLOCK PAD BOOST`!
    */
   private launchOrbitalTacticalChallenge(
     player: ActiveAstronautPlayer,
     stageContainer: Phaser.GameObjects.Container,
-    challengeRoll: 1 | 2 | 3
+    challengeType: OrbitalChallengeType
   ): void {
-    const isKidTier =
-      player.roster.tier !== 'ADULT' ||
-      player.roster.id === 'wyatt' ||
-      player.roster.id === 'emma';
+    // Autonomous Dread-Bot X-99 Tactical Override (2000ms simulated laser/scanner visuals -> 50% +2 Pads / 50% 0 Pads)
+    if (player.roster.isAI) {
+      const title = this.add
+        .text(0, -180, '🤖 DREAD-BOT EXECUTING TACTICAL OVERRIDE...', {
+          fontSize: '22px',
+          fontStyle: 'bold',
+          color: '#ff2255',
+          stroke: '#020617',
+          strokeThickness: 5
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(title, 760);
 
-    if (challengeRoll === 1) {
+      const sub = this.add
+        .text(0, -142, `BYPASSING STARFLEET SECURITY PROTOCOLS (${challengeType.toUpperCase()})...`, {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: '#fde047'
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(sub, 760);
+      stageContainer.add([title, sub]);
+
+      const gridW = 680;
+      const gridH = 220;
+      const boxG = this.add.graphics();
+      boxG.fillStyle(0x020617, 0.94);
+      boxG.fillRoundedRect(-gridW / 2, -108, gridW, gridH, 16);
+      boxG.lineStyle(3, 0xff2255, 0.95);
+      boxG.strokeRoundedRect(-gridW / 2, -108, gridW, gridH, 16);
+      stageContainer.add(boxG);
+
+      if (this.textures.exists('starship-card-dreadbot')) {
+        const botImg = this.add
+          .image(0, -2, 'starship-card-dreadbot')
+          .setDisplaySize(148, 164);
+        stageContainer.add(botImg);
+      }
+
+      // Sweeping crimson laser beam & rotating target rings inside the telemetry box
+      const laserBeam = this.add
+        .rectangle(0, -96, gridW - 24, 8, 0xff2255, 0.8)
+        .setBlendMode(Phaser.BlendModes.ADD);
+      stageContainer.add(laserBeam);
+      this.tweens.add({
+        targets: laserBeam,
+        y: 96,
+        duration: 380,
+        yoyo: true,
+        repeat: 4,
+        ease: 'Sine.easeInOut'
+      });
+
+      const statusTxt = this.add
+        .text(0, 152, '⚡ COMPUTING QUANTUM OVERRIDE VECTORS...', {
+          fontSize: '17px',
+          fontStyle: 'bold',
+          color: '#ff6b8b',
+          stroke: '#020617',
+          strokeThickness: 4
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(statusTxt, 740);
+      stageContainer.add(statusTxt);
+
+      const soundPulse = this.time.addEvent({
+        delay: 320,
+        repeat: 5,
+        callback: () => {
+          if (this.scene.isActive()) {
+            StarshipAudio.playTrajectoryLaserLock(1);
+          }
+        }
+      });
+
+      this.time.delayedCall(2000, () => {
+        if (!this.scene.isActive()) return;
+        soundPulse.remove(false);
+        // 50% chance Dread-Bot wins the +2 OVERCLOCK PAD BOOST, 50% chance Dread-Bot malfunctions (0 bonus steps)
+        const won = Math.random() < 0.5;
+        if (won) {
+          StarshipAudio.playAnswerCorrectFanfare();
+          title.setText('🟢 DREAD-BOT OVERRIDE SUCCESSFUL! +2 OVERCLOCK PAD BOOST!');
+          title.setColor('#6ee7b7');
+          this.fitTextToWidth(title, 760);
+          statusTxt.setText('🤖 ROGUE A.I. ADVANCING +2 BONUS PADS!');
+          statusTxt.setColor('#6ee7b7');
+          this.fitTextToWidth(statusTxt, 740);
+          Juice.burstStars(this, 640, 340, 28, [0xff2255, 0xfde047, 0x00f5d4]);
+          this.completeMiniChallengeAndAdvance(player, 2);
+        } else {
+          StarshipAudio.playAnswerWrongBuzzer();
+          title.setText('🔴 DREAD-BOT CIRCUIT MALFUNCTION — OVERRIDE BLOCKED!');
+          title.setColor('#fca5a5');
+          this.fitTextToWidth(title, 760);
+          statusTxt.setText('⚡ STARFLEET FIREWALL HELD — 0 BONUS PADS!');
+          statusTxt.setColor('#fde047');
+          this.fitTextToWidth(statusTxt, 740);
+          this.completeMiniChallengeAndAdvance(player, 0);
+        }
+      });
+      return;
+    }
+    const isEmmaTier = player.roster.id === 'emma' || player.roster.tier === 'EMMA_3YO';
+    const isWyattTier = player.roster.id === 'wyatt' || player.roster.tier === 'WYATT_4YO';
+    const isKidTier = isEmmaTier || isWyattTier || player.roster.tier !== 'ADULT';
+
+    if (challengeType === 'chrono') {
       // =======================================================================
       // CHALLENGE 1: `CHRONO-THRUSTER 2.00s PRECISION BURN`
       // - Commander Tier: Target 2.00s ± 0.12s (1.88s–2.12s), digits cloak after 1.30s.
@@ -4626,16 +5509,20 @@ export class StarshipUnicornScene extends Phaser.Scene {
           }
         }
       });
-    } else if (challengeRoll === 2) {
+    } else if (challengeType === 'swarm') {
       // =======================================================================
-      // CHALLENGE 2: `QUANTUM DRONE SWARM COUNT`
-      // - Commander Tier: 9–15 fast-bouncing cyan plasma orbs + 3 red decoy meteors for 3.8s.
-      // - Kids Tier: 3–6 large, gentle-drifting cyan plasma drones with ZERO red decoy meteors
-      //   for 4.5s so a 3- or 4-year-old can point at the screen and count them out loud!
+      // CHALLENGE 2: `QUANTUM DRONE SWARM COUNT` (Harder for Kids + Randomized 4 Answer Buttons!)
+      // - Emma (3yo): 4 to 7 cyan drones (medium speed, 0 red decoys, 4.2s duration).
+      // - Wyatt (4yo): 6 to 11 faster-moving cyan drones + 2 red decoy meteors (3.8s duration).
+      // - Commanders (Adults): 11 to 18 high-speed cyan drones + 4 red decoy meteors (3.5s duration).
       // =======================================================================
-      const targetCount = isKidTier ? Phaser.Math.Between(3, 6) : Phaser.Math.Between(9, 15);
-      const decoyCount = isKidTier ? 0 : 3;
-      const sweepDurationMs = isKidTier ? 4500 : 3800;
+      const targetCount = isEmmaTier
+        ? Phaser.Math.Between(4, 7)
+        : isWyattTier
+        ? Phaser.Math.Between(6, 11)
+        : Phaser.Math.Between(11, 18);
+      const decoyCount = isEmmaTier ? 0 : isWyattTier ? 2 : 4;
+      const sweepDurationMs = isEmmaTier ? 4200 : isWyattTier ? 3800 : 3500;
 
       const title = this.add
         .text(0, -184, '🛸 QUANTUM DRONE SWARM SENSOR SWEEP!', {
@@ -4648,8 +5535,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
         .setOrigin(0.5);
       this.fitTextToWidth(title, 760);
 
-      const subPrompt = isKidTier
-        ? `${player.roster.name}: Point and count the glowing BLUE DRONES out loud! (1, 2, 3...)`
+      const subPrompt = isEmmaTier
+        ? `${player.roster.name}: Point and count the glowing BLUE DRONES out loud!`
         : `${player.roster.name}: Count ONLY the CYAN PLASMA DRONES (ignore red decoy meteors)!`;
 
       const sub = this.add
@@ -4687,8 +5574,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
         const sy = Phaser.Math.Between(-gridH / 2 + 36, gridH / 2 - 36);
         const node = this.add.container(sx, sy);
 
-        const droneRadius = isKidTier ? 18 : isDecoy ? 9 : 10;
-        const glowScale = isKidTier ? 1.05 : isDecoy ? 0.58 : 0.68;
+        const droneRadius = isEmmaTier ? 16 : isWyattTier ? (isDecoy ? 11 : 13) : isDecoy ? 9 : 10;
+        const glowScale = isEmmaTier ? 0.95 : isWyattTier ? 0.78 : isDecoy ? 0.58 : 0.68;
 
         const glow = this.add
           .image(0, 0, 'starship-flare-dot')
@@ -4703,9 +5590,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
         node.add([glow, core]);
         swarmContainer.add(node);
 
-        const speed = isKidTier
-          ? Phaser.Math.FloatBetween(0.65, 1.15)
-          : Phaser.Math.FloatBetween(2.3, 3.8);
+        const speed = isEmmaTier
+          ? Phaser.Math.FloatBetween(1.15, 1.85)
+          : isWyattTier
+          ? Phaser.Math.FloatBetween(1.75, 2.75)
+          : Phaser.Math.FloatBetween(2.6, 4.2);
         const ang = Phaser.Math.FloatBetween(0, Math.PI * 2);
         entities.push({
           node,
@@ -4730,9 +5619,11 @@ export class StarshipUnicornScene extends Phaser.Scene {
         }
       });
 
-      const statusMsg = isKidTier
-        ? '🔭 COUNT THE BLUE DRONES OUT LOUD! (1, 2, 3...)'
-        : '🔭 SENSOR SWEEP IN PROGRESS (3.8s)... COUNT FAST!';
+      const statusMsg = isEmmaTier
+        ? '🔭 COUNT THE BLUE DRONES OUT LOUD! (4.2s)'
+        : isWyattTier
+        ? '🔭 COUNT ONLY THE BLUE DRONES — IGNORE RED METEORS! (3.8s)'
+        : '🔭 HIGH-SPEED SENSOR SWEEP IN PROGRESS (3.5s)... COUNT FAST!';
       const statusTxt = this.add
         .text(0, 152, statusMsg, {
           fontSize: '16px',
@@ -4768,8 +5659,17 @@ export class StarshipUnicornScene extends Phaser.Scene {
         sub.setText('SELECT YOUR COUNT BELOW FOR A +2 OVERCLOCK PAD BOOST!');
         this.fitTextToWidth(sub, 760);
 
-        const baseVal = Math.max(1, targetCount - 1);
-        const choices = [baseVal, baseVal + 1, baseVal + 2, baseVal + 3];
+        // Generate 3 unique nearby integer distractors (`> 0`) around `targetCount`,
+        // put `[targetCount, d1, d2, d3]` into an array, and Fisher-Yates shuffle the 4 options!
+        const candidatePool: number[] = [];
+        for (const offset of [-3, -2, -1, 1, 2, 3, 4]) {
+          const val = targetCount + offset;
+          if (val > 0 && val !== targetCount) {
+            candidatePool.push(val);
+          }
+        }
+        const shuffledDistractors = this.fisherYatesShuffle(candidatePool).slice(0, 3);
+        const choices = this.fisherYatesShuffle([targetCount, ...shuffledDistractors]);
         let answered = false;
 
         choices.forEach((val, idx) => {
@@ -4811,7 +5711,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
           stageContainer.add(btn);
         });
       });
-    } else {
+    } else if (challengeType === 'phaselock') {
       // =======================================================================
       // CHALLENGE 3: `WARP CORE PHASE LOCK`
       // - Commander Tier: Fast 1.4s needle sweep with a narrow 8% golden target zone.
@@ -4857,8 +5757,6 @@ export class StarshipUnicornScene extends Phaser.Scene {
       }
 
       // Horizontal Star Trek Warp Containment Bar (`w: 600, y: 64`)
-      // Commander Tier: 8% width (`48px`, `targetHalfW = 24`)
-      // Kids Tier: 38% width (`228px`, `targetHalfW = 114`)
       const barW = 600;
       const targetHalfW = isKidTier ? 114 : 24;
       const halfSweepDurationMs = isKidTier ? 1500 : 700;
@@ -4927,6 +5825,661 @@ export class StarshipUnicornScene extends Phaser.Scene {
         }
       );
       stageContainer.add(lockBtn);
+    } else if (challengeType === 'asteroids') {
+      // =======================================================================
+      // CHALLENGE 4: `☄️ ASTEROID SHIELD DEFLECTOR` (Tap-to-Blast Phasers)
+      // - Emma (3yo): 5 large slow crimson meteors, 0 green escape pods (5.0s).
+      // - Wyatt (4yo): 7 faster crimson meteors + 2 friendly green escape pods (5.0s).
+      // - Commanders: 10 rapid crimson meteors + 4 friendly green escape pods (5.0s).
+      // =======================================================================
+      const targetMeteors = isEmmaTier ? 5 : isWyattTier ? 7 : 10;
+      const greenPods = isEmmaTier ? 0 : isWyattTier ? 2 : 4;
+      const durationMs = 5000;
+
+      const title = this.add
+        .text(0, -184, '☄️ ASTEROID SHIELD DEFLECTOR — PHASER ARRAY ONLINE!', {
+          fontSize: '21px',
+          fontStyle: 'bold',
+          color: '#fde047',
+          stroke: '#020617',
+          strokeThickness: 4
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(title, 760);
+
+      const sub = this.add
+        .text(
+          0,
+          -146,
+          isEmmaTier
+            ? `${player.roster.name}: Tap every glowing RED METEOR to blast it with phasers!`
+            : `${player.roster.name}: Tap all RED METEORS! DO NOT tap friendly GREEN ESCAPE PODS!`,
+          {
+            fontSize: '13.5px',
+            fontStyle: 'bold',
+            color: '#7dd3fc'
+          }
+        )
+        .setOrigin(0.5);
+      this.fitTextToWidth(sub, 760);
+      stageContainer.add([title, sub]);
+
+      const gridW = 720;
+      const gridH = 240;
+      const gridBox = this.add.graphics();
+      gridBox.fillStyle(0x020617, 0.94);
+      gridBox.fillRoundedRect(-gridW / 2, -116, gridW, gridH, 16);
+      gridBox.lineStyle(2.5, 0xef4444, 0.92);
+      gridBox.strokeRoundedRect(-gridW / 2, -116, gridW, gridH, 16);
+      stageContainer.add(gridBox);
+
+      const fieldContainer = this.add.container(0, 4);
+      const beamContainer = this.add.container(0, 4);
+      stageContainer.add([fieldContainer, beamContainer]);
+
+      // Bottom-center phaser turret emitter graphic
+      const turretG = this.add.graphics();
+      turretG.fillStyle(0x0f172a, 1);
+      turretG.fillCircle(0, 114, 20);
+      turretG.lineStyle(3, 0x00f5d4, 1);
+      turretG.strokeCircle(0, 114, 20);
+      fieldContainer.add(turretG);
+
+      let blastedCount = 0;
+      let finished = false;
+      const startMs = performance.now();
+
+      const statusTxt = this.add
+        .text(0, 154, `💥 BLASTED: 0 / ${targetMeteors}   •   ⏱️ 5.0s REMAINING`, {
+          fontSize: '17px',
+          fontStyle: 'bold',
+          color: '#fde047',
+          stroke: '#020617',
+          strokeThickness: 4
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(statusTxt, 740);
+      stageContainer.add(statusTxt);
+
+      interface AsteroidObj {
+        node: Phaser.GameObjects.Container;
+        vx: number;
+        vy: number;
+        alive: boolean;
+      }
+      const objs: AsteroidObj[] = [];
+
+      const endAsteroidChallenge = (won: boolean, reasonText: string) => {
+        if (finished) return;
+        finished = true;
+        loopTimer.remove(false);
+
+        if (won) {
+          StarshipAudio.playAnswerCorrectFanfare();
+          sub.setText(`🟢 ${reasonText} +2 OVERCLOCK PAD BOOST!`);
+          sub.setColor('#6ee7b7');
+          this.fitTextToWidth(sub, 760);
+          statusTxt.setText(`🏆 ALL ${targetMeteors} RED METEORS VAPORIZED!`);
+          statusTxt.setColor('#6ee7b7');
+          this.fitTextToWidth(statusTxt, 740);
+          Juice.burstStars(this, 640, 340, 34, [0x10b981, 0xfde047, 0x00f5d4]);
+          this.completeMiniChallengeAndAdvance(player, 2);
+        } else {
+          StarshipAudio.playAnswerWrongBuzzer();
+          sub.setText(`🔴 ${reasonText} +1 AUXILIARY PAD BOOST!`);
+          sub.setColor('#fca5a5');
+          this.fitTextToWidth(sub, 760);
+          statusTxt.setText(reasonText);
+          statusTxt.setColor('#fca5a5');
+          this.fitTextToWidth(statusTxt, 740);
+          this.completeMiniChallengeAndAdvance(player, 1);
+        }
+      };
+
+      const totalObjects = targetMeteors + greenPods;
+      for (let i = 0; i < totalObjects; i++) {
+        const isGreenPod = i >= targetMeteors;
+        const sx = Phaser.Math.Between(-gridW / 2 + 58, gridW / 2 - 58);
+        const sy = Phaser.Math.Between(-gridH / 2 + 42, gridH / 2 - 48);
+        const node = this.add.container(sx, sy);
+
+        const radius = isEmmaTier ? 30 : isWyattTier ? 25 : 22;
+        const colorHex = isGreenPod ? 0x10b981 : 0xef4444;
+
+        const glow = this.add
+          .image(0, 0, 'starship-flare-dot')
+          .setTint(colorHex)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setScale(isEmmaTier ? 1.2 : 0.95);
+
+        const ringG = this.add.graphics();
+        ringG.fillStyle(isGreenPod ? 0x064e3b : 0x450a0a, 0.95);
+        ringG.fillCircle(0, 0, radius);
+        ringG.lineStyle(3, colorHex, 1);
+        ringG.strokeCircle(0, 0, radius);
+
+        const iconTxt = this.add
+          .text(0, 0, isGreenPod ? '🛸' : '☄️', {
+            fontSize: isEmmaTier ? '28px' : '22px'
+          })
+          .setOrigin(0.5);
+
+        const hitZone = this.add
+          .circle(0, 0, radius + 12, 0x000000, 0.001)
+          .setInteractive({ useHandCursor: true });
+
+        node.add([glow, ringG, iconTxt, hitZone]);
+        fieldContainer.add(node);
+
+        const speed = isEmmaTier
+          ? Phaser.Math.FloatBetween(0.7, 1.25)
+          : isWyattTier
+          ? Phaser.Math.FloatBetween(1.3, 2.1)
+          : Phaser.Math.FloatBetween(1.9, 3.1);
+        const ang = Phaser.Math.FloatBetween(0, Math.PI * 2);
+        const objRecord: AsteroidObj = {
+          node,
+          vx: Math.cos(ang) * speed,
+          vy: Math.sin(ang) * speed,
+          alive: true
+        };
+        objs.push(objRecord);
+
+        hitZone.on('pointerdown', () => {
+          if (finished || !objRecord.alive) return;
+          objRecord.alive = false;
+
+          // Fire cyan phaser beam from bottom-center turret `(0, 114)` to target `(node.x, node.y)`
+          const phaserG = this.add.graphics();
+          phaserG.setBlendMode(Phaser.BlendModes.ADD);
+          phaserG.lineStyle(8, isGreenPod ? 0xef4444 : 0x00f5d4, 0.45);
+          phaserG.lineBetween(0, 114, node.x, node.y);
+          phaserG.lineStyle(3, 0xffffff, 1);
+          phaserG.lineBetween(0, 114, node.x, node.y);
+          beamContainer.add(phaserG);
+          this.tweens.add({
+            targets: phaserG,
+            alpha: 0,
+            duration: 180,
+            onComplete: () => phaserG.destroy()
+          });
+
+          if (isGreenPod) {
+            endAsteroidChallenge(false, 'FRIENDLY GREEN ESCAPE POD HIT!');
+            return;
+          }
+
+          StarshipAudio.playTrajectoryLaserLock(2);
+          Juice.burstStars(this, 640 + node.x, 364 + node.y, 16, [0x00f5d4, 0xfde047, 0xef4444]);
+          node.destroy();
+
+          blastedCount += 1;
+          const remSec = Math.max(0, (durationMs - (performance.now() - startMs)) / 1000);
+          statusTxt.setText(
+            `💥 BLASTED: ${blastedCount} / ${targetMeteors}   •   ⏱️ ${remSec.toFixed(1)}s REMAINING`
+          );
+          this.fitTextToWidth(statusTxt, 740);
+
+          if (blastedCount >= targetMeteors) {
+            endAsteroidChallenge(true, `ALL ${targetMeteors} RED METEORS VAPORIZED!`);
+          }
+        });
+      }
+
+      const loopTimer = this.time.addEvent({
+        delay: 20,
+        loop: true,
+        callback: () => {
+          if (finished || !this.scene.isActive()) return;
+          const elapsed = performance.now() - startMs;
+          const remSec = Math.max(0, (durationMs - elapsed) / 1000);
+          statusTxt.setText(
+            `💥 BLASTED: ${blastedCount} / ${targetMeteors}   •   ⏱️ ${remSec.toFixed(1)}s REMAINING`
+          );
+          this.fitTextToWidth(statusTxt, 740);
+
+          const maxX = gridW / 2 - 36;
+          const maxY = gridH / 2 - 34;
+          for (const o of objs) {
+            if (!o.alive) continue;
+            o.node.x += o.vx;
+            o.node.y += o.vy;
+            if (o.node.x < -maxX || o.node.x > maxX) o.vx *= -1;
+            if (o.node.y < -maxY || o.node.y > maxY) o.vy *= -1;
+          }
+
+          if (elapsed >= durationMs) {
+            endAsteroidChallenge(
+              false,
+              `SHIELD WINDOW EXPIRED (${blastedCount}/${targetMeteors} BLASTED)!`
+            );
+          }
+        }
+      });
+    } else if (challengeType === 'memory') {
+      // =======================================================================
+      // CHALLENGE 5: `🎹 SUBSPACE SIGNAL MEMORY` (Star Trek Simon Says)
+      // - Emma (3yo): 3-step sequence
+      // - Wyatt (4yo): 4-step sequence
+      // - Commanders: 5-step high-speed sequence
+      // =======================================================================
+      const sequenceLength = isEmmaTier ? 3 : isWyattTier ? 4 : 5;
+      const stepDelayMs = isEmmaTier ? 680 : isWyattTier ? 580 : 430;
+
+      const title = this.add
+        .text(0, -184, '🎹 SUBSPACE SIGNAL MEMORY — HARMONIC WARP CRYSTALS!', {
+          fontSize: '21px',
+          fontStyle: 'bold',
+          color: '#fde047',
+          stroke: '#020617',
+          strokeThickness: 4
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(title, 760);
+
+      const sub = this.add
+        .text(0, -146, 'WATCH & LISTEN TO THE SUBSPACE CRYSTAL SEQUENCE...', {
+          fontSize: '14px',
+          fontStyle: 'bold',
+          color: '#7dd3fc'
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(sub, 760);
+      stageContainer.add([title, sub]);
+
+      const crystalSpecs = [
+        { label: '🔷 CYAN ALPHA', color: 0x00f5d4, x: -165, y: -38 },
+        { label: '🔶 AMBER BETA', color: 0xf59e0b, x: 165, y: -38 },
+        { label: '🟣 VIOLET GAMMA', color: 0xa855f7, x: -165, y: 66 },
+        { label: '🟢 EMERALD DELTA', color: 0x10b981, x: 165, y: 66 }
+      ];
+
+      const sequence: number[] = [];
+      for (let i = 0; i < sequenceLength; i++) {
+        sequence.push(Phaser.Math.Between(0, 3));
+      }
+
+      let acceptingInput = false;
+      let playerStepIdx = 0;
+      let finished = false;
+
+      const statusTxt = this.add
+        .text(0, 154, `📡 RECEIVING SUBSPACE TRANSMISSION (0 / ${sequenceLength})...`, {
+          fontSize: '17px',
+          fontStyle: 'bold',
+          color: '#fde047',
+          stroke: '#020617',
+          strokeThickness: 4
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(statusTxt, 740);
+      stageContainer.add(statusTxt);
+
+      const crystalHooks: Array<{ flash: () => void }> = [];
+
+      crystalSpecs.forEach((spec, idx) => {
+        const c = this.add.container(spec.x, spec.y);
+        const w = 296;
+        const h = 84;
+
+        const baseG = this.add.graphics();
+        baseG.fillStyle(0x0f172a, 0.96);
+        baseG.fillRoundedRect(-w / 2, -h / 2, w, h, 14);
+        baseG.lineStyle(3, spec.color, 0.85);
+        baseG.strokeRoundedRect(-w / 2, -h / 2, w, h, 14);
+
+        const flashG = this.add.graphics().setAlpha(0);
+        flashG.fillStyle(spec.color, 0.85);
+        flashG.fillRoundedRect(-w / 2, -h / 2, w, h, 14);
+        flashG.lineStyle(4, 0xffffff, 1);
+        flashG.strokeRoundedRect(-w / 2, -h / 2, w, h, 14);
+
+        const txt = this.add
+          .text(0, 0, spec.label, {
+            fontSize: '18px',
+            fontStyle: 'bold',
+            color: '#ffffff',
+            stroke: '#020617',
+            strokeThickness: 4
+          })
+          .setOrigin(0.5);
+        this.fitTextToWidth(txt, w - 24);
+
+        const hit = this.add
+          .rectangle(0, 0, w, h, 0x000000, 0.001)
+          .setInteractive({ useHandCursor: true });
+
+        c.add([baseG, flashG, txt, hit]);
+        stageContainer.add(c);
+
+        const flashCrystal = () => {
+          StarshipAudio.playMemoryCrystalChime(idx);
+          flashG.setAlpha(1);
+          c.setScale(1.06);
+          this.tweens.add({
+            targets: flashG,
+            alpha: 0,
+            duration: Math.min(360, stepDelayMs - 70),
+            ease: 'Quad.easeOut'
+          });
+          this.tweens.add({
+            targets: c,
+            scaleX: 1,
+            scaleY: 1,
+            duration: 200,
+            ease: 'Back.easeOut'
+          });
+        };
+
+        crystalHooks.push({ flash: flashCrystal });
+
+        hit.on('pointerdown', () => {
+          if (!acceptingInput || finished) return;
+          flashCrystal();
+
+          const expectedIdx = sequence[playerStepIdx];
+          if (idx === expectedIdx) {
+            playerStepIdx += 1;
+            statusTxt.setText(
+              `🟢 YOUR TURN: TAP THE SEQUENCE (${playerStepIdx} / ${sequenceLength})`
+            );
+            this.fitTextToWidth(statusTxt, 740);
+
+            if (playerStepIdx >= sequenceLength) {
+              finished = true;
+              acceptingInput = false;
+              StarshipAudio.playAnswerCorrectFanfare();
+              sub.setText('🟢 SUBSPACE SEQUENCE VERIFIED! +2 OVERCLOCK PAD BOOST!');
+              sub.setColor('#6ee7b7');
+              this.fitTextToWidth(sub, 760);
+              statusTxt.setText(`🏆 PERFECT ${sequenceLength}-CRYSTAL HARMONIC SYNC!`);
+              statusTxt.setColor('#6ee7b7');
+              this.fitTextToWidth(statusTxt, 740);
+              Juice.burstStars(this, 640, 340, 32, [0x10b981, 0xfde047, 0x00f5d4]);
+              this.completeMiniChallengeAndAdvance(player, 2);
+            }
+          } else {
+            finished = true;
+            acceptingInput = false;
+            StarshipAudio.playAnswerWrongBuzzer();
+            sub.setText('🔴 SUBSPACE HARMONIC MISMATCH — +1 AUXILIARY PAD BOOST!');
+            sub.setColor('#fca5a5');
+            this.fitTextToWidth(sub, 760);
+            statusTxt.setText(
+              `EXPECTED ${crystalSpecs[expectedIdx].label} • +1 AUXILIARY PAD BOOST`
+            );
+            statusTxt.setColor('#fca5a5');
+            this.fitTextToWidth(statusTxt, 740);
+            this.completeMiniChallengeAndAdvance(player, 1);
+          }
+        });
+      });
+
+      // Play the computer sequence step-by-step
+      sequence.forEach((crystalIdx, stepNum) => {
+        this.time.delayedCall(450 + stepNum * stepDelayMs, () => {
+          if (!this.scene.isActive() || finished) return;
+          statusTxt.setText(
+            `📡 TRANSMITTING CRYSTAL ${stepNum + 1} OF ${sequenceLength}...`
+          );
+          this.fitTextToWidth(statusTxt, 740);
+          crystalHooks[crystalIdx]?.flash();
+        });
+      });
+
+      this.time.delayedCall(520 + sequenceLength * stepDelayMs, () => {
+        if (!this.scene.isActive() || finished) return;
+        acceptingInput = true;
+        sub.setText(`${player.roster.name}: TAP THE WARP CRYSTALS IN THE EXACT SAME ORDER!`);
+        sub.setColor('#fde047');
+        this.fitTextToWidth(sub, 760);
+        statusTxt.setText(`🖖 YOUR TURN: TAP THE SEQUENCE (0 / ${sequenceLength})`);
+        statusTxt.setColor('#6ee7b7');
+        this.fitTextToWidth(statusTxt, 740);
+      });
+    } else {
+      // =======================================================================
+      // CHALLENGE 6: `🔍 HOLO-DECK ANOMALY SCAN` (Real Game Sprites + Subtle Visual Glitches!)
+      // - Every cell in the grid renders the EXACT SAME base game sprite texture!
+      // - Emma (3yo): 3 cols x 2 rows (6 large sprites), 5.0s (5000ms) — anomaly is upside-down (`setFlipY(true)`) + golden-pink tint!
+      // - Wyatt (4yo): 3 cols x 3 rows (9 sprites), 3.8s (3800ms) — anomaly is upside-down, tilted 35°, or bright green/magenta tinted!
+      // - Commanders (Adults): 5 cols x 4 rows (20 sprites), 2.3s (2300ms) — anomaly has 1 subtle glitch:
+      //   mirrored (`setFlipX(true)`), tilted (`±16°`), upside-down (`setFlipY(true)`), subtle phase-tint (`0x99ddff`/`0xffbbdd`), or 80% scale!
+      // =======================================================================
+      const cols = isEmmaTier ? 3 : isWyattTier ? 3 : 5;
+      const rows = isEmmaTier ? 2 : isWyattTier ? 3 : 4;
+      const totalCards = cols * rows;
+      const durationMs = isEmmaTier ? 5000 : isWyattTier ? 3800 : 2300;
+
+      // Build candidate pool of real loaded game sprites
+      const candidateSprites: Array<{ key: string; frame?: number; label: string }> = [
+        { key: 'starship-astro-wyatt', label: 'ASTRO WYATT' },
+        { key: 'starship-astro-emma', label: 'PRINCESS EMMA' },
+        { key: 'starship-astro-robert', label: 'COMMANDER ROBERT' },
+        { key: 'starship-astro-rita', label: 'DIRECTOR RITA' },
+        { key: 'starship-astro-papa', label: 'ENGINEER PAPA' },
+        { key: 'starship-astro-nana', label: 'COUNSELOR NANA' },
+        { key: 'starship-astro-grandpa', label: 'ADMIRAL GRANDPA' },
+        { key: 'starship-astro-babci', label: 'NAVIGATOR BABCI' },
+        { key: 'starship-astro-dreadbot', label: 'DREAD-BOT X-99' },
+        { key: 'starship-card-wyatt', label: 'WYATT EXOSUIT' },
+        { key: 'starship-card-emma', label: 'EMMA EXOSUIT' },
+        { key: 'starship-card-robert', label: 'ROBERT EXOSUIT' },
+        { key: 'starship-card-rita', label: 'RITA EXOSUIT' },
+        { key: 'challenge-warp-core', label: 'WARP CORE' },
+        { key: 'dice-plunger-console', label: 'THRUSTER POD' },
+        { key: 'sprite-3d-supply-pods', frame: 0, label: 'SUPPLY POD ALPHA' },
+        { key: 'sprite-3d-supply-pods', frame: 1, label: 'SUPPLY POD BETA' },
+        { key: 'sprite-3d-supply-pods', frame: 2, label: 'SUPPLY POD GAMMA' }
+      ].filter((s) => this.textures.exists(s.key));
+
+      const chosenSpriteSpec =
+        (Phaser.Utils.Array.GetRandom(candidateSprites) as
+          | { key: string; frame?: number; label: string }
+          | undefined) ?? { key: 'challenge-warp-core', label: 'WARP CORE' };
+
+      if (this.textures.exists(chosenSpriteSpec.key)) {
+        this.textures.get(chosenSpriteSpec.key).setFilter(Phaser.Textures.FilterMode.LINEAR);
+      }
+
+      const anomalyIndex = Phaser.Math.Between(0, totalCards - 1);
+
+      // Select the tier-appropriate visual mutation for the 1 anomaly sprite
+      type CommanderGlitchType = 'flipX' | 'tilt16' | 'flipY' | 'tintShift' | 'shrunk80';
+      type WyattGlitchType = 'flipY' | 'tilt35' | 'neonTint';
+
+      const commanderGlitch: CommanderGlitchType = Phaser.Utils.Array.GetRandom([
+        'flipX',
+        'tilt16',
+        'flipY',
+        'tintShift',
+        'shrunk80'
+      ] as CommanderGlitchType[]);
+
+      const wyattGlitch: WyattGlitchType = Phaser.Utils.Array.GetRandom([
+        'flipY',
+        'tilt35',
+        'neonTint'
+      ] as WyattGlitchType[]);
+
+      const title = this.add
+        .text(0, -184, '🔍 HOLO-DECK ANOMALY SCAN — SPOT THE 1 GLITCHED SPRITE!', {
+          fontSize: '21px',
+          fontStyle: 'bold',
+          color: '#fde047',
+          stroke: '#020617',
+          strokeThickness: 4
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(title, 760);
+
+      const subPrompt = isEmmaTier
+        ? `${player.roster.name}: Tap the 1 UPSIDE-DOWN ${chosenSpriteSpec.label} sprite!`
+        : isWyattTier
+        ? `${player.roster.name}: All 9 cells show ${chosenSpriteSpec.label} — tap the 1 GLITCHED sprite!`
+        : `${player.roster.name}: 20 ${chosenSpriteSpec.label} sprites — tap the 1 subtle visual glitch in 2.3s!`;
+
+      const sub = this.add
+        .text(0, -146, subPrompt, {
+          fontSize: '13.5px',
+          fontStyle: 'bold',
+          color: '#7dd3fc'
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(sub, 760);
+      stageContainer.add([title, sub]);
+
+      const cardW = isEmmaTier ? 176 : isWyattTier ? 156 : 118;
+      const cardH = isEmmaTier ? 104 : isWyattTier ? 72 : 54;
+      const gapX = isEmmaTier ? 20 : isWyattTier ? 16 : 12;
+      const gapY = isEmmaTier ? 16 : isWyattTier ? 12 : 10;
+      const totalGridW = cols * cardW + (cols - 1) * gapX;
+      const totalGridH = rows * cardH + (rows - 1) * gapY;
+      const startX = -totalGridW / 2 + cardW / 2;
+      const startY = 4 - totalGridH / 2 + cardH / 2;
+
+      let finished = false;
+      const startMs = performance.now();
+
+      const statusTxt = this.add
+        .text(0, 154, `⏱️ SENSOR WINDOW: ${(durationMs / 1000).toFixed(1)}s REMAINING`, {
+          fontSize: '17px',
+          fontStyle: 'bold',
+          color: '#00f5d4',
+          stroke: '#020617',
+          strokeThickness: 4
+        })
+        .setOrigin(0.5);
+      this.fitTextToWidth(statusTxt, 740);
+      stageContainer.add(statusTxt);
+
+      const resolveScan = (won: boolean, reason: string) => {
+        if (finished) return;
+        finished = true;
+        scanTimer.remove(false);
+
+        if (won) {
+          StarshipAudio.playAnswerCorrectFanfare();
+          sub.setText(`🟢 ${reason} +2 OVERCLOCK PAD BOOST!`);
+          sub.setColor('#6ee7b7');
+          this.fitTextToWidth(sub, 760);
+          statusTxt.setText('🏆 HOLO-DECK ANOMALY ISOLATED!');
+          statusTxt.setColor('#6ee7b7');
+          this.fitTextToWidth(statusTxt, 740);
+          Juice.burstStars(this, 640, 340, 32, [0x10b981, 0xfde047, 0x00f5d4]);
+          this.completeMiniChallengeAndAdvance(player, 2);
+        } else {
+          StarshipAudio.playAnswerWrongBuzzer();
+          sub.setText(`🔴 ${reason} +1 AUXILIARY PAD BOOST!`);
+          sub.setColor('#fca5a5');
+          this.fitTextToWidth(sub, 760);
+          statusTxt.setText(`${reason} • +1 AUXILIARY PAD BOOST`);
+          statusTxt.setColor('#fca5a5');
+          this.fitTextToWidth(statusTxt, 740);
+          this.completeMiniChallengeAndAdvance(player, 1);
+        }
+      };
+
+      const spriteBoxSize = isEmmaTier ? 84 : isWyattTier ? 58 : 44;
+
+      for (let i = 0; i < totalCards; i++) {
+        const r = Math.floor(i / cols);
+        const c = i % cols;
+        const cx = startX + c * (cardW + gapX);
+        const cy = startY + r * (cardH + gapY);
+        const isAnomaly = i === anomalyIndex;
+
+        const cardNode = this.add.container(cx, cy);
+        const bgG = this.add.graphics();
+        bgG.fillStyle(0x0f172a, 0.96);
+        bgG.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 11);
+        bgG.lineStyle(2.2, 0x38bdf8, 0.9);
+        bgG.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 11);
+
+        const sprite = this.add
+          .image(0, 0, chosenSpriteSpec.key, chosenSpriteSpec.frame)
+          .setOrigin(0.5);
+        sprite.setDisplaySize(spriteBoxSize, spriteBoxSize);
+        const baseScaleX = sprite.scaleX;
+        const baseScaleY = sprite.scaleY;
+
+        let glitchLabel = 'ANOMALY GLITCH';
+        if (isAnomaly) {
+          if (isEmmaTier) {
+            // Emma (3yo): upside-down (`setFlipY(true)`) + golden-pink tint (`0xff99cc` / `0xffd700`)
+            sprite.setFlipY(true);
+            sprite.setTint(Math.random() > 0.5 ? 0xff99cc : 0xffd700);
+            glitchLabel = 'UPSIDE-DOWN SPRITE';
+          } else if (isWyattTier) {
+            // Wyatt (4yo): upside-down (`setFlipY(true)`), tilted `35°`, or bright green/magenta tinted (`0x55ff88`)
+            if (wyattGlitch === 'flipY') {
+              sprite.setFlipY(true);
+              glitchLabel = 'UPSIDE-DOWN SPRITE';
+            } else if (wyattGlitch === 'tilt35') {
+              sprite.setAngle(Math.random() > 0.5 ? 35 : -35);
+              glitchLabel = 'TILTED 35° SPRITE';
+            } else {
+              sprite.setTint(Math.random() > 0.5 ? 0x55ff88 : 0xff55dd);
+              glitchLabel = 'PHASE-TINTED SPRITE';
+            }
+          } else {
+            // Commander Tier (Adults): 1 subtle visual glitch among 20 identical sprites in 2.3s!
+            if (commanderGlitch === 'flipX') {
+              sprite.setFlipX(true);
+              glitchLabel = 'MIRRORED SPRITE';
+            } else if (commanderGlitch === 'tilt16') {
+              sprite.setAngle(Math.random() > 0.5 ? 16 : -16);
+              glitchLabel = 'OFF-AXIS 16° SPRITE';
+            } else if (commanderGlitch === 'flipY') {
+              sprite.setFlipY(true);
+              glitchLabel = 'INVERTED SPRITE';
+            } else if (commanderGlitch === 'tintShift') {
+              sprite.setTint(Math.random() > 0.5 ? 0x99ddff : 0xffbbdd);
+              glitchLabel = 'PHASE-SHIFTED SPRITE';
+            } else {
+              sprite.setScale(baseScaleX * 0.8, baseScaleY * 0.8);
+              glitchLabel = 'SCALE-ANOMALY SPRITE';
+            }
+          }
+        }
+
+        const hit = this.add
+          .rectangle(0, 0, cardW, cardH, 0x000000, 0.001)
+          .setInteractive({ useHandCursor: true });
+
+        cardNode.add([bgG, sprite, hit]);
+        stageContainer.add(cardNode);
+
+        hit.on('pointerdown', () => {
+          if (finished) return;
+          bgG.clear();
+          bgG.fillStyle(isAnomaly ? 0x065f46 : 0x450a0a, 0.98);
+          bgG.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 11);
+          bgG.lineStyle(3.5, isAnomaly ? 0x10b981 : 0xef4444, 1);
+          bgG.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 11);
+
+          if (isAnomaly) {
+            resolveScan(true, `${glitchLabel} LOCKED IN!`);
+          } else {
+            resolveScan(false, `NORMAL ${chosenSpriteSpec.label} TAPPED!`);
+          }
+        });
+      }
+
+      const scanTimer = this.time.addEvent({
+        delay: 30,
+        loop: true,
+        callback: () => {
+          if (finished || !this.scene.isActive()) return;
+          const elapsed = performance.now() - startMs;
+          const remSec = Math.max(0, (durationMs - elapsed) / 1000);
+          statusTxt.setText(`⏱️ SENSOR WINDOW: ${remSec.toFixed(1)}s REMAINING`);
+          this.fitTextToWidth(statusTxt, 740);
+          if (elapsed >= durationMs) {
+            resolveScan(false, 'SENSOR SCAN WINDOW EXPIRED!');
+          }
+        }
+      });
     }
   }
 
@@ -4946,6 +6499,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
   private triggerCitadelVictory(winner: ActiveAstronautPlayer): void {
     this.stopTriviaCountdownTimer();
     this.missionActive = false;
+    this.clearActiveMissionStorage();
     this.pausedTweensSnapshot = [];
     this.scenePhase = 'VICTORY';
 

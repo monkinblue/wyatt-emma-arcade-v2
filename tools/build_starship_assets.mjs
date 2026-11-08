@@ -42,6 +42,7 @@ const STAGED_FILES = {
   [path.join(RAW_DIR, 'astro_grandpa_raw.png')]: path.join(STAGED_ARTIFACT_DIR, 'astro_grandpa_raw_1794018976702.jpg'),
   [path.join(RAW_DIR, 'astro_babci_raw.png')]: path.join(STAGED_ARTIFACT_DIR, 'astro_babci_raw_1794018990607.jpg'),
   [path.join(RAW_DIR, 'astro_guest_raw.png')]: path.join(STAGED_ARTIFACT_DIR, 'astro_guest_raw_1794019009065.jpg'),
+  [path.join(RAW_DIR, 'astro_dreadbot_raw.png')]: path.join(STAGED_ARTIFACT_DIR, 'dread_bot_x99_robot_clean_1794109960571.jpg'),
   [path.join(RAW_DIR, 'starship-board-bg-raw.png')]: path.join(STAGED_ARTIFACT_DIR, 'starship_board_bg_raw_1794018947121.jpg'),
   [path.join(HUB_RAW_DIR, 'hub-toy-starship-unicorn-raw.png')]: path.join(STAGED_ARTIFACT_DIR, 'hub_toy_starship_unicorn_raw_1794018971293.jpg'),
   [path.join(HUB_RAW_DIR, 'mode-tv-raw.png')]: path.join(STAGED_ARTIFACT_DIR, 'mode_tv_raw_1794018984972.jpg')
@@ -144,6 +145,12 @@ const CHARACTER_SPECS = [
     prompt:
       'Photorealistic Next-Gen 4K Unreal Engine 5 cinematic sci-fi portrait of a mysterious VIP Mission Specialist astronaut wearing a gleaming Mirror-Chrome, Matte-White & 24k-Gold SpaceX Crew Dragon / FICSIT EVA spacesuit with a closed full-face dome visor made of reflective rainbow-iridescentdichroic glass that vividly reflects a glowing cosmic Cyber-Unicorn and bioluminescent nebula starlight. ' +
       'Heavy anodized titanium neck ring, carbon-fiber shoulder pauldrons, glowing golden chest telemetry core, head-and-shoulders centered square portrait, razor-sharp 85mm studio lighting, ZERO text.'
+  },
+  {
+    id: 'dreadbot',
+    refCrop: null,
+    prompt:
+      'Cinematic photorealistic close-up portrait of a menacing yet kid-friendly futuristic rogue sci-fi robot commander wearing a sleek dark obsidian and titanium astronaut exosuit collar, glowing crimson-red optical visor and LED telemetry nodes, dark starship command bridge background with subtle red neon rim lighting, front-facing head-and-shoulders framing matching an astronaut crew badge portrait, ultra-detailed 3D CGI movie render quality, no text'
   }
 ];
 
@@ -181,7 +188,14 @@ async function generateWithGemini(apiKey, prompt, outPath, refImagePath = null, 
   }
   parts.push({ text: prompt });
 
-  const models = ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview'];
+  const models = [
+    'gemini-3.1-flash-image',
+    'gemini-3.1-flash-lite-image',
+    'gemini-3-pro-image',
+    'gemini-3.1-flash-image-preview',
+    'gemini-3-pro-image-preview',
+    'gemini-2.5-flash-image'
+  ];
   for (const model of models) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;

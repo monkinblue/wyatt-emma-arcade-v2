@@ -41,47 +41,43 @@ const VOICE_LINES = [
   },
   {
     file: 'vo_turn_wyatt.mp3',
-    text: 'Astro-Ranger Wyatt.',
-    force: true
+    text: 'Astro-Ranger Wyatt.'
   },
   {
     file: 'vo_turn_emma.mp3',
-    text: 'Space Princess Emma.',
-    force: true
+    text: 'Space Princess Emma.'
   },
   {
     file: 'vo_turn_robert.mp3',
-    text: 'Commander Robert.',
-    force: true
+    text: 'Commander Robert.'
   },
   {
     file: 'vo_turn_rita.mp3',
-    text: 'Commander Rita.',
-    force: true
+    text: 'Commander Rita.'
   },
   {
     file: 'vo_turn_papa.mp3',
-    text: 'Commander Papa.',
-    force: true
+    text: 'Commander Papa.'
   },
   {
     file: 'vo_turn_nana.mp3',
-    text: "Ship's Counselor Nana.",
-    force: true
+    text: "Ship's Counselor Nana."
   },
   {
     file: 'vo_turn_grandpa.mp3',
-    text: 'Commander Grandpa.',
-    force: true
+    text: 'Commander Grandpa.'
   },
   {
     file: 'vo_turn_babci.mp3',
-    text: 'Commander Bahp-shee.',
-    force: true
+    text: 'Commander Bahp-shee.'
   },
   {
     file: 'vo_turn_guest.mp3',
-    text: 'Mission Specialist.',
+    text: 'Mission Specialist.'
+  },
+  {
+    file: 'vo_turn_dreadbot.mp3',
+    text: 'Warning: Rogue A.I. Dread-Bot.',
     force: true
   },
   {
@@ -110,8 +106,7 @@ const VOICE_LINES = [
   },
   {
     file: 'vo_airdrop_incoming.mp3',
-    text: 'Attention crew: Orbital challenge engaged.',
-    force: true
+    text: 'Attention crew: Orbital challenge engaged.'
   },
   {
     file: 'vo_victory.mp3',

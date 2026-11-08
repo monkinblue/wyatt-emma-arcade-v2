@@ -28,6 +28,7 @@ export type StarshipPaVoiceKey =
   | 'vo_turn_grandpa'
   | 'vo_turn_babci'
   | 'vo_turn_guest'
+  | 'vo_turn_dreadbot'
   | 'vo_verdict_correct'
   | 'vo_verdict_wrong'
   | 'vo_red_alert'
@@ -48,6 +49,7 @@ export type StarshipVoiceKey =
   | 'turn_grandpa'
   | 'turn_babci'
   | 'turn_guest'
+  | 'turn_dreadbot'
   | 'welcome_title'
   | 'lobby_select'
   | 'launch_sequence'
@@ -67,7 +69,8 @@ export type StarshipVoiceKey =
   | 'victory_nana'
   | 'victory_grandpa'
   | 'victory_babci'
-  | 'victory_guest';
+  | 'victory_guest'
+  | 'victory_dreadbot';
 
 export type StarshipIndustrialSfxKey =
   | 'sfx_lobby_latch'
@@ -133,6 +136,7 @@ export const PA_VOICE_KEYS: StarshipPaVoiceKey[] = [
   'vo_turn_grandpa',
   'vo_turn_babci',
   'vo_turn_guest',
+  'vo_turn_dreadbot',
   'vo_verdict_correct',
   'vo_verdict_wrong',
   'vo_red_alert',
@@ -154,6 +158,7 @@ const LEGACY_TO_PA_VOICE_MAP: Partial<Record<StarshipVoiceKey, StarshipPaVoiceKe
   turn_grandpa: 'vo_turn_grandpa',
   turn_babci: 'vo_turn_babci',
   turn_guest: 'vo_turn_guest',
+  turn_dreadbot: 'vo_turn_dreadbot',
   overclock_engaged: 'vo_verdict_correct',
   standard_thruster: 'vo_verdict_wrong',
   tile_wormhole: 'vo_hypertube',
@@ -168,11 +173,13 @@ const LEGACY_TO_PA_VOICE_MAP: Partial<Record<StarshipVoiceKey, StarshipPaVoiceKe
   victory_nana: 'vo_victory',
   victory_grandpa: 'vo_victory',
   victory_babci: 'vo_victory',
-  victory_guest: 'vo_victory'
+  victory_guest: 'vo_victory',
+  victory_dreadbot: 'vo_victory'
 };
 
 class StarshipAudioEngineImpl {
   private paVoiceHowls: Map<StarshipPaVoiceKey, Howl> = new Map();
+  private kidClipHowls: Map<string, Howl> = new Map();
   private industrialHowls: Map<StarshipIndustrialSfxKey, Howl> = new Map();
   private legacySfxHowls: Map<StarshipLegacySfxKey, Howl> = new Map();
   private activeVoiceHowl: Howl | null = null;
@@ -190,7 +197,7 @@ class StarshipAudioEngineImpl {
     for (const key of INDUSTRIAL_SFX_KEYS) {
       if (!this.industrialHowls.has(key)) {
         const howl = new Howl({
-          src: [`/assets/sfx/starship/${key}.mp3?v=sfx3`],
+          src: [`/assets/sfx/starship/${key}.mp3`],
           volume: 0.9,
           preload: true
         });
@@ -201,7 +208,7 @@ class StarshipAudioEngineImpl {
     for (const voKey of PA_VOICE_KEYS) {
       if (!this.paVoiceHowls.has(voKey)) {
         const howl = new Howl({
-          src: [`/assets/sfx/starship/${voKey}.mp3?v=3`],
+          src: [`/assets/sfx/starship/${voKey}.mp3`],
           volume: 0.98,
           preload: true
         });
@@ -225,7 +232,7 @@ class StarshipAudioEngineImpl {
     let howl = this.industrialHowls.get(key);
     if (!howl) {
       howl = new Howl({
-        src: [`/assets/sfx/starship/${key}.mp3?v=sfx3`],
+        src: [`/assets/sfx/starship/${key}.mp3`],
         volume,
         preload: true
       });
@@ -253,7 +260,7 @@ class StarshipAudioEngineImpl {
     let howl = this.paVoiceHowls.get(voKey);
     if (!howl) {
       howl = new Howl({
-        src: [`/assets/sfx/starship/${voKey}.mp3?v=3`],
+        src: [`/assets/sfx/starship/${voKey}.mp3`],
         volume: 0.98,
         preload: true
       });
@@ -293,12 +300,63 @@ class StarshipAudioEngineImpl {
     if (onEnd) onEnd();
   }
 
+  /**
+   * Plays a Kid Question or Option `.mp3` clip (`/assets/sfx/starship/kids/kid_XX_q.mp3`, `_a.mp3`, `_b.mp3`)
+   * and invokes `onEnd` when playback finishes (or if muted / failed to load).
+   */
+  public playKidClipUrl(url: string, onEnd?: () => void): void {
+    if (AudioBus.getMuted()) {
+      if (onEnd) onEnd();
+      return;
+    }
+    this.stopAllVoice();
+
+    let howl = this.kidClipHowls.get(url);
+    if (!howl) {
+      howl = new Howl({
+        src: [url],
+        volume: 0.98,
+        preload: true
+      });
+      this.kidClipHowls.set(url, howl);
+    }
+
+    this.activeVoiceHowl = howl;
+    let completed = false;
+    const fireOnce = () => {
+      if (completed) return;
+      completed = true;
+      if (this.activeVoiceHowl === howl) {
+        this.activeVoiceHowl = null;
+      }
+      if (onEnd) onEnd();
+    };
+
+    howl.off('end');
+    howl.off('loaderror');
+    howl.off('playerror');
+    howl.once('end', fireOnce);
+    howl.once('loaderror', fireOnce);
+    howl.once('playerror', fireOnce);
+
+    howl.volume(0.98);
+    howl.play();
+  }
+
   public stopAllVoice(): void {
     if (this.activeVoiceHowl) {
+      this.activeVoiceHowl.off('end');
       this.activeVoiceHowl.stop();
       this.activeVoiceHowl = null;
     }
     this.paVoiceHowls.forEach((h) => {
+      h.off('end');
+      if (h.playing()) {
+        h.stop();
+      }
+    });
+    this.kidClipHowls.forEach((h) => {
+      h.off('end');
       if (h.playing()) {
         h.stop();
       }
@@ -437,6 +495,12 @@ class StarshipAudioEngineImpl {
 
   public playMeteorShatter(): void {
     this.playIndustrialSfx('sfx_meteor_shatter', 0.96, 1.0);
+  }
+
+  public playMemoryCrystalChime(crystalIndex: number): void {
+    const harmonicRates = [0.85, 1.0, 1.18, 1.34];
+    const rate = harmonicRates[Math.abs(crystalIndex) % harmonicRates.length];
+    this.playIndustrialSfx('sfx_trajectory_lock', 0.88, rate);
   }
 
   public playCrateOpen(): void {

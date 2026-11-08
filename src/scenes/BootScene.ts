@@ -10,9 +10,11 @@
 
 import Phaser from 'phaser';
 import { AudioBus } from '../core/AudioBus';
-import { PA_VOICE_KEYS, StarshipAudio } from '../core/StarshipAudioEngine';
+import { StarshipAudio } from '../core/StarshipAudioEngine';
 
 export class BootScene extends Phaser.Scene {
+  private hasFinishedBoot = false;
+
   constructor() {
     super({ key: 'BootScene' });
   }
@@ -24,7 +26,13 @@ export class BootScene extends Phaser.Scene {
    * on Frame 0 when entering `StoryEngineScene`!
    */
   public preload(): void {
+    this.hasFinishedBoot = false;
     this.mountHeirloomLoadingBar();
+
+    // Never allow a single cached audio/image glitch on Android/Pixel Tablet to block boot completion!
+    this.load.on('loaderror', (file: Phaser.Loader.File) => {
+      console.warn('Skipped stalled asset:', file?.key);
+    });
 
     // 0a. Hub Heirloom Bookshelf, 3 Mode Objects, 3 Individual Book Sprites & 3 Create Shelf Objects
     this.load.image('bookshelf-bg', '/assets/hub/bookshelf-bg.jpg?v=hub2');
@@ -54,9 +62,6 @@ export class BootScene extends Phaser.Scene {
 
     // 0a-1b. Starship Unicorn: Orbital Trivia (`StarshipUnicornScene.ts`) 1080p/4K HD Assets, ElevenLabs SFX & Emily E. PA Voices
     StarshipAudio.preloadAllSfx();
-    for (const voKey of PA_VOICE_KEYS) {
-      this.load.audio(voKey, `/assets/sfx/starship/${voKey}.mp3?v=emily2`);
-    }
     this.load.image(
       'board-isometric-conveyor-world',
       '/assets/starship/board-isometric-conveyor-world.png?v=iso4'
@@ -95,6 +100,7 @@ export class BootScene extends Phaser.Scene {
     );
     this.load.image('board-isometric-factory', '/assets/starship/board-isometric-factory.png?v=iso4');
     this.load.image('starship-board-bg', '/assets/games/starship-unicorn/starship-board-bg.jpg?v=iso2');
+    this.load.image('starship-crew-dreadbot', '/assets/starship/crew-dreadbot.png');
     const starshipAstronautIds = [
       'robert',
       'rita',
@@ -104,7 +110,8 @@ export class BootScene extends Phaser.Scene {
       'nana',
       'grandpa',
       'babci',
-      'guest'
+      'guest',
+      'dreadbot'
     ];
     for (const astroId of starshipAstronautIds) {
       this.load.image(
@@ -1289,8 +1296,20 @@ export class BootScene extends Phaser.Scene {
 
     drawProgress(0);
 
+    let watchdogScheduled = false;
+
     const onProgress = (value: number) => {
       drawProgress(value);
+      // Hard Watchdog Timer: once progress reaches >= 0.98, guarantee transition within 700ms
+      // so the game can NEVER freeze at 100% waiting on a suspended Android AudioContext or stalled cache entry!
+      if (value >= 0.98 && !watchdogScheduled) {
+        watchdogScheduled = true;
+        window.setTimeout(() => {
+          if (this.scene.isActive('BootScene')) {
+            this.finishBootAndStartHub();
+          }
+        }, 700);
+      }
     };
 
     this.load.on('progress', onProgress);
@@ -1303,12 +1322,24 @@ export class BootScene extends Phaser.Scene {
   }
 
   public create(): void {
-    this.generateSharedTextures();
-    this.applyPixelArtFilteringAndAnims();
-    AudioBus.startCozyLoop();
-    void this.preloadAvailableStoryBackgrounds().finally(() => {
-      this.scene.start('HubScene');
-    });
+    this.finishBootAndStartHub();
+  }
+
+  private finishBootAndStartHub(): void {
+    if (this.hasFinishedBoot) return;
+    this.hasFinishedBoot = true;
+
+    try {
+      this.generateSharedTextures();
+      this.applyPixelArtFilteringAndAnims();
+      AudioBus.startCozyLoop();
+    } catch (err) {
+      console.warn('Non-fatal boot initialization warning:', err);
+    }
+
+    // Start HubScene immediately and let optional background probes finish asynchronously without blocking!
+    void this.preloadAvailableStoryBackgrounds();
+    this.scene.start('HubScene');
   }
 
   private applyPixelArtFilteringAndAnims(): void {

@@ -626,16 +626,22 @@ foreach ($d in @($portraitsDir, $cardsDir, $tokensDir)) {
 }
 
 $roster = @(
-    @{ Id = "robert";  Name = "ROBERT";  Role = "MISSION COMMANDER";   R = 245; G = 158; B = 11 },
-    @{ Id = "rita";    Name = "RITA";    Role = "FLIGHT DIRECTOR";     R = 56;  G = 189; B = 248 },
-    @{ Id = "wyatt";   Name = "WYATT";   Role = "ASTRO-RANGER (4YO)";  R = 16;  G = 185; B = 129 },
-    @{ Id = "emma";    Name = "EMMA";    Role = "SPACE PRINCESS (3YO)";R = 244; G = 114; B = 182 },
-    @{ Id = "papa";    Name = "PAPA";    Role = "CHIEF ENGINEER";      R = 59;  G = 130; B = 246 },
-    @{ Id = "nana";    Name = "NANA";    Role = "SHIP'S COUNSELOR";    R = 14;  G = 165; B = 233 },
-    @{ Id = "grandpa"; Name = "GRANDPA"; Role = "FLEET ADMIRAL";       R = 148; G = 163; B = 184 },
-    @{ Id = "babci";   Name = "BABCI";   Role = "ORBITAL NAVIGATOR";   R = 192; G = 132; B = 252 },
-    @{ Id = "guest";   Name = "GUEST";   Role = "MISSION SPECIALIST";  R = 250; G = 204; B = 21 }
+    @{ Id = "robert";   Name = "ROBERT";    Role = "MISSION COMMANDER";   R = 245; G = 158; B = 11 },
+    @{ Id = "rita";     Name = "RITA";      Role = "FLIGHT DIRECTOR";     R = 56;  G = 189; B = 248 },
+    @{ Id = "wyatt";    Name = "WYATT";     Role = "ASTRO-RANGER (4YO)";  R = 16;  G = 185; B = 129 },
+    @{ Id = "emma";     Name = "EMMA";      Role = "SPACE PRINCESS (3YO)";R = 244; G = 114; B = 182 },
+    @{ Id = "papa";     Name = "PAPA";      Role = "CHIEF ENGINEER";      R = 59;  G = 130; B = 246 },
+    @{ Id = "nana";     Name = "NANA";      Role = "SHIP'S COUNSELOR";    R = 14;  G = 165; B = 233 },
+    @{ Id = "grandpa";  Name = "GRANDPA";   Role = "FLEET ADMIRAL";       R = 148; G = 163; B = 184 },
+    @{ Id = "babci";    Name = "BABCI";     Role = "ORBITAL NAVIGATOR";   R = 192; G = 132; B = 252 },
+    @{ Id = "guest";    Name = "GUEST";     Role = "MISSION SPECIALIST";  R = 250; G = 204; B = 21 },
+    @{ Id = "dreadbot"; Name = "DREAD-BOT"; Role = "ROGUE A.I. X-99";     R = 255; G = 34;  B = 85 }
 )
+
+$starshipDir = Join-Path $rootDir "public\assets\starship"
+if (-not (Test-Path $starshipDir)) {
+    New-Item -ItemType Directory -Force -Path $starshipDir | Out-Null
+}
 
 foreach ($c in $roster) {
     $rawPath = Join-Path $rawDir "astro_$($c.Id)_raw.png"
@@ -656,6 +662,9 @@ foreach ($c in $roster) {
 
     $portraitPath = Join-Path $portraitsDir "astro_$($c.Id).png"
     $cleanPortrait.Save($portraitPath, [System.Drawing.Imaging.ImageFormat]::Png)
+
+    $crewStarshipPath = Join-Path $starshipDir "crew-$($c.Id).png"
+    $cleanPortrait.Save($crewStarshipPath, [System.Drawing.Imaging.ImageFormat]::Png)
 
     # 2. Build Hexagonal Brushed-Titanium Card with Illuminated Nameplate
     $accent = [System.Drawing.Color]::FromArgb(255, $c.R, $c.G, $c.B)

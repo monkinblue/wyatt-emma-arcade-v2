@@ -51,8 +51,8 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,mp3,wav,ogg,json,woff,woff2}'],
-        globIgnores: ['**/raw/**', '**/refs/**', '**/pages_v1_backup/**', '**/Old/**'],
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,svg,webp,json,woff,woff2}'],
+        globIgnores: ['**/raw/**', '**/refs/**', '**/pages_v1_backup/**', '**/Old/**', '**/*.mp3', '**/*.wav', '**/*.ogg'],
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         clientsClaim: true,
