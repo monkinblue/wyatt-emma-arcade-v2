@@ -393,6 +393,45 @@ type OrbitalChallengeType =
 
 const ACTIVE_MISSION_STORAGE_KEY = 'starship_active_mission_v1';
 
+const STARSHIP_SCIFI_FONT_FAMILY = "'Orbitron', 'Rajdhani', sans-serif";
+
+/**
+ * Eagerly pre-warms the Google Fonts `'Orbitron'` and `'Rajdhani'` faces in the browser
+ * as soon as this module is imported (during initial app boot), so Canvas 2D text in the
+ * Crew Selection Lobby is 100% rasterizer-ready on the very first frame and NEVER swaps
+ * from a fallback system font to `'Orbitron'` when toggling Dread-Bot or any crew card!
+ */
+let starshipFontsPrewarmed = false;
+function prewarmStarshipSciFiFonts(): void {
+  if (starshipFontsPrewarmed || typeof document === 'undefined') return;
+  starshipFontsPrewarmed = true;
+  try {
+    if (document.fonts && typeof document.fonts.load === 'function') {
+      void document.fonts.load("600 16px 'Orbitron'");
+      void document.fonts.load("700 16px 'Orbitron'");
+      void document.fonts.load("900 16px 'Orbitron'");
+      void document.fonts.load("600 16px 'Rajdhani'");
+      void document.fonts.load("700 16px 'Rajdhani'");
+    }
+    if (document.body && !document.getElementById('starship-font-prewarmer')) {
+      const warmer = document.createElement('div');
+      warmer.id = 'starship-font-prewarmer';
+      warmer.setAttribute('aria-hidden', 'true');
+      warmer.style.cssText =
+        'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;' +
+        "font-family:'Orbitron','Rajdhani',sans-serif;font-weight:700;";
+      warmer.innerHTML =
+        '<span style="font-family:\'Orbitron\',sans-serif;font-weight:700;">STARSHIP DREAD-BOT X-99 P1 P6</span>' +
+        '<span style="font-family:\'Orbitron\',sans-serif;font-weight:900;">ORBITAL TRIVIA</span>' +
+        '<span style="font-family:\'Rajdhani\',sans-serif;font-weight:700;">MISSION CONTROL</span>';
+      document.body.appendChild(warmer);
+    }
+  } catch {
+    // Ignore DOM/font prewarm errors
+  }
+}
+prewarmStarshipSciFiFonts();
+
 interface SavedStarshipMissionState {
   missionActive: true;
   totalPads: 25 | 50;
@@ -480,6 +519,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   public preload(): void {
+    prewarmStarshipSciFiFonts();
     StarshipAudio.preloadAllSfx();
     if (!this.textures.exists('board-isometric-conveyor-world')) {
       this.load.image(
@@ -588,6 +628,24 @@ export class StarshipUnicornScene extends Phaser.Scene {
     this.buildAndRenderOrbitalBoard(this.missionTotalPads);
     this.renderTopMissionHeader();
     this.openPreFlightLobby(true);
+
+    // Ensure that if the browser finishes downloading Orbitron/Rajdhani a moment after direct scene boot,
+    // the Crew Lobby and HUD re-render once with identical Orbitron metrics so clicking Dread-Bot never shifts fonts.
+    if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) {
+      document.fonts.ready
+        .then(() => {
+          if (!this.scene.isActive()) return;
+          this.children.list.forEach((child) => {
+            if (child instanceof Phaser.GameObjects.Text && child.active) {
+              child.updateText();
+            }
+          });
+          if (this.scenePhase === 'LOBBY' && this.lobbyContainer && this.lobbyContainer.visible) {
+            this.openPreFlightLobby(false, true);
+          }
+        })
+        .catch(() => {});
+    }
 
     // Block accidental Android / Pixel Tablet back-edge swipes: push a history guard state
     // and pop open the in-game `[ ⏸ PAUSE ]` modal instead of closing the app!
@@ -895,14 +953,25 @@ export class StarshipUnicornScene extends Phaser.Scene {
       style?: Phaser.Types.GameObjects.Text.TextStyle
     ): Phaser.GameObjects.Text => {
       const mergedStyle: Phaser.Types.GameObjects.Text.TextStyle = {
-        ...style,
-        fontFamily: "'Orbitron', 'Rajdhani', \"Segoe UI\", system-ui, sans-serif"
+        ...(style ? { ...style } : {}),
+        fontFamily: STARSHIP_SCIFI_FONT_FAMILY
       };
       const t = origText(x, y, text, mergedStyle);
       t.setResolution(hiDpiRes);
       if (t.texture) {
         t.texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
       }
+      const origSetStyle = t.setStyle.bind(t);
+      t.setStyle = (nextStyle?: object) => {
+        return origSetStyle({
+          ...(nextStyle ? { ...(nextStyle as Record<string, unknown>) } : {}),
+          fontFamily: STARSHIP_SCIFI_FONT_FAMILY
+        });
+      };
+      const origSetFontFamily = t.setFontFamily.bind(t);
+      t.setFontFamily = () => {
+        return origSetFontFamily(STARSHIP_SCIFI_FONT_FAMILY);
+      };
       return t;
     };
   }
@@ -1458,6 +1527,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
           ? 'LIVE MID-GAME CREW ROSTER — ADD OR REMOVE ASTRONAUTS ON THE FLY'
           : 'STARSHIP UNICORN: ORBITAL TRIVIA — MISSION CONTROL',
         {
+          fontFamily: STARSHIP_SCIFI_FONT_FAMILY,
           fontSize: '17px',
           fontStyle: 'bold',
           color: '#f8fafc',
@@ -1474,6 +1544,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
         panelY + 59,
         `TAP ASTRONAUT EXOSUIT CARDS TO ASSIGN LAUNCH BAYS P1–P6 (${this.selectedAstronautIds.length}/6 CREW SELECTED — MIN 2, MAX 6)`,
         {
+          fontFamily: STARSHIP_SCIFI_FONT_FAMILY,
           fontSize: '11.5px',
           fontStyle: 'bold',
           color: '#38bdf8'
@@ -1574,7 +1645,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       }
 
       const tierLabel = spec.isAI
-        ? '🤖 ROGUE AUTO-A.I.'
+        ? 'ROGUE AUTO-A.I.'
         : spec.tier === 'WYATT_4YO'
         ? 'AGE 4 ASTRO-RANGER'
         : spec.tier === 'EMMA_3YO'
@@ -1593,6 +1664,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       tierPill.strokeRoundedRect(-84, 79, 168, 22, 8);
       const tierTxt = this.add
         .text(0, 90, tierLabel, {
+          fontFamily: STARSHIP_SCIFI_FONT_FAMILY,
           fontSize: '9.5px',
           fontStyle: 'bold',
           color: isSelected && baySpec ? baySpec.hex : spec.isAI ? '#ff6b8b' : '#94a3b8'
@@ -1601,7 +1673,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
       this.fitTextToWidth(tierTxt, 154);
       cardContainer.add([tierPill, tierTxt]);
 
-      // Glowing `[ 🤖 AUTO-AI ]` top-left badge on Dread-Bot's card
+      // Glowing `[ AUTO-AI ]` top-left badge on Dread-Bot's card
       if (spec.isAI) {
         const aiBadge = this.add.container(-52, -84);
         const aiG = this.add.graphics();
@@ -1610,7 +1682,8 @@ export class StarshipUnicornScene extends Phaser.Scene {
         aiG.lineStyle(1.8, 0xff2255, 1);
         aiG.strokeRoundedRect(-42, -12, 84, 24, 7);
         const aiTxt = this.add
-          .text(0, 0, '🤖 AUTO-AI', {
+          .text(0, 0, 'AUTO-AI', {
+            fontFamily: STARSHIP_SCIFI_FONT_FAMILY,
             fontSize: '9.5px',
             fontStyle: 'bold',
             color: '#ffe4e6'
@@ -1630,6 +1703,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
         bbG.strokeRoundedRect(-30, -14, 60, 28, 9);
         const bbTxt = this.add
           .text(0, 0, `✓ ${baySpec.slotLabel}`, {
+            fontFamily: STARSHIP_SCIFI_FONT_FAMILY,
             fontSize: '12px',
             fontStyle: 'bold',
             color: '#020617'
@@ -1647,6 +1721,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
         sbG.strokeRoundedRect(-28, -12, 56, 24, 7);
         const sbTxt = this.add
           .text(0, 0, '+ JOIN', {
+            fontFamily: STARSHIP_SCIFI_FONT_FAMILY,
             fontSize: '10px',
             fontStyle: 'bold',
             color: '#cbd5e1'
@@ -1786,8 +1861,9 @@ export class StarshipUnicornScene extends Phaser.Scene {
       .text(
         0,
         -8,
-        isMidGame ? '✅ APPLY ROSTER & RESUME' : '🚀 INITIATE LAUNCH SEQUENCE',
+        isMidGame ? 'APPLY ROSTER & RESUME' : 'INITIATE LAUNCH SEQUENCE',
         {
+          fontFamily: STARSHIP_SCIFI_FONT_FAMILY,
           fontSize: '17px',
           fontStyle: 'bold',
           color: '#ffffff',
@@ -1806,6 +1882,7 @@ export class StarshipUnicornScene extends Phaser.Scene {
           ? 'HOT-SWAP CREW & KEEP CURRENT PAD POSITIONS'
           : `RANDOMIZE ORDER & DEPLOY ${this.selectedAstronautIds.length} ASTRONAUTS TO PAD 0`,
         {
+          fontFamily: STARSHIP_SCIFI_FONT_FAMILY,
           fontSize: '10.5px',
           fontStyle: 'bold',
           color: '#d1fae5'
@@ -4727,15 +4804,18 @@ export class StarshipUnicornScene extends Phaser.Scene {
   }
 
   /**
-   * TRON TACTICAL BLACKOUT & SEQUENTIAL PATH-LOCK SEQUENCE:
-   * 1. Board Blackout Shroud (`0x02040a`, alpha `0.84` at depth `14` — above board/track/non-active pads,
-   *    below active player figurine & sequential path-highlight glow graphics at depth `18` & `100`)
-   *    fast-fades on in `120ms` so the board goes pitch-dark like Tron except for the active player's starting pad.
-   * 2. Sequential Neon Path Ignition (`CLACK -> CLACK -> CLACK`, `240ms` per pad):
-   *    Steps through `currentPad + 1` .. `targetPad` one by one, igniting a super-bright glowing
-   *    Tron Cyan/Gold neon ring + pad spotlight + connecting light-beam segment synced with mechanical clack SFX!
-   * 3. Final Mechanical Clack (`380ms` pause after final pad, then `150ms` shroud snap-off + latch SFX):
-   *    Restores full board lighting right as the player's figurine begins hopping along the illuminated pads!
+   * TRON TACTICAL BLACKOUT & SEQUENTIAL PATH-LOCK SEQUENCE (3-BEAT CHOREOGRAPHY):
+   * 1. Beat 1 — Instant "Lights Out" + Deep Breaker Lock (`t = 0ms`):
+   *    The exact millisecond the blackout shroud (`0x02040a`, alpha `0.84` at depth `14`) snaps on
+   *    and the board lights go out, fire `StarshipAudio.playBlackoutBreakerLock()`.
+   * 2. Beat 2 — 1.5 Seconds of Pure Blackout Silence (`1500ms` Pause):
+   *    Hold the darkened board in complete stillness and silence for `1500ms` (1.5 seconds) —
+   *    nothing moves and no path pads light up yet.
+   * 3. Beat 3 — Sequential Neon Path Ignition + Final Lights-On Clack:
+   *    After the `1500ms` pause completes, step through each pad in the rolled path (`240ms` per pad)
+   *    using `StarshipAudio.playTronPathStepClack(step - 1)` as each neon pad ignites, pause `380ms`
+   *    at the end of the lit path, and fire one final crisp mechanical clack (`playTronBlackoutRestoreClack()`)
+   *    as the blackout shroud snaps off and the figurine hops forward!
    */
   private showHolographicTrajectoryPreview(
     player: ActiveAstronautPlayer,
@@ -4751,21 +4831,21 @@ export class StarshipUnicornScene extends Phaser.Scene {
     const actualSteps = Math.max(0, endIdx - startIdx);
     const tronPrimaryHex = player.roster.isAI ? 0xff2255 : 0x00f5d4;
 
-    // 1. Create the Full-Board Tron Blackout Shroud (`0x02040a`, alpha `0.84`) at depth `14`
+    // -------------------------------------------------------------------------
+    // BEAT 1 (`t = 0ms`): Instant "Lights Out" + Deep Resonant Breaker Lock
+    // -------------------------------------------------------------------------
     const blackoutShroud = this.add
       .rectangle(640, 360, 1280, 720, 0x02040a, 0.84)
-      .setAlpha(0);
+      .setAlpha(1);
     this.tronBlackoutContainer.add(blackoutShroud);
+
+    // Fire the heavy 3-layer mechanical breaker lock at the exact millisecond the lights snap out
+    StarshipAudio.playBlackoutBreakerLock();
 
     // Dim non-active player figurines while the Tron Blackout is active so ONLY the active player's pad & figurine shine
     this.players.forEach((p) => {
       if (p !== player && p.tokenContainer) {
-        this.tweens.add({
-          targets: p.tokenContainer,
-          alpha: 0.24,
-          duration: 120,
-          ease: 'Quad.easeOut'
-        });
+        p.tokenContainer.setAlpha(0.24);
       } else if (p === player && p.tokenContainer) {
         p.tokenContainer.setAlpha(1);
       }
@@ -4804,17 +4884,12 @@ export class StarshipUnicornScene extends Phaser.Scene {
       this.trajectoryLaserContainer.add([startSpot, startRingG]);
     }
 
-    // Fast-fade (`120ms`) the blackout shroud on
-    this.tweens.add({
-      targets: blackoutShroud,
-      alpha: 1,
-      duration: 120,
-      ease: 'Quad.easeOut'
-    });
-
-    // 2. Sequential Neon Path Ignition (`CLACK -> CLACK -> CLACK`, `240ms` per pad)
+    // -------------------------------------------------------------------------
+    // BEAT 2 (`1500ms` Pause): Hold darkened board in pure blackout stillness & silence
+    // BEAT 3 (`t >= 1500ms`): Sequential Neon Path Ignition (`CLACK -> CLACK -> CLACK`)
+    // -------------------------------------------------------------------------
     const stepIntervalMs = 240;
-    const blackoutLeadInMs = 120;
+    const blackoutLeadInMs = 1500;
 
     for (let step = 1; step <= actualSteps; step++) {
       const padIdx = startIdx + step;

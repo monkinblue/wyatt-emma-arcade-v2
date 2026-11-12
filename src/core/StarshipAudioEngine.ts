@@ -14,7 +14,7 @@
  *      (`public/assets/sfx/starship/vo_*.mp3`) — zero browser `window.speechSynthesis` fallback!
  */
 
-import { Howl } from 'howler';
+import { Howl, Howler } from 'howler';
 import { AudioBus } from './AudioBus';
 
 export type StarshipPaVoiceKey =
@@ -183,8 +183,28 @@ class StarshipAudioEngineImpl {
   private industrialHowls: Map<StarshipIndustrialSfxKey, Howl> = new Map();
   private legacySfxHowls: Map<StarshipLegacySfxKey, Howl> = new Map();
   private activeVoiceHowl: Howl | null = null;
+  private fallbackAudioCtx: AudioContext | null = null;
   private lastHoverTimestamp = 0;
   private preloaded = false;
+
+  private getWebAudioContext(): AudioContext | null {
+    if (Howler.ctx) {
+      return Howler.ctx as AudioContext;
+    }
+    if (this.fallbackAudioCtx) {
+      return this.fallbackAudioCtx;
+    }
+    if (typeof window !== 'undefined') {
+      const CtxClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (CtxClass) {
+        this.fallbackAudioCtx = new CtxClass();
+        return this.fallbackAudioCtx;
+      }
+    }
+    return null;
+  }
 
   /**
    * Preloads all ElevenLabs Space-Industrial `.mp3` SFX files and all 18 Emily E. PA Operator
@@ -458,6 +478,156 @@ class StarshipAudioEngineImpl {
    */
   public playTrajectoryLaserLock(_stepCount: number): void {
     this.playIndustrialSfx('sfx_trajectory_lock', 0.68, 1.12);
+  }
+
+  /**
+   * Deep Resonant "Lights Out" Breaker Lock (`playBlackoutBreakerLock`):
+   * Synthesizes a heavy, resonant mechanical vault lock / starship main breaker clunk
+   * at the exact millisecond the Tron Tactical Blackout shroud snaps on (`t = 0ms`),
+   * layering 3 tightly synced WebAudio components:
+   *   1. Layer 1 (Transient Mechanical Latch): Crisp low-mid mechanical latch strike
+   *      (`triangle` + bandpass-filtered noise burst sweeping `280Hz -> 95Hz` over `45ms`).
+   *   2. Layer 2 (Heavy Sub-Bass Vault Thud): Deep, weighty sub-bass drop
+   *      (`sine` + lowpass `triangle` sweeping `135Hz -> 42Hz` over `220ms` with strong gain envelope).
+   *   3. Layer 3 (Metallic Chamber Resonance): Subtle dark low-pass resonant metallic decay
+   *      (`160Hz` / `240Hz` detuned harmonics fading out over `320ms`).
+   */
+  public playBlackoutBreakerLock(): void {
+    if (AudioBus.getMuted()) return;
+    const ctx = this.getWebAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      const t0 = ctx.currentTime;
+      const dest: AudioNode =
+        (Howler as unknown as { masterGain?: GainNode }).masterGain ?? ctx.destination;
+
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.95, t0);
+      masterGain.connect(dest);
+
+      // -----------------------------------------------------------------------
+      // LAYER 1: Transient Mechanical Latch (`280Hz -> 95Hz` over `45ms`)
+      // -----------------------------------------------------------------------
+      const latchOsc = ctx.createOscillator();
+      const latchGain = ctx.createGain();
+      latchOsc.type = 'triangle';
+      latchOsc.frequency.setValueAtTime(280, t0);
+      latchOsc.frequency.exponentialRampToValueAtTime(95, t0 + 0.045);
+
+      latchGain.gain.setValueAtTime(0.001, t0);
+      latchGain.gain.linearRampToValueAtTime(0.62, t0 + 0.003);
+      latchGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.048);
+
+      latchOsc.connect(latchGain);
+      latchGain.connect(masterGain);
+      latchOsc.start(t0);
+      latchOsc.stop(t0 + 0.05);
+
+      // Filtered mechanical bolt noise burst (`280Hz -> 95Hz` over `45ms`)
+      const noiseSamples = Math.max(1, Math.floor(ctx.sampleRate * 0.05));
+      const noiseBuffer = ctx.createBuffer(1, noiseSamples, ctx.sampleRate);
+      const noiseData = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < noiseSamples; i++) {
+        noiseData[i] = (Math.random() * 2 - 1) * (1 - i / noiseSamples);
+      }
+
+      const noiseSrc = ctx.createBufferSource();
+      noiseSrc.buffer = noiseBuffer;
+
+      const noiseFilter = ctx.createBiquadFilter();
+      noiseFilter.type = 'bandpass';
+      noiseFilter.Q.setValueAtTime(2.2, t0);
+      noiseFilter.frequency.setValueAtTime(280, t0);
+      noiseFilter.frequency.exponentialRampToValueAtTime(95, t0 + 0.045);
+
+      const noiseGain = ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.001, t0);
+      noiseGain.gain.linearRampToValueAtTime(0.55, t0 + 0.002);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.046);
+
+      noiseSrc.connect(noiseFilter);
+      noiseFilter.connect(noiseGain);
+      noiseGain.connect(masterGain);
+      noiseSrc.start(t0);
+      noiseSrc.stop(t0 + 0.048);
+
+      // -----------------------------------------------------------------------
+      // LAYER 2: Heavy Sub-Bass Vault Thud (`135Hz -> 42Hz` over `220ms`)
+      // -----------------------------------------------------------------------
+      const subSine = ctx.createOscillator();
+      const subTri = ctx.createOscillator();
+      const subTriFilter = ctx.createBiquadFilter();
+      const subGain = ctx.createGain();
+
+      subSine.type = 'sine';
+      subSine.frequency.setValueAtTime(135, t0);
+      subSine.frequency.exponentialRampToValueAtTime(42, t0 + 0.22);
+
+      subTri.type = 'triangle';
+      subTri.frequency.setValueAtTime(135, t0);
+      subTri.frequency.exponentialRampToValueAtTime(42, t0 + 0.22);
+
+      subTriFilter.type = 'lowpass';
+      subTriFilter.frequency.setValueAtTime(175, t0);
+      subTriFilter.frequency.exponentialRampToValueAtTime(65, t0 + 0.22);
+
+      subGain.gain.setValueAtTime(0.001, t0);
+      subGain.gain.linearRampToValueAtTime(0.88, t0 + 0.008);
+      subGain.gain.setValueAtTime(0.82, t0 + 0.055);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.225);
+
+      subSine.connect(subGain);
+      subTri.connect(subTriFilter);
+      subTriFilter.connect(subGain);
+      subGain.connect(masterGain);
+
+      subSine.start(t0);
+      subTri.start(t0);
+      subSine.stop(t0 + 0.23);
+      subTri.stop(t0 + 0.23);
+
+      // -----------------------------------------------------------------------
+      // LAYER 3: Metallic Chamber Resonance (`160Hz` / `240Hz` detuned over `320ms`)
+      // -----------------------------------------------------------------------
+      const resOsc1 = ctx.createOscillator();
+      const resOsc2 = ctx.createOscillator();
+      const resFilter = ctx.createBiquadFilter();
+      const resGain = ctx.createGain();
+
+      resOsc1.type = 'triangle';
+      resOsc1.frequency.setValueAtTime(160, t0);
+      resOsc1.detune.setValueAtTime(-9, t0);
+
+      resOsc2.type = 'triangle';
+      resOsc2.frequency.setValueAtTime(240, t0);
+      resOsc2.detune.setValueAtTime(11, t0);
+
+      resFilter.type = 'lowpass';
+      resFilter.Q.setValueAtTime(4.2, t0);
+      resFilter.frequency.setValueAtTime(340, t0);
+      resFilter.frequency.exponentialRampToValueAtTime(130, t0 + 0.32);
+
+      resGain.gain.setValueAtTime(0.001, t0);
+      resGain.gain.linearRampToValueAtTime(0.28, t0 + 0.012);
+      resGain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.32);
+
+      resOsc1.connect(resFilter);
+      resOsc2.connect(resFilter);
+      resFilter.connect(resGain);
+      resGain.connect(masterGain);
+
+      resOsc1.start(t0);
+      resOsc2.start(t0);
+      resOsc1.stop(t0 + 0.33);
+      resOsc2.stop(t0 + 0.33);
+    } catch {
+      // Never block gameplay if WebAudio synthesis fails
+    }
   }
 
   /**

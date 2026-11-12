@@ -2,103 +2,35 @@
  * main.ts
  * -------
  * Entry point for Wyatt & Emma Arcade v2.0.
- * Locks the Phaser 2D WebGL/Canvas stage to a crisp 1280x720 landscape tablet viewport
- * using `Phaser.Scale.FIT` + `Phaser.Scale.CENTER_BOTH`.
+ *
+ * Fast-Path Route:
+ * - If `?velvet=<ROOM_CODE>` is present, skips Phaser & Heirloom boot splash completely,
+ *   unlocks mobile touch responsiveness, and lazy-loads `VelvetPhoneController` inside `#app`.
+ * - Otherwise boots the normal 1280x720 Phaser Heirloom Arcade with zero secret modules loaded.
  */
 
-import Phaser from 'phaser';
-import { BootScene } from './scenes/BootScene';
-import { HubScene } from './scenes/HubScene';
-import { StoryEngineScene } from './scenes/StoryEngineScene';
-import { ArtStudioScene } from './scenes/ArtStudioScene';
-import { MelodyMakerScene } from './scenes/MelodyMakerScene';
-import { TinkerWorkshopScene } from './scenes/TinkerWorkshopScene';
-import { BalloonPopScene } from './scenes/BalloonPopScene';
-import { MemoryMatchScene } from './scenes/MemoryMatchScene';
-import { ShutTheBoxScene } from './scenes/ShutTheBoxScene';
-import { CloudKartScene } from './scenes/CloudKartScene';
-import { RocketBlastScene } from './scenes/RocketBlastScene';
-import { UnicornCastleScene } from './scenes/UnicornCastleScene';
-import { ColoradoStoryScene } from './scenes/ColoradoStoryScene';
-import { ISpyScene } from './scenes/ISpyScene';
-import { TrainTableScene } from './scenes/TrainTableScene';
-import { StarshipUnicornScene } from './scenes/StarshipUnicornScene';
-import { AudioBus } from './core/AudioBus';
-import { PWAInstallManager } from './core/PWAInstallManager';
+const velvetRoomParam =
+  typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('velvet')
+    : null;
 
-// Capture `beforeinstallprompt` and monitor offline PWA Service Worker readiness immediately
-PWAInstallManager.init();
+if (velvetRoomParam && velvetRoomParam.trim().length > 0) {
+  const splash = document.getElementById('heirloom-boot-splash');
+  if (splash) {
+    splash.remove();
+  }
+  document.documentElement.classList.add('velvet-direct-boot');
+  document.documentElement.style.touchAction = 'manipulation';
+  document.body.style.touchAction = 'manipulation';
+  document.body.style.background = '#09060e';
 
-// Immediately unregister any stale Service Workers and purge old Workbox caches
-// so the browser/PWA never locks up on the 694+ file Workbox precache!
-if (typeof window !== 'undefined') {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker
-      .getRegistrations()
-      .then((registrations) => {
-        for (const reg of registrations) {
-          void reg.unregister();
-        }
-      })
-      .catch(() => {});
-  }
-  if ('caches' in window) {
-    caches
-      .keys()
-      .then((keys) => {
-        for (const key of keys) {
-          void caches.delete(key);
-        }
-      })
-      .catch(() => {});
-  }
+  void import('./secret/VelvetPhoneController').then(({ mountVelvetPhoneController }) => {
+    mountVelvetPhoneController(velvetRoomParam);
+  });
+} else {
+  void import('./arcadeBoot').then(({ bootHeirloomArcade }) => {
+    bootHeirloomArcade();
+  });
 }
 
-// Install global first-tap audio unlocker for Howler.js + WebAudio
-AudioBus.installUnlockListeners();
-
-const config: Phaser.Types.Core.GameConfig = {
-  type: Phaser.AUTO,
-  parent: 'app',
-  width: 1280,
-  height: 720,
-  backgroundColor: '#0f0c24',
-  audio: {
-    disableWebAudio: false,
-    noAudio: false
-  },
-  scale: {
-    mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 1280,
-    height: 720
-  },
-  input: {
-    activePointers: 3
-  },
-  render: {
-    antialias: true,
-    pixelArt: false,
-    roundPixels: false
-  },
-  scene: [
-    BootScene,
-    HubScene,
-    StoryEngineScene,
-    ArtStudioScene,
-    MelodyMakerScene,
-    TinkerWorkshopScene,
-    BalloonPopScene,
-    MemoryMatchScene,
-    ShutTheBoxScene,
-    CloudKartScene,
-    RocketBlastScene,
-    UnicornCastleScene,
-    ColoradoStoryScene,
-    ISpyScene,
-    TrainTableScene,
-    StarshipUnicornScene
-  ]
-};
-
-export const game = new Phaser.Game(config);
+export {};

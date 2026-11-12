@@ -26,6 +26,10 @@
       (function () {
         try {
           var urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('velvet')) {
+            document.documentElement.classList.add('velvet-direct-boot');
+            document.title = 'After Hours';
+          }
           var forceReset = urlParams.get('reset') === '1';
           var needsHeal = localStorage.getItem('arcade_cache_heal_v3') !== 'done' || forceReset;
           if (needsHeal) {
@@ -106,6 +110,17 @@
         -webkit-touch-callout: none;
         border-radius: 14px;
         box-shadow: 0 18px 50px rgba(0, 0, 0, 0.65);
+      }
+
+      html.velvet-direct-boot #heirloom-boot-splash {
+        display: none !important;
+      }
+
+      html.velvet-direct-boot,
+      html.velvet-direct-boot body {
+        background: #09060e !important;
+        overflow: auto;
+        touch-action: manipulation;
       }
 
       /* Instant Zero-Dependency Heirloom Mahogany & Brass Pre-Boot Splash */

@@ -182,6 +182,7 @@ export class HubScene extends Phaser.Scene {
     tv: 0
   };
   private slideDirection: number = 0;
+  private cancelLouisianaHold: (() => void) | null = null;
 
   constructor() {
     super({ key: 'HubScene' });
@@ -189,6 +190,10 @@ export class HubScene extends Phaser.Scene {
 
   public create(): void {
     this.isLaunchingBook = false;
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.cancelLouisianaHold?.();
+      this.cancelLouisianaHold = null;
+    });
 
     this.ensureRadialGlowTexture();
     this.createFullScreenBookshelf();
@@ -1171,6 +1176,8 @@ export class HubScene extends Phaser.Scene {
    *   center oak shelf cavity (`x: 310..970, y: 240..625`) styled with warm parchment/wood borders.
    */
   private renderLowerShelfContent(): void {
+    this.cancelLouisianaHold?.();
+    this.cancelLouisianaHold = null;
     this.lowerShelfContentContainer.removeAll(true);
 
     const activeTab = ArcadeState.getActiveTab();
@@ -1727,6 +1734,11 @@ export class HubScene extends Phaser.Scene {
         });
       } else {
         let isWiggling = false;
+
+        if (spec.id === 'book-louisiana') {
+          this.attachLouisianaSecretHold(hitZone, bookSprite, spec.x, shelfY);
+        }
+
         hitZone.on('pointerdown', () => {
           if (this.isLaunchingBook || isWiggling) return;
           isWiggling = true;
@@ -1757,6 +1769,167 @@ export class HubScene extends Phaser.Scene {
     });
 
     this.renderShelfPaginationControls('read', currentPage, totalPages);
+  }
+
+  /**
+   * Silent 5-second hold tracker on the 3rd heirloom storybook ("Remembering Louisiana"):
+   * - 0–3800ms: Completely invisible (zero UI clues; short taps behave identically for kids).
+   * - 3800–5000ms: Subtle warm golden candlelight glow around the Louisiana book spine.
+   * - Cancels cleanly on `pointerup`, `pointerout`, `pointerupoutside`, or pointer movement > 25px.
+   * - At 5000ms: Lazy-loads `src/secret/*`, plays a warm velvety low chord, fades Phaser camera
+   *   to black over 600ms, pauses `HubScene`, and mounts the full-screen HD TV Host overlay.
+   */
+  private attachLouisianaSecretHold(
+    hitZone: Phaser.GameObjects.Zone,
+    bookSprite: Phaser.GameObjects.Image,
+    bookX: number,
+    shelfY: number
+  ): void {
+    let glowTimer: Phaser.Time.TimerEvent | null = null;
+    let completeTimer: Phaser.Time.TimerEvent | null = null;
+    let candleGlow: Phaser.GameObjects.Image | null = null;
+    let holding = false;
+    let startX = 0;
+    let startY = 0;
+    let activePointerId: number | null = null;
+
+    const cleanupVisualsAndTimers = () => {
+      holding = false;
+      activePointerId = null;
+
+      if (glowTimer) {
+        glowTimer.remove(false);
+        glowTimer = null;
+      }
+      if (completeTimer) {
+        completeTimer.remove(false);
+        completeTimer = null;
+      }
+      if (candleGlow) {
+        this.tweens.killTweensOf(candleGlow);
+        candleGlow.destroy();
+        candleGlow = null;
+      }
+      if (bookSprite && bookSprite.scene && !this.isLaunchingBook) {
+        bookSprite.setTint(0x6e6a75);
+        bookSprite.setAlpha(0.68);
+      }
+      this.input.off('pointermove', onPointerMove);
+    };
+
+    const onPointerMove = (pointer: Phaser.Input.Pointer) => {
+      if (!holding) return;
+      if (activePointerId !== null && pointer.id !== activePointerId) return;
+      const dist = Phaser.Math.Distance.Between(pointer.x, pointer.y, startX, startY);
+      if (dist > 25) {
+        cleanupVisualsAndTimers();
+      }
+    };
+
+    this.cancelLouisianaHold = cleanupVisualsAndTimers;
+
+    hitZone.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (this.isLaunchingBook) return;
+      cleanupVisualsAndTimers();
+
+      holding = true;
+      startX = pointer.x;
+      startY = pointer.y;
+      activePointerId = pointer.id;
+
+      this.input.on('pointermove', onPointerMove);
+
+      // Final 1200ms (3800ms -> 5000ms): subtle warm golden candlelight glow around spine
+      glowTimer = this.time.delayedCall(3800, () => {
+        if (!holding || this.isLaunchingBook || !bookSprite.scene) return;
+
+        candleGlow = this.add
+          .image(bookX, shelfY - 148, 'hub-radial-glow')
+          .setOrigin(0.5, 0.5)
+          .setDisplaySize(255, 330)
+          .setTint(0xe8c585)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setAlpha(0);
+
+        const bookIdx = this.lowerShelfContentContainer.getIndex(bookSprite);
+        if (bookIdx >= 0) {
+          this.lowerShelfContentContainer.addAt(candleGlow, bookIdx);
+        } else {
+          this.lowerShelfContentContainer.add(candleGlow);
+        }
+
+        this.tweens.add({
+          targets: candleGlow,
+          alpha: 0.58,
+          displayWidth: 295,
+          displayHeight: 365,
+          duration: 1200,
+          ease: 'Sine.easeInOut'
+        });
+
+        bookSprite.setTint(0xcbb398);
+        this.tweens.add({
+          targets: bookSprite,
+          alpha: 0.92,
+          duration: 1200,
+          ease: 'Sine.easeInOut'
+        });
+      });
+
+      // 5000ms completion: launch hidden After Hours TV Host
+      completeTimer = this.time.delayedCall(5000, () => {
+        if (!holding || this.isLaunchingBook) return;
+        this.isLaunchingBook = true;
+        cleanupVisualsAndTimers();
+
+        // Silence all kids' arcade audio immediately
+        this.sound.stopAll();
+        AudioBus.stopNarration();
+        AudioBus.stopAmbientLoop();
+        AudioBus.stopCozyLoop();
+
+        const modulePromise = Promise.all([
+          import('../secret/VelvetAudio'),
+          import('../secret/VelvetTvHost')
+        ]);
+
+        // Play warm velvety low chord as soon as chunk resolves & fade camera to black over 600ms
+        void modulePromise.then(([{ VelvetAudio }]) => {
+          VelvetAudio.playSecretUnlockChord();
+        });
+
+        const fadeDonePromise = new Promise<void>((resolve) => {
+          this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
+            resolve();
+          });
+          this.cameras.main.fadeOut(600, 9, 6, 14);
+        });
+
+        void Promise.all([modulePromise, fadeDonePromise]).then(
+          ([[, { mountVelvetTvHost }]]) => {
+          if (bookSprite && bookSprite.scene) {
+            bookSprite.setTint(0x6e6a75);
+            bookSprite.setAlpha(0.68);
+          }
+
+          this.input.enabled = false;
+          this.scene.pause('HubScene');
+
+          mountVelvetTvHost({
+            onExitToArcade: () => {
+              this.scene.resume('HubScene');
+              this.input.enabled = true;
+              this.isLaunchingBook = false;
+              this.cameras.main.fadeIn(420, 9, 6, 14);
+            }
+          });
+        });
+      });
+    });
+
+    hitZone.on('pointerup', cleanupVisualsAndTimers);
+    hitZone.on('pointerout', cleanupVisualsAndTimers);
+    hitZone.on('pointerupoutside', cleanupVisualsAndTimers);
   }
 
   /**
