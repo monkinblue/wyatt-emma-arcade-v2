@@ -97,6 +97,7 @@ export function mountVelvetTvHost(options: VelvetTvHostOptions = {}): () => void
   let revealTimerId: number | null = null;
   let qrDataUrl: string = '';
   let brokerStatus: 'connecting' | 'ready' | 'reconnecting' | 'error' = 'connecting';
+  let brokerDetail: string = 'Connecting Lounge Signal...';
 
   const state: VelvetRoomState = {
     roomCode: initialRoomCode,
@@ -520,8 +521,11 @@ export function mountVelvetTvHost(options: VelvetTvHostOptions = {}): () => void
       }
       renderStage();
     },
-    onBrokerStatusChange: (status) => {
+    onBrokerStatusChange: (status, detail) => {
       brokerStatus = status;
+      if (detail) {
+        brokerDetail = detail;
+      }
       if (net.getRoomCode() !== state.roomCode) {
         state.roomCode = net.getRoomCode();
         void refreshQrCode();
@@ -730,7 +734,7 @@ export function mountVelvetTvHost(options: VelvetTvHostOptions = {}): () => void
 
     const brokerBadge =
       brokerStatus === 'ready'
-        ? '<span style="color:#86efac;">● Live WebRTC Lounge Ready</span>'
+        ? `<span style="color:#86efac;">● ${escapeHtml(brokerDetail)}</span>`
         : brokerStatus === 'connecting'
         ? '<span style="color:#fde68a;">◌ Connecting Lounge Signal...</span>'
         : '<span style="color:#fda4af;">◌ Reconnecting Signal...</span>';

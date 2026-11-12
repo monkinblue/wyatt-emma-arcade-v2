@@ -83,6 +83,7 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
   // Controller UI State
   let connStatus: PhoneConnectionStatus = 'connecting';
   let myPlayer: PlayerId | null = null;
+  let claimingPlayer: PlayerId | null = null;
   let claimError: string | null = null;
   let roomState: VelvetRoomState | null = null;
 
@@ -135,6 +136,7 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
       }
     },
     onClaimResult: (success, player, reason, lockedVal) => {
+      claimingPlayer = null;
       if (success) {
         myPlayer = player;
         claimError = null;
@@ -145,6 +147,7 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
           }
         }
       } else {
+        myPlayer = null;
         claimError = reason ?? 'Unable to claim seat.';
       }
       render(true);
@@ -232,6 +235,7 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
       return [
         'login',
         connStatus,
+        claimingPlayer ?? '',
         claimError ?? '',
         roomState?.connected.robert ? '1' : '0',
         roomState?.connected.rita ? '1' : '0'
@@ -289,10 +293,19 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
         gap: 8px;
         padding: 4px 2px;
       ">
-        <div style="display:flex;align-items:center;gap:8px;">
+        <button type="button" id="vl-ph-conn-pill" style="
+          appearance: none;
+          background: transparent;
+          border: none;
+          padding: 4px 2px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+        " title="Tap to refresh lounge signal">
           <span id="vl-ph-conn-dot" style="width:8px;height:8px;border-radius:50%;background:${status.dotColor};display:inline-block;"></span>
           <span id="vl-ph-conn-txt" style="font-size:12px;font-weight:600;color:var(--vl-muted);">${escapeHtml(status.text)}</span>
-        </div>
+        </button>
 
         ${
           playerName
@@ -373,7 +386,21 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
           ">${name[0]}</div>
 
           ${
-            isConnected
+            claimingPlayer === player
+              ? `
+                <button type="button" class="vl-primary-btn" disabled style="
+                  opacity: 0.92;
+                  background: ${
+                    isRob
+                      ? 'linear-gradient(135deg, #e8c585 0%, #c99a52 100%)'
+                      : 'linear-gradient(135deg, #f48fb1 0%, #d4668c 100%)'
+                  };
+                  animation: vlSoftPulse 1.1s ease-in-out infinite;
+                ">
+                  Pairing as ${name}...
+                </button>
+              `
+              : isConnected
               ? `
                 <div style="font-size:13px;font-weight:700;color:#86efac;letter-spacing:0.06em;">
                   ${name} • Connected ✓
@@ -986,13 +1013,16 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
     return `
       ${renderHeader()}
       <div style="flex:1;display:flex;align-items:center;justify-content:center;text-align:center;">
-        <div class="vl-glass-card" style="padding:28px 22px;width:100%;">
-          <div style="font-family:var(--vl-serif);font-size:24px;color:var(--vl-gold-bright);margin-bottom:8px;">
+        <div class="vl-glass-card" style="padding:28px 22px;width:100%;display:flex;flex-direction:column;gap:14px;">
+          <div style="font-family:var(--vl-serif);font-size:24px;color:var(--vl-gold-bright);">
             Syncing with TV Lounge...
           </div>
           <div style="font-size:13px;color:var(--vl-muted);">
             Room Code <strong>${escapeHtml(roomCode)}</strong> — make sure the TV screen is open.
           </div>
+          <button type="button" class="vl-secondary-btn" id="vl-ph-retry-sync" style="margin-top:4px;">
+            ↻ Refresh Lounge Signal
+          </button>
         </div>
       </div>
     `;
@@ -1031,10 +1061,21 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
   }
 
   function bindInteractiveHandlers(): void {
+    // Connection pill / Retry button
+    document.getElementById('vl-ph-conn-pill')?.addEventListener('click', () => {
+      if (connStatus !== 'connected') {
+        net.forceReconnectNow();
+      }
+    });
+    document.getElementById('vl-ph-retry-sync')?.addEventListener('click', () => {
+      net.forceReconnectNow();
+    });
+
     // Switch Role
     document.getElementById('vl-ph-switch-role')?.addEventListener('click', () => {
       net.releaseIdentity();
       myPlayer = null;
+      claimingPlayer = null;
       claimError = null;
       render(true);
     });
@@ -1044,6 +1085,15 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
       btn.addEventListener('click', () => {
         const p = btn.getAttribute('data-claim') as PlayerId;
         claimError = null;
+        claimingPlayer = p;
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate(10);
+          } catch {
+            // ignore
+          }
+        }
+        render(true);
         net.claimIdentity(p, false);
       });
     });
@@ -1052,6 +1102,8 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
       btn.addEventListener('click', () => {
         const p = btn.getAttribute('data-reclaim') as PlayerId;
         claimError = null;
+        claimingPlayer = p;
+        render(true);
         net.claimIdentity(p, true);
       });
     });

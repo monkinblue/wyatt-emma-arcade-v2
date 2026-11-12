@@ -31,9 +31,9 @@
             document.title = 'After Hours';
           }
           var forceReset = urlParams.get('reset') === '1';
-          var needsHeal = localStorage.getItem('arcade_cache_heal_v3') !== 'done' || forceReset;
+          var needsHeal = localStorage.getItem('arcade_cache_heal_v4') !== 'done' || forceReset;
           if (needsHeal) {
-            localStorage.setItem('arcade_cache_heal_v3', 'done');
+            localStorage.setItem('arcade_cache_heal_v4', 'done');
             var swPromise =
               'serviceWorker' in navigator
                 ? navigator.serviceWorker.getRegistrations().then(function (regs) {
