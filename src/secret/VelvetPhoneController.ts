@@ -178,7 +178,6 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
 
   // Pre-populate remembered identity if resuming from sleep
   myPlayer = net.getSavedIdentity();
-  net.start();
 
   // Wake-lock on any touch inside the controller
   root.addEventListener(
@@ -1203,6 +1202,7 @@ export function mountVelvetPhoneController(rawRoomCode: string): () => void {
   }
 
   render(true);
+  net.start();
 
   return () => {
     net.destroy();

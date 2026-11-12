@@ -226,6 +226,7 @@ export function mountVelvetTvHost(options: VelvetTvHostOptions = {}): () => void
   let gaugeCanvas: HTMLCanvasElement | null = null;
   let rafId: number | null = null;
   let destroyed = false;
+  let exited = false;
 
   // Compute summary metrics from history
   const recomputeAggregates = () => {
@@ -659,10 +660,6 @@ export function mountVelvetTvHost(options: VelvetTvHostOptions = {}): () => void
       }
     }
   });
-
-  net.start();
-  VelvetAudio.playRoomLaunchPad();
-  void refreshQrCode();
 
   // ============================================================================
   // RENDER STAGE HTML BY PHASE
@@ -1739,9 +1736,6 @@ export function mountVelvetTvHost(options: VelvetTvHostOptions = {}): () => void
     rafId = requestAnimationFrame(renderLoop);
   };
 
-  renderStage();
-  rafId = requestAnimationFrame(renderLoop);
-
   const onKeyDown = (ev: KeyboardEvent) => {
     if (ev.key === 'Escape') {
       cleanupAndExit();
@@ -1749,7 +1743,6 @@ export function mountVelvetTvHost(options: VelvetTvHostOptions = {}): () => void
   };
   window.addEventListener('keydown', onKeyDown);
 
-  let exited = false;
   const cleanupAndExit = () => {
     if (exited) return;
     exited = true;
@@ -1773,6 +1766,12 @@ export function mountVelvetTvHost(options: VelvetTvHostOptions = {}): () => void
       options.onExitToArcade?.();
     }, 360);
   };
+
+  renderStage();
+  net.start();
+  VelvetAudio.playRoomLaunchPad();
+  void refreshQrCode();
+  rafId = requestAnimationFrame(renderLoop);
 
   return cleanupAndExit;
 }
